@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:case_sync/login.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1.00),  // Background color of splash screen
       body: Center(
-        child: Image.asset('assets/splash_logo.png'),  // Your splash image
+        child: SvgPicture.asset('assets/splash_logo.svg'),  // Your splash image
       ),
     );
   }
