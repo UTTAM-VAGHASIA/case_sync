@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
-import 'splash_screen.dart';
+import 'screens/splash_screen.dart';
+import 'theme_data/app_theme.dart';
 
-void main(){
+void main() {
   runApp(const CaseSyncApp());
-}
-
-ThemeData customTheme() {
-  return ThemeData(
-    inputDecorationTheme: InputDecorationTheme(
-      floatingLabelStyle: TextStyle(color: Colors.black),
-      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black), borderRadius: BorderRadius.circular(20))
-    ),
-    colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-  );
 }
 
 class CaseSyncApp extends StatelessWidget {
@@ -21,9 +12,9 @@ class CaseSyncApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: customTheme(),
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(), // Set the LoginScreen as the home screen
+      theme: AppTheme.theme,
+      home: const SplashScreen(),
     );
   }
 }
