@@ -39,7 +39,7 @@ class HomeScreen extends StatelessWidget {
     }
 
     double cardWidth = screenWidth * 0.40;
-    double cardHeight = screenHeight * 0.08;
+    double cardHeight = 72;
     double fullCardWidth = screenWidth * 0.93;
     double cardIconPositionX = cardWidth * 0.08;
     double cardIconPositionY = cardHeight * 0.21;
@@ -48,6 +48,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
         leadingWidth: 56 + 30,
