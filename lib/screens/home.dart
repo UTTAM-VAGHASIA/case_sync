@@ -141,7 +141,7 @@ class HomeScreen extends StatelessWidget {
                     cardIconPositionY,
                     cardTextPositionY,
                     context,
-                    UnassignedCasesScreen(),
+                    UnassignedCases(),
                   ),
                   _buildCard(
                     'Assigned Cases',
@@ -152,7 +152,7 @@ class HomeScreen extends StatelessWidget {
                     cardIconPositionY,
                     cardTextPositionY,
                     context,
-                    AssignedCasesScreen(),
+                    AssignedCases(),
                   ),
                   _buildCard(
                     'Case History',
@@ -297,16 +297,16 @@ class HomeScreen extends StatelessWidget {
 
   // Responsive card widget with navigation
   Widget _buildCard(
-      String title,
-      String iconPath,
-      double cardWidth,
-      double cardHeight,
-      double iconPositionX,
-      double iconPositionY,
-      double textPositionY,
-      BuildContext context,
-      Widget destinationScreen,
-      ) {
+    String title,
+    String iconPath,
+    double cardWidth,
+    double cardHeight,
+    double iconPositionX,
+    double iconPositionY,
+    double textPositionY,
+    BuildContext context,
+    Widget destinationScreen,
+  ) {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
@@ -324,7 +324,8 @@ class HomeScreen extends StatelessWidget {
               MaterialPageRoute(builder: (context) => destinationScreen),
             );
           },
-          splashColor: Colors.grey.withOpacity(0.2), // Optional: Custom splash color
+          splashColor:
+              Colors.grey.withOpacity(0.2), // Optional: Custom splash color
           child: SizedBox(
             width: cardWidth,
             height: cardHeight,
