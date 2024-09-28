@@ -16,7 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
-  String _errorMessage = ''; // To store error message
+  String _errorMessage = '';
+  bool _isLoading = false; // To handle loading state
 
   @override
   void dispose() {
@@ -38,28 +39,50 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  // Function to handle login button press
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+
       String email = _emailController.text;
       String password = _passwordController.text;
 
-      // Call ApiResponse to perform login
-      Map<String, dynamic> response = await ApiResponse.loginUser(email, password);
+      DateTime startTime = DateTime.now();
+      print("Login started at: $startTime");
 
-      if (response['success'] == true) {
-        // Navigate to HomeScreen and pass the response body
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(responseBody: response['data']),
-          ),
-        );
-      } else {
+      try {
+        // Start timing the login request
+        Map<String, dynamic> response =
+            await ApiResponse.loginUser(email, password);
+
+        DateTime endTime = DateTime.now();
+        print("Login response received at: $endTime");
+        print("Time taken: ${endTime.difference(startTime).inMilliseconds} ms");
+
+        if (response['success'] == true) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(responseBody: response['data']),
+            ),
+          );
+        } else {
+          setState(() {
+            _errorMessage = response['message'] ??
+                'Login failed. Please check your credentials.';
+          });
+        }
+      } catch (error) {
         setState(() {
-          _errorMessage = response['message'] ?? 'Login failed. Please recheck your credentials.';
+          _errorMessage = 'An error occurred: $error';
         });
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -70,7 +93,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(30, 16, 30, 16),
@@ -127,17 +149,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(50.0),
                       ),
                     ),
-                    child: const Text(
-                      'Log in',
-                      style: TextStyle(
-                        fontSize: 22,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text(
+                            'Log in',
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 10),
-                if (_errorMessage.isNotEmpty) // Only show if there's an error
+                if (_errorMessage.isNotEmpty)
                   Text(
                     _errorMessage,
                     style: const TextStyle(color: Colors.red),
