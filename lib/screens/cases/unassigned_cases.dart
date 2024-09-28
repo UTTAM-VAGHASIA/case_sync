@@ -8,14 +8,14 @@ class UnassignedCases extends StatelessWidget {
         backgroundColor: const Color(0xFFF3F3F3), // Set the app bar background to #f3f3f3
         elevation: 0, // Remove shadow under the AppBar
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,size: 35,color: Colors.black,),
           onPressed: () {
             // Action for back button
           },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings,size: 35,color: Colors.black,),
             onPressed: () {
               // Action for settings button
             },
