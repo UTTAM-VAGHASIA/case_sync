@@ -1,4 +1,6 @@
+import 'package:case_sync/screens/forms/login.dart';
 import 'package:flutter/material.dart';
+import 'package:case_sync/api_response/shared_pref.dart';
 
 class SettingsDrawer extends StatelessWidget {
   const SettingsDrawer({super.key});
@@ -28,24 +30,24 @@ class SettingsDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 30.0), // Adjust as necessary
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black, // Black color for the button
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20), // Rounded corners
-                ),
-              ),
-              onPressed: () {
-                // Call the logout functionality
-                _logoutUser(context);
+              onPressed: () async {
+                // Call the logOut method from SharedPrefService
+                await SharedPrefService.logOut();
+
+                // Show snackbar after logging out successfully
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You have been logged out successfully.'),
+                  ),
+                );
+
+                // Navigate to the LoginScreen after successful logout
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
               },
-              child: const Text(
-                'Logout',
-                style: TextStyle(
-                  color: Colors.white, // White text
-                  fontSize: 16,
-                ),
-              ),
+              child: const Text('Logout'),
             ),
           ),
         ],
@@ -53,14 +55,10 @@ class SettingsDrawer extends StatelessWidget {
     );
   }
 
-  // This method will handle the logout functionality
+  // This method will handle the logout functionality (Optional if more logic is needed)
   void _logoutUser(BuildContext context) {
-    // You can replace this with actual logout functionality
-    // For example, if you're using Firebase Auth:
-    // await FirebaseAuth.instance.signOut();
-
-    // Navigate to the login screen or any other screen after logging out
-    // Navigator.pushReplacementNamed(context, '/login');
+    // Close the modal after logging out
+    Navigator.pop(context);
 
     // Show a simple snackbar message for demo purposes
     ScaffoldMessenger.of(context).showSnackBar(
@@ -68,8 +66,5 @@ class SettingsDrawer extends StatelessWidget {
         content: Text('You have been logged out'),
       ),
     );
-
-    // Close the modal after logging out
-    Navigator.pop(context);
   }
 }
