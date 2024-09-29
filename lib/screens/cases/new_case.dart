@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart'; // Import intl package for date formatting
 
 class NewCaseScreen extends StatefulWidget {
+  const NewCaseScreen({super.key});
+
   @override
   NewCaseScreenState createState() => NewCaseScreenState();
 }
@@ -382,7 +384,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                               );
                             }
                           },
-                          child: Text('Register'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             padding: EdgeInsets.symmetric(vertical: 15),
@@ -391,6 +392,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                           ),
+                          child: Text('Register'),
                         ),
                       ),
                     ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class UnassignedCases extends StatelessWidget {
+  const UnassignedCases({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,7 +65,7 @@ class UnassignedCases extends StatelessWidget {
 }
 
 class CaseCard extends StatelessWidget {
-  const CaseCard({Key? key}) : super(key: key);
+  const CaseCard({super.key});
 
   @override
   Widget build(BuildContext context) {

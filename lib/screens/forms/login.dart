@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '/api_response/api_response.dart';
+import '../../services/api_service.dart';
 import '../home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'Please enter your email';
     }
     final RegExp emailRegExp = RegExp(
-      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
     );
     if (!emailRegExp.hasMatch(value)) {
       return 'Please enter a valid email address';
@@ -49,17 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
       String email = _emailController.text;
       String password = _passwordController.text;
 
-      DateTime startTime = DateTime.now();
-      print("Login started at: $startTime");
 
       try {
         // Start timing the login request
         Map<String, dynamic> response =
             await ApiResponse.loginUser(email, password);
 
-        DateTime endTime = DateTime.now();
-        print("Login response received at: $endTime");
-        print("Time taken: ${endTime.difference(startTime).inMilliseconds} ms");
 
         if (response['success'] == true) {
           Navigator.pushReplacement(

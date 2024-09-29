@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CaseHistoryPage extends StatefulWidget {
+  const CaseHistoryPage({super.key});
+
   @override
   _CaseHistoryPageState createState() => _CaseHistoryPageState();
 }
@@ -173,7 +175,7 @@ class CaseCard extends StatelessWidget {
   final String plaintiff;
   final String location;
 
-  CaseCard({required this.caseId, required this.plaintiff, required this.location});
+  const CaseCard({super.key, required this.caseId, required this.plaintiff, required this.location});
 
   @override
   Widget build(BuildContext context) {

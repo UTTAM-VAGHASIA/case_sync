@@ -21,7 +21,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     List<dynamic> userList = responseBody;
     Map<String, dynamic> userData = userList.isNotEmpty ? userList[0] : {};
@@ -153,7 +152,7 @@ class HomeScreen extends StatelessWidget {
                     cardIconPositionY,
                     cardTextPositionY,
                     context,
-                    AssignedCases(),
+                    AssignedCasesScreen(),
                   ),
                   _buildCard(
                     'Case History',
