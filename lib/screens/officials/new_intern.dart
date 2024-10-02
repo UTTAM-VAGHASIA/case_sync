@@ -227,10 +227,6 @@ class _NewInternScreenState extends State<NewInternScreen> {
                             );
                           }
                         },
-                        child: Text(
-                          'Register',
-                          style: TextStyle(color: Colors.white),
-                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           padding: EdgeInsets.symmetric(vertical: 15),
@@ -238,6 +234,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                        ),
+                        child: Text(
+                          'Register',
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ),
