@@ -6,7 +6,7 @@ class CaseCard extends StatelessWidget {
   final String location;
   final bool isHighlighted;
 
-  const CaseCard({
+  const CaseCard({super.key, 
     required this.caseId,
     required this.plaintiff,
     required this.location,

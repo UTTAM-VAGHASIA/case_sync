@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart'; // Import intl package for date formatting
 
 class NewcaseForm extends StatefulWidget {
+  const NewcaseForm({super.key});
+
   @override
   NewcaseFormState createState() => NewcaseFormState();
 }
@@ -382,18 +384,18 @@ class NewcaseFormState extends State<NewcaseForm> {
                               );
                             }
                           },
-                          child: Text(
-  'Register',
-  style: TextStyle(
-    fontSize: 18,
-    color: Colors.white, // Set the text color to white
-  ),
-),
 style: ElevatedButton.styleFrom(
   backgroundColor: Colors.black, // Set the button background color to black
   padding: EdgeInsets.symmetric(vertical: 15),
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(20),
+  ),
+),
+                          child: Text(
+  'Register',
+  style: TextStyle(
+    fontSize: 18,
+    color: Colors.white, // Set the text color to white
   ),
 ),
 
