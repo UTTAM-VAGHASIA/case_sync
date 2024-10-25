@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart'; // Import intl package for date formatting
+import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
+import '../../services/api_service.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -11,12 +14,34 @@ class NewCaseScreen extends StatefulWidget {
 
 class NewCaseScreenState extends State<NewCaseScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _joiningDateController = TextEditingController();
 
+  final TextEditingController _caseNumberController = TextEditingController();
+  final TextEditingController _caseYearController = TextEditingController();
+  final TextEditingController _applicantController = TextEditingController();
+  final TextEditingController _opponentController = TextEditingController();
+  final TextEditingController _summonDateController = TextEditingController();
+
+  String? _selectedCaseType;
+  String? _selectedHandler;
+  String? _selectedCompany;
+  String? _selectedCourtName;
+  String? _selectedCityName;
+  String? _selectedCaseStage;
   String? _fileName;
+  String? _filePath;
 
-  // Method to show date picker and select a date
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _caseNumberController.dispose();
+    _caseYearController.dispose();
+    _applicantController.dispose();
+    _opponentController.dispose();
+    _summonDateController.dispose();
+    super.dispose();
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -26,383 +51,333 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     );
     if (pickedDate != null) {
       setState(() {
-        // Format the selected date and display it in the TextFormField
-        _joiningDateController.text =
-            DateFormat('dd/MM/yyyy').format(pickedDate);
+        _summonDateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
       });
     }
   }
+
   Future<void> _pickDocument() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-    if (result != null) {
+    if (result != null && result.files.single.path != null) {
       setState(() {
-        _fileName = result.files.single.name;
+        _fileName = result.files.single.name;  // Displayed file name
+        _filePath = result.files.single.path;  // Actual file path for upload
       });
     } else {
       setState(() {
         _fileName = null;
+        _filePath = null;
       });
+    }
+  }
+
+  // Function to submit the case
+  Future<void> _submitCase() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    Map<String, dynamic> caseData = {
+      'case_no': _caseNumberController.text,
+      'year': _caseYearController.text,
+      'case_type': _selectedCaseType,
+      'handled_by': _selectedHandler,
+      'applicant': _applicantController.text,
+      'company_id': _selectedCompany,
+      'opp_name': _opponentController.text,
+      'court_name': _selectedCourtName,
+      'city_id': _selectedCityName,
+      'sr_date': _summonDateController.text,
+      // 'court_status': _selectedCaseStatus,
+    };
+
+    var response = await ApiService.submitNewCase(caseData, _filePath);
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (response['success']) {
+      Get.snackbar('Success', 'Case submitted successfully!',
+          snackPosition: SnackPosition.BOTTOM);
+      Get.back(); // Navigate back after submission
+    } else {
+      Get.snackbar('Error', 'Failed to submit case: ${response['message']}',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: Color(0xFFF3F3F3), // Set background to #f3f3f3
-      body: SafeArea(
-        // Ensure content is displayed within safe area
-        child: SingleChildScrollView(
-          // Make the layout scrollable
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+      backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+      appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        elevation: 0,
+        leadingWidth: 56 + 30,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/icons/back_arrow.svg',
+            width: 35,
+            height: 35,
+          ),
+          onPressed: () {
+            Get.back();
+          },
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: Form(
+            key: _formKey,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // Custom back button (positioned at the top-left corner)
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios),
-                  onPressed: () {
-                    Navigator.pop(context); // Navigate back
-                  },
-                  alignment: Alignment.topLeft,
-                ),
-                SizedBox(height: 20),
                 Center(
                   child: Text(
                     'New Case',
                     style: TextStyle(
-                      fontSize: 36, // Increased font size
-                      fontWeight: FontWeight.bold, // Made text bold
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      height: 1.2,
                     ),
-                    textAlign: TextAlign.center, // Center the title
+                    textAlign: TextAlign.center,
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.06),
+                _buildTextField('Case Number', 'Case Number',
+                    _caseNumberController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the Case Number';
+                      }
+                      return null;
+                    }),
+                _buildTextField('Case Year', 'Case Year', _caseYearController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the Case Year';
+                      }
+                      return null;
+                    }),
+                _buildDropdownField('Case Type', 'Select Case Type',
+                    ['Case 1', 'Case 2', 'Case 3'], _selectedCaseType, (value) {
+                      setState(() {
+                        _selectedCaseType = value;
+                      });
+                    }),
+                _buildDropdownField('Case Stage', 'Select Case Stage',
+                    ['Pending', 'Dismissed'], _selectedCaseStage, (value) {
+                      setState(() {
+                        _selectedCaseStage = value;
+                      });
+                    }),
+                _buildDropdownField('Handled By', 'Select Handler',
+                    ['Advocate 1', 'Advocate 2', 'Advocate 3'], _selectedHandler, (value) {
+                      setState(() {
+                        _selectedHandler = value;
+                      });
+                    }),
+                _buildDropdownField('Company Name', 'Select Company',
+                    ['Company 1', 'Company 2', 'Company 3'], _selectedCompany,
+                        (value) {
+                      setState(() {
+                        _selectedCompany = value;
+                      });
+                    }),
+                _buildTextField('Applicant / Appellant / Complainant',
+                    'Enter Name', _applicantController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the name';
+                      }
+                      return null;
+                    }),
+                _buildTextField('Opponent / Respondent / Accused', 'Enter Name',
+                    _opponentController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the name';
+                      }
+                      return null;
+                    }),
+                _buildDropdownField('Court Name', 'Select Court Name',
+                    ['Court 1', 'Court 2', 'Court 3'], _selectedCourtName,
+                        (value) {
+                      setState(() {
+                        _selectedCourtName = value;
+                      });
+                    }),
+                _buildDropdownField('City Name', 'Select City',
+                    ['Surat', 'Bardoli', 'Rajkot'], _selectedCityName, (value) {
+                      setState(() {
+                        _selectedCityName = value;
+                      });
+                    }),
+                _buildDateField('Summon Date', 'Select Summon Date',
+                    _summonDateController, () => _selectDate(context),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select Summon Date';
+                      }
+                      return null;
+                    }),
+                _buildFilePickerField(
+                    'Attach Document', 'Attach Document', _pickDocument),
 
-                SizedBox(height: 30), // Extra spacing after the title
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      // Add text label before each TextFormField
-
-                      // Case-Number Starting
-                      Text(
-                        'Case Number',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Case-Number',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter the Case Number';
-                          }
-                          return null;
-                        },
-                      ),
-                      // case-Number Ending
-
-                      // Case-Year Starting
-                      SizedBox(height: 20),
-                      Text(
-                        'Case Year',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Case-Year',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter  Case Year';
-                          }
-                          return null;
-                        },
-                      ),
-                      // Case-Year Ending
-
-                      // Case-type Drop-down starting
-                      SizedBox(height: 20),
-                      Text(
-                        'Case-type',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      DropdownButtonFormField<String>(
-                        // controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Select Case-type',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        hint: Text('Select Case'),
-                        items: ['Case 1', 'Case 2', 'Case 3']
-                            .map((CaseType) => DropdownMenuItem<String>(
-                                  value: CaseType,
-                                  child: Text(CaseType),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          // Handle value change
-                        },
-                      ),
-                      // Case-type-Drop-down ending
-
-                      // Company Drop-down starting
-                      SizedBox(height: 20),
-                      Text(
-                        'Company Name',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      DropdownButtonFormField<String>(
-                        // controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Select Company',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        hint: Text('Select Company'),
-                        items: ['Company 1', 'Company 2', 'Company 3']
-                            .map((CompanyName) => DropdownMenuItem<String>(
-                                  value: CompanyName,
-                                  child: Text(CompanyName),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          // Handle value change
-                        },
-                      ),
-                      // Company-Name-Drop-down ending
-
-                      // Plantiff Name Starting
-                      SizedBox(height: 20),
-                      Text(
-                        'Plantiff Name ',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Plantiff Name ',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter Plantiff Name ';
-                          }
-                          return null;
-                        },
-                      ),
-                      // Plantiff Name  Ending
-
-                      // Court Name Drop-down starting
-                      SizedBox(height: 20),
-                      Text(
-                        'Court Name',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      DropdownButtonFormField<String>(
-                        // controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Select Court Name ',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        hint: Text('Select Court'),
-                        items: ['Court 1', 'Court 2', 'Court 3']
-                            .map((CourtName) => DropdownMenuItem<String>(
-                                  value: CourtName,
-                                  child: Text(CourtName),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          // Handle value change
-                        },
-                      ),
-                      // Court-name-Drop-down ending
-
-                      // City-Name Drop-down starting
-                      SizedBox(height: 20),
-                      Text(
-                        'City Name',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 5),
-                      DropdownButtonFormField<String>(
-                        // controller: _nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Select City ',
-                          hintStyle: TextStyle(
-                              fontWeight: FontWeight
-                                  .normal), // Remove bold from hint text
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: Colors.grey), // Light grey border color
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        hint: Text('Select City'),
-                        items: ['Surat', 'Bardoli', 'Rajkot']
-                            .map((CityName) => DropdownMenuItem<String>(
-                                  value: CityName,
-                                  child: Text(CityName),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          // Handle value change
-                        },
-                      ),
-                      // City-name-Drop-down ending
-
-                      // Summon Date  Starting
-                      SizedBox(height: 20),
-                      Text('Summon Date  ', style: TextStyle(fontSize: 16)),
-                      SizedBox(height: 5),
-                      TextFormField(
-                        controller: _joiningDateController,
-                        decoration: InputDecoration(
-                          hintText: 'Summon Date  ',
-                          hintStyle: TextStyle(fontWeight: FontWeight.normal),
-                          fillColor: Colors.white,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(Icons.calendar_today),
-                            onPressed: () {
-                              _selectDate(context); // Call _selectDate method
-                            },
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter Summon Date';
-                          }
-                          return null;
-                        },
-                      ),
-                        SizedBox(height: 20),
-                      // Summon Date Ending
-
-                      //Attach Document starting
-                       Text('Attach Document ', style: TextStyle(fontSize: 16)),
-                      SizedBox(height: 5),
-                      TextFormField(
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          hintText: _fileName ?? 'Attach Document',
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(Icons.attach_file),
-                            onPressed: _pickDocument,
-                          ),
+                SizedBox(height: screenHeight * 0.05),
+                Center(
+                  child: SizedBox(
+                    width: screenWidth * 0.5,
+                    height: 70,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _submitCase,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
                         ),
                       ),
-                        SizedBox(height: 30),                      
-                      //Attach Document ending 
-
-                      
-                      SizedBox(
-                        width: double.infinity,
-                        height: 45,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Processing Data')),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            padding: EdgeInsets.symmetric(vertical: 15),
-                            textStyle: TextStyle(fontSize: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: Text('Register'),
+                      child: _isSubmitting
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                        'Register',
+                        style: TextStyle(
+                          fontSize: 22,
+                          color: Colors.white,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
+                const SizedBox(height: 80),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(String label, String hintText,
+      TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text,
+        String? Function(String?)? validator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: validator,
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField(String label, String hintText, List<String> items,
+      String? value, Function(String?)? onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          value: value,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please select $label';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDateField(String label, String hintText,
+      TextEditingController controller, Function()? onTap,
+      {String? Function(String?)? validator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          onTap: onTap,
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            suffixIcon: Icon(Icons.calendar_today),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: validator,
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildFilePickerField(
+      String label, String hintText, Function()? onTap) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          readOnly: true,
+          onTap: onTap,
+          decoration: InputDecoration(
+            hintText: _fileName ?? hintText,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            suffixIcon: Icon(Icons.attach_file),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }

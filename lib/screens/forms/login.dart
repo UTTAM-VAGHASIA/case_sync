@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 
+import '../../models/advocate.dart';
 import '../../services/api_service.dart';
+import '../../services/shared_pref.dart';
 import '../home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -49,35 +52,39 @@ class _LoginScreenState extends State<LoginScreen> {
       String email = _emailController.text;
       String password = _passwordController.text;
 
-
       try {
-        // Start timing the login request
-        Map<String, dynamic> response =
-            await ApiResponse.loginUser(email, password);
+        // Call the login API
+        var response = await ApiService.loginUser(email, password);
 
-
+        // Check if the login was successful
         if (response['success'] == true) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(responseBody: response['data']),
-            ),
-          );
-        } else {
-          setState(() {
-            _errorMessage = response['message'] ??
-                'Login failed. Please check your credentials.';
-          });
-        }
-      } catch (error) {
-        setState(() {
-          _errorMessage = 'An error occurred: $error';
-        });
-      }
+          var data = response['data'];
 
-      setState(() {
-        _isLoading = false;
-      });
+          // If the data is a list, we take the first user; otherwise, treat it as a map.
+          if (data is List && data.isNotEmpty) {
+            // Cast the first item in the list to Map<String, dynamic>
+            Map<String, dynamic> userJson =
+            (data[0] as Map).cast<String, dynamic>();
+            Advocate advocate = Advocate.fromJson(userJson);
+            await SharedPrefService.saveUser(advocate);
+          } else if (data is Map) {
+            // If it's a map, cast it to Map<String, dynamic>
+            Map<String, dynamic> userJson =
+            (data).cast<String, dynamic>();
+            Advocate advocate = Advocate.fromJson(userJson);
+            await SharedPrefService.saveUser(advocate);
+          }
+
+          // Navigate to the home screen
+          Get.offAll(() => const HomeScreen());
+        } else {
+          // Handle login failure
+          Get.snackbar('Login Error', response['message']);
+        }
+      } catch (e) {
+        print('An error occurred: $e');
+        Get.snackbar('Error', 'Login failed, please try again.');
+      }
     }
   }
 

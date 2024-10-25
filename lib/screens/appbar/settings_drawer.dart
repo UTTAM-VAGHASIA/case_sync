@@ -37,7 +37,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
             padding: const EdgeInsets.only(bottom: 30.0), // Adjust as necessary
             child: ElevatedButton(
               onPressed: () async {
-                await SharedPrefService.logOut();
+                await SharedPrefService.clearUser();
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -45,9 +45,10 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
                   ),
                 );
 
-                Navigator.pushReplacement(
+                Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
                 );
               },
               child: const Text('Logout'),

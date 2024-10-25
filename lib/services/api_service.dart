@@ -1,32 +1,29 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class ApiResponse {
-  // Async login method
-  static Future<Map<String, dynamic>> loginUser(String email, String password) async {
+class ApiService {
+  static const String baseUrl =
+      'https://pragmanxt.com/case_sync/services/v1/index.php/';
+  static const Map<String, String> headers = {
+    'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
+  };
+
+  // General method to send requests
+  static Future<Map<String, dynamic>> _sendRequest(
+      String endpoint, Map<String, dynamic> bodyData) async {
     try {
-      var headers = {
-        'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
-      };
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://pragmanxt.com/case_sync/services/v1/index.php/login_advocate'),
+        Uri.parse(baseUrl + endpoint),
       );
-
-      // Add fields to the request
-      request.fields.addAll({
-        'data': jsonEncode({
-          'user_id': email,
-          'password': password,
-        })
-      });
-
+      request.fields.addAll({'data': jsonEncode(bodyData)});
       request.headers.addAll(headers);
 
-      // Send the request and wait for the response asynchronously
+      // Send the request and handle timeout
       http.StreamedResponse response =
-      await request.send().timeout(const Duration(seconds: 10));
+          await request.send().timeout(const Duration(seconds: 10));
 
+      // Handle response status
       if (response.statusCode == 200) {
         String responseBody = await response.stream.bytesToString();
         var decodedResponse = jsonDecode(responseBody);
@@ -35,18 +32,18 @@ class ApiResponse {
           return {
             'success': true,
             'data': decodedResponse['data'],
-            'message': decodedResponse['message']
+            'message': decodedResponse['message'],
           };
         } else {
           return {
             'success': false,
-            'message': decodedResponse['message'] ?? 'Login failed'
+            'message': decodedResponse['message'] ?? 'Operation failed',
           };
         }
       } else {
         return {
           'success': false,
-          'message': 'Server error: ${response.reasonPhrase}'
+          'message': 'Server error: ${response.reasonPhrase}',
         };
       }
     } catch (error) {
@@ -54,34 +51,58 @@ class ApiResponse {
     }
   }
 
-  // Async advocate registration method
+  // Login user method
+  static Future<Map<String, dynamic>> loginUser(
+      String email, String password) async {
+    return _sendRequest(
+      'login_advocate',
+      {
+        'user_id': email,
+        'password': password,
+      },
+    );
+  }
+
+  // Register advocate method
   static Future<Map<String, dynamic>> registerAdvocate(
       String name, String contact, String email, String password) async {
-    try {
-      var headers = {
-        'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
-      };
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('https://pragmanxt.com/case_sync/services/v1/index.php/advocate_registration'),
-      );
+    return _sendRequest(
+      'advocate_registration',
+      {
+        'name': name,
+        'contact': contact,
+        'email': email,
+        'password': password,
+      },
+    );
+  }
 
-      // Add fields to the request
-      request.fields.addAll({
-        'data': jsonEncode({
-          'name': name,
-          'contact': contact,
-          'email': email,
-          'password': password,
-        })
+  // Submit new case method
+  static Future<Map<String, dynamic>> submitNewCase(
+      Map<String, dynamic> caseData, String? filePath) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${baseUrl}add_case'),
+    );
+
+    // Add case data as JSON in the 'data' field
+    request.fields['data'] = jsonEncode(caseData);
+
+    // If there is a file to upload, add it to the request
+    if (filePath != null) {
+      request.files
+          .add(await http.MultipartFile.fromPath('case_image', filePath));
+    }
+
+    request.headers.addAll(headers);
+
+    try {
+      http.StreamedResponse response =
+          await request.send().timeout(Duration(seconds: 10), onTimeout: () {
+        throw Exception('Request timed out');
       });
 
-      request.headers.addAll(headers);
-
-      // Send the request and wait for the response asynchronously
-      http.StreamedResponse response =
-      await request.send().timeout(const Duration(seconds: 10));
-
+      // Handle response
       if (response.statusCode == 200) {
         String responseBody = await response.stream.bytesToString();
         var decodedResponse = jsonDecode(responseBody);
@@ -90,18 +111,17 @@ class ApiResponse {
           return {
             'success': true,
             'message': decodedResponse['message'],
-            'data': decodedResponse['data'],
           };
         } else {
           return {
             'success': false,
-            'message': decodedResponse['message'] ?? 'Registration failed'
+            'message': decodedResponse['message'] ?? 'Operation failed',
           };
         }
       } else {
         return {
           'success': false,
-          'message': 'Server error: ${response.reasonPhrase}'
+          'message': 'Server error: ${response.reasonPhrase}',
         };
       }
     } catch (error) {

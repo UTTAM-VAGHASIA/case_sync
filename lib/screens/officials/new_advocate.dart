@@ -44,7 +44,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
     String password = _passwordController.text;
 
     try {
-      Map<String, dynamic> response = await ApiResponse.registerAdvocate(
+      Map<String, dynamic> response = await ApiService.registerAdvocate(
           name, contact, email, password);
 
       if (response['success'] == true) {
@@ -217,7 +217,6 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
           controller: _passwordController,
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
-            hintText: 'must be 8 characters',
             contentPadding:
             const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: IconButton(
@@ -235,14 +234,6 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Password is required';
-            } else if (value.length < 8) {
-              return 'Password must be at least 8 characters long';
-            }
-            return null;
-          },
         ),
         const SizedBox(height: 20),
       ],
