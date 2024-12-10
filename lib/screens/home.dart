@@ -154,7 +154,7 @@ class HomeScreen extends StatelessWidget {
                               cardIconPositionX,
                               cardIconPositionY,
                               cardTextPositionY,
-                              AssignedCasesScreen(),
+                              AssignedCases(),
                             ),
                             _buildCard(
                               'Case History',
@@ -214,7 +214,7 @@ class HomeScreen extends StatelessWidget {
                               cardIconPositionX,
                               cardIconPositionY,
                               cardTextPositionY,
-                              TasksScreen(),
+                              TasksPage(),
                             ),
                           ],
                         ),
@@ -294,15 +294,15 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildCard(
-      String title,
-      String iconPath,
-      double cardWidth,
-      double cardHeight,
-      double iconPositionX,
-      double iconPositionY,
-      double textPositionY,
-      Widget destinationScreen,
-      ) {
+    String title,
+    String iconPath,
+    double cardWidth,
+    double cardHeight,
+    double iconPositionX,
+    double iconPositionY,
+    double textPositionY,
+    Widget destinationScreen,
+  ) {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

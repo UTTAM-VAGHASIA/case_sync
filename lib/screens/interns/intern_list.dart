@@ -1,15 +1,71 @@
+import 'dart:convert'; // For JSON decoding
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:http/http.dart' as http; // Add http for API calls
+import 'package:intl/intl.dart'; // For date formatting
 
-import '../appbar/settings_drawer.dart';
-
-class InternListScreen extends StatelessWidget {
+class InternListScreen extends StatefulWidget {
   const InternListScreen({super.key});
+
+  @override
+  _InternListScreenState createState() => _InternListScreenState();
+}
+
+class _InternListScreenState extends State<InternListScreen> {
+  List<dynamic> interns = []; // To store fetched interns
+  bool isLoading = true; // To show loading indicator
+
+  @override
+  void initState() {
+    super.initState();
+    fetchInterns(); // Fetch interns on screen load
+  }
+
+  // Function to fetch data from the API
+  Future<void> fetchInterns() async {
+    const String apiUrl =
+        "https://pragmanxt.com/case_sync/services/v1/index.php/get_interns_list"; // Replace this with your API endpoint
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+        if (responseBody['success'] == true) {
+          setState(() {
+            interns = responseBody['data']; // Access the "data" key
+            isLoading = false;
+          });
+        } else {
+          throw Exception(responseBody['message'] ?? 'Failed to load interns');
+        }
+      } else {
+        throw Exception('Failed to load interns');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print("Error fetching interns: $e");
+    }
+  }
+
+  // Helper function to format date
+  String formatDate(String dateTime) {
+    if (dateTime == "0000-00-00" || dateTime.isEmpty) {
+      return "No Date";
+    }
+    try {
+      DateTime parsedDate = DateTime.parse(dateTime);
+      return DateFormat('d MMMM, yyyy').format(parsedDate);
+    } catch (e) {
+      return "Invalid Date";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3), // Set the background color to #f3f3f3
+      backgroundColor:
+          const Color(0xFFF3F3F3), // Set the background color to #f3f3f3
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -25,38 +81,16 @@ class InternListScreen extends StatelessWidget {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 20),
-            child: IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/settings.svg',
-                width: 35,
-                height: 35,
-              ),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  scrollControlDisabledMaxHeightRatio: 5 / 6,
-                  backgroundColor: Color.fromRGBO(201, 201, 201, 1),
-                  builder: (context) => const SettingsDrawer(),
-                );
-              },
-            ),
-          ),
-        ],
       ),
-
-      // The main body of the page
       body: Column(
         children: [
-          // Title below the AppBar
           Container(
-            color: Color(0xFFF3F3F3),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+            color: const Color(0xFFF3F3F3),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+              children: const [
                 Text(
                   'Intern List',
                   style: TextStyle(
@@ -68,19 +102,26 @@ class InternListScreen extends StatelessWidget {
               ],
             ),
           ),
-
-          // List of interns
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: 10,  // Set a higher number for demonstration (makes it scrollable)
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: const InternCard(),  // Reuse the InternCard widget for each item
-                );
-              },
-            ),
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator()) // Show loading spinner
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: interns.length,
+                    itemBuilder: (context, index) {
+                      final intern = interns[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: InternCard(
+                          id: intern['id'].toString(),
+                          name: intern['name'],
+                          contact: intern['contact'],
+                          dateTime: formatDate(intern['date_time']),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -89,57 +130,68 @@ class InternListScreen extends StatelessWidget {
 }
 
 class InternCard extends StatelessWidget {
-  const InternCard({super.key});
+  final String id;
+  final String name;
+  final String contact;
+  final String dateTime;
+
+  const InternCard({
+    super.key,
+    required this.id,
+    required this.name,
+    required this.contact,
+    required this.dateTime,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       color: Colors.white, // Set card background to white
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.black, width: 1),
+        side: const BorderSide(color: Colors.grey, width: 1),
         borderRadius: BorderRadius.circular(10.0),
       ),
-      elevation: 3,  // Adds shadow effect
+      elevation: 3, // Adds shadow effect
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-        child: IntrinsicHeight(  // Ensures correct height
-          child: Row(
-            children: [
-              // Left side: Intern details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      '#Intern123',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.0,
-                      ),
-                    ),
-                    SizedBox(height: 4.0),
-                    Text('+91 XXXXXXXXXX'),
-                    Text('intern123@gmail.com'),
-                  ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Left section: ID, name, and placeholder details
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14.0,
+                  ),
                 ),
-              ),
-
-              // Vertical divider between the details and date
-              const VerticalDivider(
-                thickness: 1,
-                color: Colors.grey,
-              ),
-
-              // Right side: Date
-              const Text(
-                '21-10-2024',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14.0,
+                const SizedBox(height: 4.0),
+                Text(
+                  '+91 $contact',
+                  style: const TextStyle(
+                    fontSize: 14.0,
+                  ),
                 ),
+                const SizedBox(height: 4.0),
+                const Text(
+                  '12321@gmail.com', // Static email ID
+                  style: TextStyle(
+                    fontSize: 14.0,
+                  ),
+                ),
+              ],
+            ),
+            // Right section: date_time
+            Text(
+              dateTime,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14.0,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

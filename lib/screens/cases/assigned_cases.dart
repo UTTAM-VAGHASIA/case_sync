@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:case_sync/screens/cases/caseinfo.dart';
 
-class UnassignedCases extends StatefulWidget {
-  const UnassignedCases({Key? key}) : super(key: key);
+class AssignedCases extends StatefulWidget {
+  const AssignedCases({Key? key}) : super(key: key);
 
   @override
-  State<UnassignedCases> createState() => _UnassignedCasesState();
+  State<AssignedCases> createState() => _AssignedCasesState();
 }
 
-class _UnassignedCasesState extends State<UnassignedCases> {
+class _AssignedCasesState extends State<AssignedCases> {
   bool _isLoading = true;
-  List<Map<String, String>> _unassignedCases = [];
+  List<Map<String, String>> _AssignedCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -27,7 +27,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   Future<void> _fetchCases() async {
     try {
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/get_unassigned_case_list');
+          'https://pragmanxt.com/case_sync/services/v1/index.php/get_assigned_case_list');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -35,7 +35,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
 
         if (data['success'] == true) {
           setState(() {
-            _unassignedCases = (data['data'] as List)
+            _AssignedCases = (data['data'] as List)
                 .map((caseItem) => {
                       "case_no": caseItem['case_no'].toString(),
                       "applicant": caseItem['applicant'].toString(),
@@ -43,7 +43,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                       "city_name": caseItem['city_name'].toString(),
                     })
                 .toList();
-            _filteredCases = List.from(_unassignedCases);
+            _filteredCases = List.from(_AssignedCases);
           });
         } else {
           _showError("No cases found.");
@@ -68,7 +68,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   // Update filtered cases when search query changes
   void _updateFilteredCases() {
     setState(() {
-      _filteredCases = _unassignedCases.where((caseItem) {
+      _filteredCases = _AssignedCases.where((caseItem) {
         return caseItem['case_no']!
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
@@ -89,7 +89,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Unassigned Cases",
+        title: const Text("Assigned Cases",
             style: TextStyle(
                 color: Colors.black,
                 fontSize: 24,
@@ -109,7 +109,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                   if (!_isSearching) {
                     _searchController.clear();
                     _searchQuery = '';
-                    _filteredCases = List.from(_unassignedCases);
+                    _filteredCases = List.from(_AssignedCases);
                   }
                 });
               },

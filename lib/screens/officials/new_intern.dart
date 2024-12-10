@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class NewInternScreen extends StatefulWidget {
   const NewInternScreen({super.key});
@@ -13,7 +15,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _contactNumberController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _joiningDateController = TextEditingController();
@@ -35,25 +37,95 @@ class _NewInternScreenState extends State<NewInternScreen> {
     }
   }
 
+  Future<void> _registerIntern() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Collect form input
+    String name = _nameController.text;
+    String contact = _contactNumberController.text;
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    String startDate = _joiningDateController.text;
+
+    try {
+      // API URL
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/v1/index.php/intern_registration');
+
+      // Create a multipart request
+      var request = http.MultipartRequest('POST', url);
+
+      // Add fields as form data
+      request.fields['data'] = jsonEncode({
+        "name": name,
+        "contact": contact,
+        "email": email,
+        "password": password,
+        "start_date": startDate,
+      });
+
+      // Send the request
+      final response = await request.send();
+
+      // Handle the response
+      final responseBody = await response.stream.bytesToString();
+
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: $responseBody');
+
+      if (response.statusCode == 200) {
+        // Decode the response body
+        final responseData = jsonDecode(responseBody);
+
+        if (responseData['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseData['message'])),
+          );
+
+          // Clear the input fields
+          _nameController.clear();
+          _contactNumberController.clear();
+          _emailController.clear();
+          _passwordController.clear();
+          _joiningDateController.clear();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed: ${responseData['message']}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Server error: ${response.statusCode}')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          surfaceTintColor: Colors.transparent,
-          backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
-          elevation: 0,
-          leadingWidth: 56 + 30,
-          leading: IconButton(
-            icon: SvgPicture.asset(
-              'assets/icons/back_arrow.svg',
-              width: 35,
-              height: 35,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+      appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        elevation: 0,
+        leadingWidth: 56 + 30,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/icons/back_arrow.svg',
+            width: 35,
+            height: 35,
           ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -220,13 +292,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Processing Data')),
-                            );
-                          }
-                        },
+                        onPressed: _registerIntern,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           padding: EdgeInsets.symmetric(vertical: 15),
