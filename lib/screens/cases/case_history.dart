@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
+import '../../components/case_card.dart';
 import '../../components/filter_modal.dart';
 import '../../components/list_app_bar.dart';
-import '../../components/case_card.dart';
+import '../../models/case.dart';
 import '../../services/case_services.dart';
+import '../constants/date_constants.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
@@ -18,24 +21,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  List<Map<String, String>> _filteredCases = [];
+  List<Case> _filteredCases = [];
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
-
-  final List<String> months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
-  ];
 
   @override
   void initState() {
@@ -60,11 +48,16 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
     setState(() {
       _filteredCases.clear();
       _resultTabs.clear();
+
+      // Filter cases based on the search query
       caseData[selectedYear]?.forEach((month, cases) {
         final results = cases.where((caseItem) {
-          return caseItem['caseId']!.toLowerCase().contains(_searchQuery) ||
-              caseItem['plaintiff']!.toLowerCase().contains(_searchQuery) ||
-              caseItem['location']!.toLowerCase().contains(_searchQuery);
+          return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
+              caseItem.courtName.toLowerCase().contains(_searchQuery) ||
+              caseItem.cityName.toLowerCase().contains(_searchQuery) ||
+              caseItem.handleBy.toLowerCase().contains(_searchQuery) ||
+              caseItem.applicant.toLowerCase().contains(_searchQuery) ||
+              caseItem.opponent.toLowerCase().contains(_searchQuery);
         }).toList();
 
         if (results.isNotEmpty) {
@@ -72,10 +65,11 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           _resultTabs.addAll(List.filled(results.length, month));
         }
       });
-      _currentResultIndex = 0; // Reset the index when search changes
 
-      // If there is exactly one result, navigate to the corresponding tab
-      if (_filteredCases.length == 1) {
+      _currentResultIndex = 0; // Reset to the first result
+
+      // Automatically switch to the first result's tab if any result is found
+      if (_filteredCases.isNotEmpty) {
         _switchTabToResult();
       }
     });
@@ -163,9 +157,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                       IconButton(
                         icon: const Icon(Icons.arrow_forward),
                         onPressed:
-                        _currentResultIndex < _filteredCases.length - 1
-                            ? _navigateToNextResult
-                            : _switchTabToResult,
+                            _currentResultIndex < _filteredCases.length - 1
+                                ? _navigateToNextResult
+                                : _switchTabToResult,
                       ),
                     ],
                   ),
@@ -175,7 +169,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           Container(
             color: const Color(0xFFF3F3F3),
             padding:
-            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -197,8 +191,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                     });
                   },
                   dropdownColor: Colors.white,
-                  items: <String>['2024', '2023', '2022', '2021']
-                      .map<DropdownMenuItem<String>>((String value) {
+                  items: years.map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value,
@@ -226,7 +219,8 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
               child: TabBarView(
                 controller: _tabController,
                 children: months.map((month) {
@@ -239,13 +233,10 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                       bool isHighlighted = _isSearching &&
                           _filteredCases.isNotEmpty &&
                           _resultTabs[_currentResultIndex] == month &&
-                          _filteredCases[_currentResultIndex]['caseId'] ==
-                              caseItem['caseId'];
+                          _filteredCases[_currentResultIndex].id == caseItem.id;
 
                       return CaseCard(
-                        caseId: caseItem['caseId']!,
-                        plaintiff: caseItem['plaintiff']!,
-                        location: caseItem['location']!,
+                        caseItem: caseItem,
                         isHighlighted: isHighlighted,
                       );
                     },

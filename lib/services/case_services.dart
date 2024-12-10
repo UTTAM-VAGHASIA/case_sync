@@ -1,48 +1,54 @@
-final Map<String, Map<String, List<Map<String, String>>>> caseData = {
-  '2024': {
-    'January': [
-      {'caseId': '#Case202401', 'plaintiff': 'John Doe', 'location': 'Court A'},
-      {'caseId': '#Case202402', 'plaintiff': 'Jane Smith', 'location': 'Court B'},
-    ],
-    'February': [
-      {'caseId': '#Case202403', 'plaintiff': 'John Smith', 'location': 'Court C'},
-    ],
-  },
-  '2023': {
-    'January': [
-      {'caseId': '#Case202301', 'plaintiff': 'Alan Brown', 'location': 'Court D'},
-    ],
-    'February': [
-      {'caseId': '#Case202302', 'plaintiff': 'Linda White', 'location': 'Court E'},
-    ],
-  },
-};
+import 'package:intl/intl.dart';
 
-List<Map<String, String>> getCaseDataForMonth(String year, String month) {
+import '../models/case.dart';
+import '../services/api_service.dart'; // Ensure correct import path for your API service
+
+final Map<String, Map<String, List<Case>>> caseData = {};
+final List<String> years = []; // New variable to store distinct years
+
+Future<void> populateCaseData() async {
+  try {
+    // Fetch data from API
+    final List<Case> cases = await CaseApiService.fetchCaseList();
+
+    // Clear existing data to avoid duplication
+    caseData.clear();
+    years.clear(); // Clear years list to avoid duplication
+
+    for (var caseItem in cases) {
+      // Extract year and month from srDate
+      String year = caseItem.srDate.year.toString();
+      String month =
+          DateFormat('MMMM').format(caseItem.srDate); // Full month name
+
+      // Add the year to the years list if not already present
+      if (!years.contains(year)) {
+        years.add(year);
+      }
+
+      // Initialize nested map for the year if it doesn't exist
+      if (!caseData.containsKey(year)) {
+        caseData[year] = {};
+      }
+
+      // Initialize list for the month if it doesn't exist
+      if (!caseData[year]!.containsKey(month)) {
+        caseData[year]![month] = [];
+      }
+
+      // Add the case to the appropriate year and month
+      caseData[year]![month]!.add(caseItem);
+    }
+
+    // Sort the years list in ascending order
+    years.sort();
+
+    print('Case data populated successfully.');
+  } catch (e) {
+    print('Error populating case data: $e');
+  }
+}
+
+List<Case> getCaseDataForMonth(String year, String month) {
   return caseData[year]?[month] ?? [];
 }
-
-final Map<String, Map<String, List<Map<String, String>>>> AssignedCaseData = {
-  '2024': {
-    'January': [
-      {'caseId': '#Case202401', 'plaintiff': 'John Doe', 'assignedTo': 'Intern 1'},
-      {'caseId': '#Case202402', 'plaintiff': 'Jane Smith', 'assignedTo': 'Intern 2'},
-    ],
-    'February': [
-      {'caseId': '#Case202403', 'plaintiff': 'John Smith', 'assignedTo': 'Intern 2'},
-    ],
-  },
-  '2023': {
-    'January': [
-      {'caseId': '#Case202301', 'plaintiff': 'Alan Brown', 'assignedTo': 'Intern 3'},
-    ],
-    'February': [
-      {'caseId': '#Case202302', 'plaintiff': 'Linda White', 'assignedTo': 'Intern 3'},
-    ],
-  },
-};
-
-List<Map<String, String>> getAssignedCaseDataForMonth(String year, String month) {
-  return AssignedCaseData[year]?[month] ?? [];
-}
-
