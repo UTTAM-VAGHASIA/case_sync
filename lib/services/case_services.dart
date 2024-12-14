@@ -1,15 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-import '../models/case.dart';
+import '../models/case_list.dart';
 import '../services/api_service.dart'; // Ensure correct import path for your API service
 
-final Map<String, Map<String, List<Case>>> caseData = {};
+final Map<String, Map<String, List<CaseListData>>> caseData = {};
 final List<String> years = []; // New variable to store distinct years
 
 Future<void> populateCaseData() async {
   try {
     // Fetch data from API
-    final List<Case> cases = await CaseApiService.fetchCaseList();
+    final List<CaseListData> cases = await CaseApiService.fetchCaseList();
+
+    if (kDebugMode) {
+      print(cases);
+    }
 
     // Clear existing data to avoid duplication
     caseData.clear();
@@ -49,6 +54,6 @@ Future<void> populateCaseData() async {
   }
 }
 
-List<Case> getCaseDataForMonth(String year, String month) {
+List<CaseListData> getCaseDataForMonth(String year, String month) {
   return caseData[year]?[month] ?? [];
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../models/case.dart';
+import '../models/case_list.dart';
 
 class CaseCard extends StatelessWidget {
-  final Case caseItem;
+  final CaseListData caseItem;
   final bool isHighlighted;
 
   const CaseCard({

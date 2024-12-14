@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../models/case.dart';
+import '../models/case_list.dart';
 
 class ApiService {
   static const String baseUrl =
@@ -82,7 +82,7 @@ class ApiService {
 
   // Submit new case method
   static Future<Map<String, dynamic>> submitNewCase(
-      Map<String, dynamic> caseData, String? filePath) async {
+      Map<String, dynamic> caseData, List<String> filePaths) async {
     var request = http.MultipartRequest(
       'POST',
       Uri.parse('${baseUrl}add_case'),
@@ -91,10 +91,12 @@ class ApiService {
     // Add case data as JSON in the 'data' field
     request.fields['data'] = jsonEncode(caseData);
 
-    // If there is a file to upload, add it to the request
-    if (filePath != null) {
-      request.files
-          .add(await http.MultipartFile.fromPath('case_image', filePath));
+    // Add multiple files to the request if any files are provided
+    if (filePaths.isNotEmpty) {
+      for (String filePath in filePaths) {
+        request.files
+            .add(await http.MultipartFile.fromPath('case_images[]', filePath));
+      }
     }
 
     request.headers.addAll(headers);
@@ -137,14 +139,14 @@ class CaseApiService {
   static const String baseUrl =
       'https://pragmanxt.com/case_sync/services/v1/index.php';
 
-  static Future<List<Case>> fetchCaseList() async {
+  static Future<List<CaseListData>> fetchCaseList() async {
     final response = await http.get(Uri.parse('$baseUrl/get_case_history'));
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       if (responseData['success']) {
         final List<dynamic> data = responseData['data'];
-        return data.map((item) => Case.fromJson(item)).toList();
+        return data.map((item) => CaseListData.fromJson(item)).toList();
       } else {
         throw Exception(
             'Failed to fetch case list: ${responseData['message']}');

@@ -1,9 +1,9 @@
+import 'package:case_sync/models/case_list.dart';
 import 'package:flutter/material.dart';
 
 import '../../components/case_card.dart';
 import '../../components/filter_modal.dart';
 import '../../components/list_app_bar.dart';
-import '../../models/case.dart';
 import '../../services/case_services.dart';
 import '../constants/date_constants.dart';
 
@@ -21,14 +21,19 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  List<Case> _filteredCases = [];
+  List<CaseListData> _filteredCases = [];
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize the TabController and set it to the current month
     _tabController = TabController(length: months.length, vsync: this);
+    final currentMonthIndex = DateTime.now().month - 1; // Index starts at 0
+    _tabController.animateTo(currentMonthIndex);
+
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
@@ -150,7 +155,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                         icon: const Icon(Icons.arrow_back),
                         onPressed: _currentResultIndex > 0
                             ? _navigateToPreviousResult
-                            : _switchTabToResult,
+                            : null,
                       ),
                       Text(
                           '${_filteredCases.isEmpty ? 0 : _currentResultIndex + 1} / ${_filteredCases.length}'),
@@ -159,7 +164,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                         onPressed:
                             _currentResultIndex < _filteredCases.length - 1
                                 ? _navigateToNextResult
-                                : _switchTabToResult,
+                                : null,
                       ),
                     ],
                   ),
@@ -207,8 +212,6 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
               labelColor: Colors.black,
               unselectedLabelColor: Colors.grey,
               indicatorColor: Colors.black,
@@ -225,21 +228,35 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                 controller: _tabController,
                 children: months.map((month) {
                   var allCases = getCaseDataForMonth(selectedYear, month);
-                  return ListView.builder(
-                    itemCount: allCases.length,
-                    itemBuilder: (context, index) {
-                      var caseItem = allCases[index];
 
-                      bool isHighlighted = _isSearching &&
-                          _filteredCases.isNotEmpty &&
-                          _resultTabs[_currentResultIndex] == month &&
-                          _filteredCases[_currentResultIndex].id == caseItem.id;
-
-                      return CaseCard(
-                        caseItem: caseItem,
-                        isHighlighted: isHighlighted,
-                      );
+                  // Wrap ListView with RefreshIndicator
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      // Reload or update case data here
+                      setState(() {
+                        // You can modify this to fetch updated data from your API or service
+                        populateCaseData();
+                        allCases = getCaseDataForMonth(selectedYear, month);
+                      });
                     },
+                    child: ListView.builder(
+                      itemCount: allCases.length,
+                      itemBuilder: (context, index) {
+                        var caseItem = allCases[index];
+
+                        // Highlight only the current result
+                        bool isHighlighted = _isSearching &&
+                            _filteredCases.isNotEmpty &&
+                            _resultTabs[_currentResultIndex] == month &&
+                            _filteredCases[_currentResultIndex].caseNo ==
+                                caseItem.caseNo;
+
+                        return CaseCard(
+                          caseItem: caseItem,
+                          isHighlighted: isHighlighted,
+                        );
+                      },
+                    ),
                   );
                 }).toList(),
               ),
