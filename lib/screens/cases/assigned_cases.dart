@@ -37,6 +37,8 @@ class _AssignedCasesState extends State<AssignedCases> {
           setState(() {
             _AssignedCases = (data['data'] as List)
                 .map((caseItem) => {
+                      "case_id": caseItem['id']
+                          .toString(), // Ensure correct field for case_id
                       "case_no": caseItem['case_no'].toString(),
                       "applicant": caseItem['applicant'].toString(),
                       "court_name": caseItem['court_name'].toString(),
@@ -168,12 +170,8 @@ class _AssignedCasesState extends State<AssignedCases> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CaseInfoPage(
-                                caseData: {
-                                  "case_no": caseItem['case_no']!,
-                                  "applicant": caseItem['applicant']!,
-                                  "court_name": caseItem['court_name']!,
-                                  "city_name": caseItem['city_name']!,
-                                },
+                                caseId:
+                                    caseItem['case_id']!, // Pass case_id here
                               ),
                             ),
                           );
