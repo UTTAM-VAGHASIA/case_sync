@@ -1,9 +1,72 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-class CaseInfoPage extends StatelessWidget {
-  final Map<String, String> caseData;
+class CaseInfoPage extends StatefulWidget {
+  final String caseId;
 
-  const CaseInfoPage({super.key, required this.caseData});
+  const CaseInfoPage({Key? key, required this.caseId}) : super(key: key);
+
+  @override
+  _CaseInfoPageState createState() => _CaseInfoPageState();
+}
+
+class _CaseInfoPageState extends State<CaseInfoPage> {
+  bool _isLoading = true;
+  Map<String, String> _caseDetails = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCaseInfo();
+  }
+
+  Future<void> _fetchCaseInfo() async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/v1/index.php/get_case_info');
+      final response = await http.post(url, body: {
+        'case_id': widget.caseId,
+      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'].isNotEmpty) {
+          setState(() {
+            _caseDetails = {
+              'case_no': data['data'][0]['case_no'] ?? 'N/A',
+              'year': data['data'][0]['year'] ?? 'N/A',
+              'type': data['data'][0]['case_type'] ?? 'N/A',
+              'company': data['data'][0]['name'] ?? 'N/A',
+              'plaintiff': data['data'][0]['applicant'] ?? 'N/A',
+              'court': data['data'][0]['court'] ?? 'N/A',
+              'location': data['data'][0]['name'] ?? 'N/A',
+              'summonDate': data['data'][0]['sr_date'] ?? 'N/A',
+              'assignedBy': 'Unknown', // Adjust as needed
+              'assignedTo': 'Unknown', // Adjust as needed
+              'assignedDate': 'Unknown', // Adjust as needed
+              'remark': 'No remarks available.', // Adjust as needed
+            };
+          });
+        } else {
+          _showError("Case details not found.");
+        }
+      } else {
+        _showError("Failed to fetch case details.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,49 +81,51 @@ class CaseInfoPage extends StatelessWidget {
           },
         ),
         title: Text(
-          'Case No. ${caseData['caseId'] ?? 'Unknown'}',
+          'Case No. ${_caseDetails['case_no'] ?? 'Unknown'}',
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailsCard(
-              title: 'Case Details',
-              details: {
-                'Case Year': caseData['year'] ?? 'N/A',
-                'Case Type': caseData['type'] ?? 'N/A',
-                'Company': caseData['company'] ?? 'N/A',
-                'Plaintiff Name': caseData['plaintiff'] ?? 'N/A',
-                'Court': caseData['court'] ?? 'N/A',
-                'City': caseData['location'] ?? 'N/A',
-                'Summon Date': caseData['summonDate'] ?? 'N/A',
-              },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailsCard(
+                    title: 'Case Details',
+                    details: {
+                      'Case Year': _caseDetails['year']!,
+                      'Case Type': _caseDetails['type']!,
+                      'Company': _caseDetails['company']!,
+                      'Plaintiff Name': _caseDetails['plaintiff']!,
+                      'Court': _caseDetails['court']!,
+                      'City': _caseDetails['location']!,
+                      'Summon Date': _caseDetails['summonDate']!,
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailsCard(
+                    title: 'Intern Status',
+                    details: {
+                      'Assigned By': _caseDetails['assignedBy']!,
+                      'Assigned To': _caseDetails['assignedTo']!,
+                      'Assigned Date': _caseDetails['assignedDate']!,
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailsCard(
+                    title: 'Remark Log',
+                    details: {
+                      'Remark': _caseDetails['remark']!,
+                    },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildDetailsCard(
-              title: 'Intern Status',
-              details: {
-                'Assigned By': caseData['assignedBy'] ?? 'N/A',
-                'Assigned To': caseData['assignedTo'] ?? 'N/A',
-                'Assigned Date': caseData['assignedDate'] ?? 'N/A',
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildDetailsCard(
-              title: 'Remark Log',
-              details: {
-                'Remark': caseData['remark'] ?? 'No remarks available.',
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -118,26 +183,4 @@ class CaseInfoPage extends StatelessWidget {
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: CaseInfoPage(
-      caseData: {
-        'caseId': 'C1234',
-        'year': '2001',
-        'type': 'Criminal',
-        'company': 'Boeing',
-        'plaintiff': 'Kelly Ortberg',
-        'court': 'Supreme',
-        'location': 'Delhi',
-        'summonDate': '09/11/2001',
-        'assignedBy': 'Advocate',
-        'assignedTo': 'Intern',
-        'assignedDate': '11/09/2001',
-        'remark': 'Initial hearing scheduled.',
-      },
-    ),
-  ));
 }

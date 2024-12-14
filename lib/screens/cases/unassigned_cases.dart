@@ -37,10 +37,16 @@ class _UnassignedCasesState extends State<UnassignedCases> {
           setState(() {
             _unassignedCases = (data['data'] as List)
                 .map((caseItem) => {
-                      "case_no": caseItem['case_no'].toString(),
-                      "applicant": caseItem['applicant'].toString(),
-                      "court_name": caseItem['court_name'].toString(),
-                      "city_name": caseItem['city_name'].toString(),
+                      "case_id": caseItem['id']?.toString() ??
+                          '', // Default empty string if null
+                      "case_no": caseItem['case_no']?.toString() ??
+                          '', // Default empty string if null
+                      "applicant": caseItem['applicant']?.toString() ??
+                          'N/A', // Default to 'N/A' if null
+                      "court_name": caseItem['court_name']?.toString() ??
+                          'N/A', // Default to 'N/A' if null
+                      "city_name": caseItem['city_name']?.toString() ??
+                          'N/A', // Default to 'N/A' if null
                     })
                 .toList();
             _filteredCases = List.from(_unassignedCases);
@@ -69,18 +75,23 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   void _updateFilteredCases() {
     setState(() {
       _filteredCases = _unassignedCases.where((caseItem) {
-        return caseItem['case_no']!
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            caseItem['applicant']!
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            caseItem['court_name']!
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            caseItem['city_name']!
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase());
+        // Check if each field is not null or empty before performing search
+        return (caseItem['case_no'] != null &&
+                caseItem['case_no']!
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase())) ||
+            (caseItem['applicant'] != null &&
+                caseItem['applicant']!
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase())) ||
+            (caseItem['court_name'] != null &&
+                caseItem['court_name']!
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase())) ||
+            (caseItem['city_name'] != null &&
+                caseItem['city_name']!
+                    .toLowerCase()
+                    .contains(_searchQuery.toLowerCase()));
       }).toList();
     });
   }
@@ -168,12 +179,8 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CaseInfoPage(
-                                caseData: {
-                                  "case_no": caseItem['case_no']!,
-                                  "applicant": caseItem['applicant']!,
-                                  "court_name": caseItem['court_name']!,
-                                  "city_name": caseItem['city_name']!,
-                                },
+                                caseId: caseItem['case_id'] ??
+                                    '', // Default empty string if null
                               ),
                             ),
                           );
@@ -190,7 +197,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Case No: ${caseItem['case_no']}",
+                                  "Case No: ${caseItem['case_no'] ?? ''}", // Default empty string if null
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -198,17 +205,17 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "Applicant: ${caseItem['applicant']}",
+                                  "Applicant: ${caseItem['applicant'] ?? 'N/A'}", // Default to 'N/A' if null
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "Court: ${caseItem['court_name']}",
+                                  "Court: ${caseItem['court_name'] ?? 'N/A'}", // Default to 'N/A' if null
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "City: ${caseItem['city_name']}",
+                                  "City: ${caseItem['city_name'] ?? 'N/A'}", // Default to 'N/A' if null
                                   style: const TextStyle(fontSize: 16),
                                 ),
                               ],
