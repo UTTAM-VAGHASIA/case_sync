@@ -106,7 +106,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                     details: {
                       'Case Year': _caseDetails['year']!,
                       'Case Type': _caseDetails['type']!,
-                      'Current Stage': _caseDetails['stage'],
+                      'Current Stage': _caseDetails['Current Stage']!,
                       'Plaintiff Name': _caseDetails['applicant']!,
                       'Opponent Name': _caseDetails['opponent']!,
                       'Court': _caseDetails['court']!,
