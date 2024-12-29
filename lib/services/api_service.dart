@@ -6,7 +6,7 @@ import '../models/case_list.dart';
 
 class ApiService {
   static const String baseUrl =
-      'https://pragmanxt.com/case_sync/services/v1/index.php/';
+      'https://pragmanxt.com/case_sync/services/admin/v1/index.php/';
   static const Map<String, String> headers = {
     'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
   };
@@ -137,7 +137,7 @@ class ApiService {
 
 class CaseApiService {
   static const String baseUrl =
-      'https://pragmanxt.com/case_sync/services/v1/index.php';
+      'https://pragmanxt.com/case_sync/services/admin/v1/index.php';
 
   static Future<List<CaseListData>> fetchCaseList() async {
     final response = await http.get(Uri.parse('$baseUrl/get_case_history'));
