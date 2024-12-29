@@ -1,95 +1,160 @@
-import 'package:case_sync/screens/interns/add_tasks.dart';
+import 'dart:convert';
+import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:http/http.dart' as http;
 
-class TasksPage extends StatelessWidget {
+class TasksPage extends StatefulWidget {
+  final String caseNo;
+
+  const TasksPage({required this.caseNo, Key? key}) : super(key: key);
+
+  @override
+  State<TasksPage> createState() => _TasksPageState();
+}
+
+class _TasksPageState extends State<TasksPage> {
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTasks();
+  }
+
+  Future<void> _fetchTasks() async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_task_list');
+      final request = http.MultipartRequest('POST', url);
+
+      // Add the multipart data
+      request.fields['data'] = jsonEncode({"case_no": widget.caseNo});
+
+      // Send the request and get the response
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = jsonDecode(responseBody);
+
+        if (data['success'] == true) {
+          setState(() {
+            _tasks = List<Map<String, dynamic>>.from(data['data']);
+          });
+        } else {
+          _showError(data['message'] ?? "No tasks found.");
+        }
+      } else {
+        _showError("Failed to fetch tasks. Please try again.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        leadingWidth: 56 + 30,
         leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/back_arrow.svg',
-            width: 35,
-            height: 35,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Tasks",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Tasks",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 5, // Number of tasks
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          "#Case123",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _tasks.isEmpty
+              ? const Center(child: Text("No tasks found for this case."))
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ListView.builder(
+                    itemCount: _tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = _tasks[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              "Instruction: ${task['instruction']}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 5),
+                                Text("Alloted By: ${task['alloted_by']}"),
+                                Text(
+                                  "Alloted Date: ${_formatDate(task['alloted_date'])}",
+                                ),
+                                Text(
+                                  "Expected End Date: ${_formatDate(task['expected_end_date'])}",
+                                ),
+                                Text("Status: ${task['status']}"),
+                              ],
+                            ),
+                            onTap: () {
+                              // Navigate to TaskInfoPage when the task is tapped
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      TaskInfoPage(task: task),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Allocated by : Advocate Name"),
-                            Text("Day of allocation"),
-                          ],
-                        ),
-                        leading: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "To",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text("Intern"),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddTaskScreen()),
-          );
-        },
-        child: Icon(Icons.add),
-        backgroundColor: Colors.black,
-      ),
+                      );
+                    },
+                  ),
+                ),
     );
+  }
+
+  String _formatDate(String date) {
+    if (date.isEmpty || date == "0000-00-00") return "";
+    final parsedDate = DateTime.parse(date);
+    return "${parsedDate.day} ${_monthName(parsedDate.month)}, ${parsedDate.year}";
+  }
+
+  String _monthName(int month) {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+    return months[month - 1];
   }
 }
