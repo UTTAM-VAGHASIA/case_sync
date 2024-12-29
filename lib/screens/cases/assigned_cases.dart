@@ -27,7 +27,7 @@ class _AssignedCasesState extends State<AssignedCases> {
   Future<void> _fetchCases() async {
     try {
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/get_assigned_case_list');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_assigned_case_list');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {

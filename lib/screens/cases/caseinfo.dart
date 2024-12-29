@@ -24,7 +24,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
   Future<void> _fetchCaseInfo() async {
     try {
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/get_case_info');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
       final response = await http.post(url, body: {
         'case_id': widget.caseId,
       });

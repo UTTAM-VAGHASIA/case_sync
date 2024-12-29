@@ -52,7 +52,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
     try {
       // API URL
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/intern_registration');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/intern_registration');
 
       // Create a multipart request
       var request = http.MultipartRequest('POST', url);
