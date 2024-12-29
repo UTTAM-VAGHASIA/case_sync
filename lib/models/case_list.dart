@@ -1,4 +1,5 @@
 class CaseListData {
+  final String id;
   final String caseNo;
   final String handleBy;
   final String applicant;
@@ -8,6 +9,7 @@ class CaseListData {
   final String cityName;
 
   CaseListData({
+    required this.id,
     required this.caseNo,
     required this.handleBy,
     required this.applicant,
@@ -19,6 +21,7 @@ class CaseListData {
 
   factory CaseListData.fromJson(Map<String, dynamic> json) {
     return CaseListData(
+      id: json['id'],
       caseNo: json['case_no'] ?? '',
       handleBy: json['handle_by'] ?? '',
       applicant: json['applicant'] ?? '',
@@ -31,6 +34,7 @@ class CaseListData {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'case_no': caseNo,
       'handle_by': handleBy,
       'applicant': applicant,

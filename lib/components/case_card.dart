@@ -21,7 +21,7 @@ class CaseCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => CaseInfoPage(
-              caseId: caseItem.caseNo, // Pass case_id here
+              caseId: caseItem.id, // Pass case_id here
             ),
           ),
         );

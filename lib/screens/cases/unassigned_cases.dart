@@ -1,7 +1,8 @@
 import 'dart:convert';
+
+import 'package:case_sync/screens/cases/caseinfo.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:case_sync/screens/cases/caseinfo.dart';
 
 class UnassignedCases extends StatefulWidget {
   const UnassignedCases({Key? key}) : super(key: key);
@@ -27,7 +28,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   Future<void> _fetchCases() async {
     try {
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/get_unassigned_case_list');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_unassigned_case_list');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {

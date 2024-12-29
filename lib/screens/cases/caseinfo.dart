@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -24,21 +26,25 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
   Future<void> _fetchCaseInfo() async {
     try {
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/get_case_info');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
       final response = await http.post(url, body: {
         'case_id': widget.caseId,
       });
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (kDebugMode) {
+          print(data);
+        }
         if (data['success'] == true && data['data'].isNotEmpty) {
           setState(() {
             _caseDetails = {
               'case_no': data['data'][0]['case_no'] ?? 'N/A',
               'year': data['data'][0]['year'] ?? 'N/A',
               'type': data['data'][0]['case_type'] ?? 'N/A',
-              'company': data['data'][0]['name'] ?? 'N/A',
-              'plaintiff': data['data'][0]['applicant'] ?? 'N/A',
+              'Current Stage': data['data'][0]['stage'] ?? 'N/A',
+              'applicant': data['data'][0]['applicant'] ?? 'N/A',
+              'opponent': data['data'][0]['opp_name'] ?? 'N/A',
               'court': data['data'][0]['court'] ?? 'N/A',
               'location': data['data'][0]['name'] ?? 'N/A',
               'summonDate': data['data'][0]['sr_date'] ?? 'N/A',
@@ -100,8 +106,9 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                     details: {
                       'Case Year': _caseDetails['year']!,
                       'Case Type': _caseDetails['type']!,
-                      'Company': _caseDetails['company']!,
-                      'Plaintiff Name': _caseDetails['plaintiff']!,
+                      'Current Stage': _caseDetails['stage'],
+                      'Plaintiff Name': _caseDetails['applicant']!,
+                      'Opponent Name': _caseDetails['opponent']!,
                       'Court': _caseDetails['court']!,
                       'City': _caseDetails['location']!,
                       'Summon Date': _caseDetails['summonDate']!,
@@ -177,7 +184,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
