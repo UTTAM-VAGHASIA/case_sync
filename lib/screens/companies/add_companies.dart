@@ -38,7 +38,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
     try {
       // API URL
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/v1/index.php/add_company');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_company');
 
       // Create a multipart request
       var request = http.MultipartRequest('POST', url);

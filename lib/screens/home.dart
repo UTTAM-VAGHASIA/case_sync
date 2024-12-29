@@ -12,6 +12,7 @@ import 'cases/case_history.dart';
 import 'cases/new_case.dart';
 import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
+import 'interns/assigned_case_taskInfo.dart';
 import 'interns/intern_list.dart';
 import 'interns/tasks.dart';
 import 'officials/new_advocate.dart';
@@ -226,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               cardIconPositionX,
                               cardIconPositionY,
                               cardTextPositionY,
-                              TasksPage(),
+                              AssignedCaseTaskinfo(),
                             ),
                           ],
                         ),

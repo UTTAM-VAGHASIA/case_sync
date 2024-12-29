@@ -24,7 +24,7 @@ class _InternListScreenState extends State<InternListScreen> {
   // Function to fetch data from the API
   Future<void> fetchInterns() async {
     const String apiUrl =
-        "https://pragmanxt.com/case_sync/services/v1/index.php/get_interns_list"; // Replace this with your API endpoint
+        "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list"; // Replace this with your API endpoint
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -117,6 +117,7 @@ class _InternListScreenState extends State<InternListScreen> {
                           id: intern['id'].toString(),
                           name: intern['name'],
                           contact: intern['contact'],
+                          email: intern['email'], // Added email field
                           dateTime: formatDate(intern['date_time']),
                         ),
                       );
@@ -133,6 +134,7 @@ class InternCard extends StatelessWidget {
   final String id;
   final String name;
   final String contact;
+  final String email; // Added email field
   final String dateTime;
 
   const InternCard({
@@ -140,6 +142,7 @@ class InternCard extends StatelessWidget {
     required this.id,
     required this.name,
     required this.contact,
+    required this.email,
     required this.dateTime,
   });
 
@@ -175,9 +178,9 @@ class InternCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4.0),
-                const Text(
-                  '12321@gmail.com', // Static email ID
-                  style: TextStyle(
+                Text(
+                  email, // Displaying email dynamically
+                  style: const TextStyle(
                     fontSize: 14.0,
                   ),
                 ),

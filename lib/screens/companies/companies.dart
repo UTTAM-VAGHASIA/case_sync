@@ -19,7 +19,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
 
   // API URL
   final String apiUrl =
-      "https://pragmanxt.com/case_sync/services/v1/index.php/get_company_list";
+      "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_company_list";
 
   @override
   void initState() {
