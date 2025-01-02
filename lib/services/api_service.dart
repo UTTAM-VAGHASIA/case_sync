@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
 import '../models/case_list.dart';
 
 class ApiService {
@@ -52,32 +50,6 @@ class ApiService {
     } catch (error) {
       return {'success': false, 'message': 'Error occurred: $error'};
     }
-  }
-
-  // Login user method
-  static Future<Map<String, dynamic>> loginUser(
-      String email, String password) async {
-    return _sendRequest(
-      'login_advocate',
-      {
-        'user_id': email,
-        'password': password,
-      },
-    );
-  }
-
-  // Register advocate method
-  static Future<Map<String, dynamic>> registerAdvocate(
-      String name, String contact, String email, String password) async {
-    return _sendRequest(
-      'advocate_registration',
-      {
-        'name': name,
-        'contact': contact,
-        'email': email,
-        'password': password,
-      },
-    );
   }
 
   // Submit new case method
@@ -131,6 +103,92 @@ class ApiService {
       }
     } catch (error) {
       return {'success': false, 'message': 'Error occurred: $error'};
+    }
+  }
+
+  // Login user method
+  static Future<Map<String, dynamic>> loginUser(
+      String email, String password) async {
+    return _sendRequest(
+      'login_advocate',
+      {
+        'user_id': email,
+        'password': password,
+      },
+    );
+  }
+
+  // Register advocate method
+  static Future<Map<String, dynamic>> registerAdvocate(
+      String name, String contact, String email, String password) async {
+    return _sendRequest(
+      'advocate_registration',
+      {
+        'name': name,
+        'contact': contact,
+        'email': email,
+        'password': password,
+      },
+    );
+  }
+
+  // Fetch case types
+  static Future<List<String>> fetchCaseTypes() async {
+    final response = await _sendRequest('get_case_types', {});
+    if (response['success']) {
+      return List<String>.from(response['data']);
+    } else {
+      throw Exception('Failed to fetch case types: ${response['message']}');
+    }
+  }
+
+  // Fetch case stages
+  static Future<List<String>> fetchCaseStages() async {
+    final response = await _sendRequest('get_case_stages', {});
+    if (response['success']) {
+      return List<String>.from(response['data']);
+    } else {
+      throw Exception('Failed to fetch case stages: ${response['message']}');
+    }
+  }
+
+  // Fetch handlers
+  static Future<List<String>> fetchHandlers() async {
+    final response = await _sendRequest('get_handlers', {});
+    if (response['success']) {
+      return List<String>.from(response['data']);
+    } else {
+      throw Exception('Failed to fetch handlers: ${response['message']}');
+    }
+  }
+
+  // Fetch companies
+  static Future<List<String>> fetchCompanies() async {
+    final response = await _sendRequest('get_companies', {});
+    if (response['success']) {
+      return List<String>.from(response['data']);
+    } else {
+      throw Exception('Failed to fetch companies: ${response['message']}');
+    }
+  }
+
+  // Fetch court names
+  static Future<List<String>> fetchCourtNames() async {
+    final response = await _sendRequest('get_court_names', {});
+    if (response['success']) {
+      return List<String>.from(response['data']);
+    } else {
+      throw Exception('Failed to fetch court names: ${response['message']}');
+    }
+  }
+
+  // Fetch city names
+  static Future<List<String>> fetchCityNames() async {
+    final response = await _sendRequest('get_city_names', {});
+    if (response['success']) {
+      return List<String>.from(response['data']);
+    } else {
+      throw Exception('Failed to fetch city names: ${response['message']}');
     }
   }
 }
