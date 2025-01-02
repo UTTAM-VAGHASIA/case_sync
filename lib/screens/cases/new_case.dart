@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
 import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'lib/services/api_service.dart';
+import 'package:intl/intl.dart';
+
+import '../../services/api_service.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -28,18 +30,31 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   String? _selectedCompany;
   String? _selectedCourtName;
   String? _selectedCityName;
-  String? _fileName;
-  String? _filePath;
+  String? _selectedCaseStage;
+  List<String> _fileNames = [];
+  List<String> _filePaths = [];
+
+  List<Map<String, String>> _caseTypeList = [];
+  List<Map<String, String>> _caseStageList = [];
+  List<Map<String, String>> _companyList = [];
+  List<Map<String, String>> _cityList = [];
+  List<Map<String, String>> _courtList = [];
 
   bool _isSubmitting = false;
+  bool _isLoading = true;
 
-  // Dropdown lists from API
-  List<Map<String, String>> _caseTypes = [];
-  List<String> _caseStages = [];
-  List<String> _handlers = [];
-  List<String> _companies = [];
-  List<String> _courtNames = [];
-  List<String> _cityNames = [];
+  final String baseUrl =
+      "https://pragmanxt.com/case_sync/services/admin/v1/index.php";
+
+  @override
+  void dispose() {
+    _caseNumberController.dispose();
+    _caseYearController.dispose();
+    _applicantController.dispose();
+    _opponentController.dispose();
+    _summonDateController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -49,24 +64,107 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   Future<void> _fetchDropdownData() async {
     try {
-      // Fetch case types
-      var caseTypesResponse = await ApiService.fetchCaseTypes();
-
-      setState(() {
-        _caseTypes = caseTypesResponse;
-      });
+      await Future.wait([
+        _getCaseTypeList(),
+        _getCompanyList(),
+        _getCityList(),
+        _getCourtList(),
+        _getCaseStageList("initial_stage"),
+      ]);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch case types: $e',
-          snackPosition: SnackPosition.BOTTOM);
+      print("Error fetching dropdown data: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _getCaseTypeList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_case_type_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _caseTypeList = List<Map<String, String>>.from(
+            data['data'].map(
+                (item) => {"id": item['id'], "case_type": item['case_type']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCaseStageList(String caseStage) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/get_stage_list"),
+      headers: {"Content-Type": "application/json"},
+      body: json.encode({"case_stage": caseStage}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _caseStageList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "stage": item['stage']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCompanyList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_company_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _companyList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "name": item['name']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCityList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_city_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _cityList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "name": item['name']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCourtList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_court_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _courtList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "name": item['name']}),
+          );
+        });
+      }
     }
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(), // Set the initial date
-      firstDate: DateTime(2000), // Set the earliest selectable date
-      lastDate: DateTime(2101), // Set the latest selectable date
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
     );
     if (pickedDate != null) {
       setState(() {
@@ -76,18 +174,20 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     }
   }
 
-  Future<void> _pickDocument() async {
-    final FilePickerResult? result = await FilePicker.platform.pickFiles();
+  Future<void> _pickDocuments() async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+    );
 
-    if (result != null && result.files.single.path != null) {
+    if (result != null) {
       setState(() {
-        _fileName = result.files.single.name; // Displayed file name
-        _filePath = result.files.single.path; // Actual file path for upload
+        _fileNames = result.files.map((file) => file.name).toList();
+        _filePaths = result.files.map((file) => file.path!).toList();
       });
     } else {
       setState(() {
-        _fileName = null;
-        _filePath = null;
+        _fileNames = [];
+        _filePaths = [];
       });
     }
   }
@@ -112,8 +212,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       'sr_date': _summonDateController.text,
     };
 
-    var response =
-        await ApiService.submitNewCase(caseData, _filePath as List<String>);
+    var response = await ApiService.submitNewCase(caseData, _filePaths);
 
     setState(() {
       _isSubmitting = false;
@@ -122,7 +221,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     if (response['success']) {
       Get.snackbar('Success', 'Case submitted successfully!',
           snackPosition: SnackPosition.BOTTOM);
-      Get.back(); // Navigate back after submission
+      Get.back();
     } else {
       Get.snackbar('Error', 'Failed to submit case: ${response['message']}',
           snackPosition: SnackPosition.BOTTOM);
@@ -131,6 +230,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -191,10 +294,37 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                 _buildDropdownField(
                     'Case Type',
                     'Select Case Type',
-                    _caseTypes.map((item) => item['case_type']!).toList(),
+                    _caseTypeList.map((e) => e['case_type']!).toList(),
                     _selectedCaseType, (value) {
                   setState(() {
                     _selectedCaseType = value;
+                  });
+                }),
+                _buildDropdownField(
+                    'Case Stage',
+                    'Select Case Stage',
+                    _caseStageList.map((e) => e['stage']!).toList(),
+                    _selectedCaseStage, (value) {
+                  setState(() {
+                    _selectedCaseStage = value;
+                  });
+                }),
+                _buildDropdownField(
+                    'Handled By',
+                    'Select Handler',
+                    ['Advocate 1', 'Advocate 2', 'Advocate 3'],
+                    _selectedHandler, (value) {
+                  setState(() {
+                    _selectedHandler = value;
+                  });
+                }),
+                _buildDropdownField(
+                    'Company Name',
+                    'Select Company',
+                    _companyList.map((e) => e['name']!).toList(),
+                    _selectedCompany, (value) {
+                  setState(() {
+                    _selectedCompany = value;
                   });
                 }),
                 _buildTextField('Applicant / Appellant / Complainant',
@@ -211,6 +341,44 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                   }
                   return null;
                 }),
+                _buildDropdownField(
+                    'Court Name',
+                    'Select Court Name',
+                    _courtList.map((e) => e['name']!).toList(),
+                    _selectedCourtName, (value) {
+                  setState(() {
+                    _selectedCourtName = value;
+                  });
+                }),
+                _buildDropdownField(
+                    'City Name',
+                    'Select City',
+                    _cityList.map((e) => e['name']!).toList(),
+                    _selectedCityName, (value) {
+                  setState(() {
+                    _selectedCityName = value;
+                  });
+                }),
+                _buildDateField(
+                    'Summon Date',
+                    'Select Summon Date',
+                    _summonDateController,
+                    () => _selectDate(context), validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select Summon Date';
+                  }
+                  return null;
+                }),
+                _buildFilePickerField(
+                    'Attach Documents', 'Attach Documents', _pickDocuments),
+                const SizedBox(height: 10),
+                if (_fileNames.isNotEmpty)
+                  ..._fileNames
+                      .map((fileName) => Padding(
+                            padding: const EdgeInsets.only(bottom: 5),
+                            child: Text(fileName),
+                          ))
+                      .toList(),
                 SizedBox(height: screenHeight * 0.05),
                 Center(
                   child: SizedBox(
@@ -220,24 +388,23 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                       onPressed: _isSubmitting ? null : _submitCase,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(50),
                         ),
                       ),
                       child: _isSubmitting
-                          ? CircularProgressIndicator()
+                          ? CircularProgressIndicator(color: Colors.white)
                           : Text(
-                              'Save',
+                              'Register',
                               style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
+                                color: Colors.white,
                               ),
                             ),
                     ),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.05),
+                const SizedBox(height: 80),
               ],
             ),
           ),
@@ -247,83 +414,120 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   }
 
   Widget _buildTextField(
-      String label, String hint, TextEditingController controller,
+      String label, String hintText, TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text,
+      String? Function(String?)? validator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: validator,
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField(String label, String hintText, List<String> items,
+      String? value, Function(dynamic)? onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          value: value,
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please select $label';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDateField(String label, String hintText,
+      TextEditingController controller, Function()? onTap,
       {String? Function(String?)? validator}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: OutlineInputBorder(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          onTap: onTap,
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            suffixIcon: Icon(Icons.calendar_today),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: validator,
         ),
-        validator: validator,
-      ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
-  Widget _buildDropdownField(String label, String hint, List<String> items,
-      String? selectedValue, ValueChanged<String?> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: OutlineInputBorder(),
+  Widget _buildFilePickerField(
+      String label, String hintText, Function()? onTap) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          readOnly: true,
+          onTap: onTap,
+          decoration: InputDecoration(
+            hintText: _fileNames.isEmpty
+                ? hintText
+                : '${_fileNames.length} file(s) selected',
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            suffixIcon: Icon(Icons.attach_file),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
         ),
-        value: selectedValue,
-        onChanged: onChanged,
-        items: items
-            .map((item) => DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(item),
-                ))
-            .toList(),
-      ),
+        const SizedBox(height: 20),
+      ],
     );
-  }
-}
-
-class ApiService {
-  static const String baseUrl = 'https://your-api-url.com/';
-  static const Map<String, String> headers = {
-    'Content-Type': 'application/json'
-  };
-
-  // Fetch case types
-  static Future<List<Map<String, String>>> fetchCaseTypes() async {
-    try {
-      // Correct endpoint for fetching case types
-      final response = await http.post(
-        Uri.parse('${baseUrl}get_case_type_list'),
-        headers: headers,
-      );
-
-      // Check response status
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-
-        // Check if the response is successful
-        if (responseData['success'] == true) {
-          // Parse the data as a list of maps (id and case_type)
-          final List<dynamic> data = responseData['data'];
-          return data.map((item) {
-            return {
-              'id': item['id'].toString(),
-              'case_type': item['case_type'].toString(),
-            };
-          }).toList();
-        } else {
-          throw Exception(
-              'Failed to fetch case types: ${responseData['message']}');
-        }
-      } else {
-        throw Exception('Server error: ${response.reasonPhrase}');
-      }
-    } catch (error) {
-      throw Exception('Error occurred: $error');
-    }
   }
 }
