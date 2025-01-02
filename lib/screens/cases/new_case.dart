@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'lib/services/api_service.dart';
+import 'package:intl/intl.dart';
+
+import '../../services/api_service.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -50,7 +52,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   Future<void> _fetchDropdownData() async {
     try {
       // Fetch case types
-      var caseTypesResponse = await ApiService.fetchCaseTypes();
+      var caseTypesResponse = await DropdownApiService.fetchCaseTypes();
 
       setState(() {
         _caseTypes = caseTypesResponse;
@@ -286,7 +288,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   }
 }
 
-class ApiService {
+class DropdownApiService {
   static const String baseUrl = 'https://your-api-url.com/';
   static const Map<String, String> headers = {
     'Content-Type': 'application/json'
