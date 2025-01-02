@@ -38,6 +38,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
         }
         if (data['success'] == true && data['data'].isNotEmpty) {
           setState(() {
+            final caseData = data['data'][0];
             _caseDetails = {
               'case_no': data['data'][0]['case_no'] ?? 'N/A',
               'year': data['data'][0]['year'] ?? 'N/A',
@@ -56,7 +57,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
             };
           });
         } else {
-          _showError("Case details not found.");
+          _showError("No data found for the given case.");
         }
       } else {
         _showError("Failed to fetch case details.");
@@ -75,6 +76,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -125,16 +127,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                       'Next Date': _caseDetails['nextDate']!,
                     },
                   ),
-                  const SizedBox(height: 16),
-                  _buildDetailsCard(
-                    title: 'Remark Log',
-                    details: {
-                      'Remark': _caseDetails['remark']!,
-                    },
-                  ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 
