@@ -40,20 +40,19 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
           setState(() {
             final caseData = data['data'][0];
             _caseDetails = {
-              'case_no': data['data'][0]['case_no'] ?? 'N/A',
-              'year': data['data'][0]['year'] ?? 'N/A',
-              'type': data['data'][0]['case_type'] ?? 'N/A',
-              'Current Stage': data['data'][0]['stage'] ?? 'N/A',
-              'Next Stage': data['data'][0]['next_stage'] ?? 'N/A',
-              'applicant': data['data'][0]['applicant'] ?? 'N/A',
-              'opponent': data['data'][0]['opp_name'] ?? 'N/A',
-              'court': data['data'][0]['court'] ?? 'N/A',
-              'location': data['data'][0]['name'] ?? 'N/A',
-              'summonDate': data['data'][0]['sr_date'] ?? 'N/A',
-              'assignedBy': 'Unknown',
-              'assignedTo': 'Unknown',
-              'nextDate': data['data'][0]['next_date'] ?? 'N/A',
-              'remark': 'No remarks available.',
+              'case_no': caseData['case_no'] ?? 'No data found',
+              'year': caseData['year'] ?? 'No data found',
+              'type': caseData['case_type'] ?? 'No data found',
+              'Current Stage': caseData['stage'] ?? 'No data found',
+              'applicant': caseData['applicant'] ?? 'No data found',
+              'opponent': caseData['opp_name'] ?? 'No data found',
+              'court': caseData['court_name'] ?? 'No data found',
+              'location': caseData['city_name'] ?? 'No data found',
+              'summonDate': caseData['sr_date'] ?? 'No data found',
+              'assignedBy': 'Unknown', // Adjust as needed
+              'assignedTo': 'Unknown', // Adjust as needed
+              'assignedDate': 'Unknown', // Adjust as needed
+              'remark': 'No remarks available.', // Adjust as needed
             };
           });
         } else {
@@ -99,37 +98,50 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDetailsCard(
-                    title: 'Case Details',
-                    details: {
-                      'Case Year': _caseDetails['year']!,
-                      'Case Type': _caseDetails['type']!,
-                      'Current Stage': _caseDetails['Current Stage']!,
-                      'Next Stage': _caseDetails['Next Stage']!,
-                      'Plaintiff Name': _caseDetails['applicant']!,
-                      'Opponent Name': _caseDetails['opponent']!,
-                      'Court': _caseDetails['court']!,
-                      'City': _caseDetails['location']!,
-                      'Summon Date': _caseDetails['summonDate']!,
-                    },
+          : _caseDetails.isEmpty || _caseDetails['case_no'] == 'No data found'
+              ? const Center(
+                  child: Text(
+                    'No data found',
+                    style: TextStyle(fontSize: 18, color: Colors.black54),
                   ),
-                  const SizedBox(height: 16),
-                  _buildDetailsCard(
-                    title: 'Intern Status',
-                    details: {
-                      'Assigned By': _caseDetails['assignedBy']!,
-                      'Assigned To': _caseDetails['assignedTo']!,
-                      'Next Date': _caseDetails['nextDate']!,
-                    },
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDetailsCard(
+                        title: 'Case Details',
+                        details: {
+                          'Case Year': _caseDetails['year']!,
+                          'Case Type': _caseDetails['type']!,
+                          'Current Stage': _caseDetails['Current Stage']!,
+                          'Plaintiff Name': _caseDetails['applicant']!,
+                          'Opponent Name': _caseDetails['opponent']!,
+                          'Court': _caseDetails['court']!,
+                          'City': _caseDetails['location']!,
+                          'Summon Date': _caseDetails['summonDate']!,
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDetailsCard(
+                        title: 'Intern Status',
+                        details: {
+                          'Assigned By': _caseDetails['assignedBy']!,
+                          'Assigned To': _caseDetails['assignedTo']!,
+                          'Assigned Date': _caseDetails['assignedDate']!,
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDetailsCard(
+                        title: 'Remark Log',
+                        details: {
+                          'Remark': _caseDetails['remark']!,
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
     );
   }
 
