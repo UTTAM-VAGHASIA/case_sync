@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../../services/api_service.dart';
@@ -31,7 +34,17 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   List<String> _fileNames = [];
   List<String> _filePaths = [];
 
+  List<Map<String, String>> _caseTypeList = [];
+  List<Map<String, String>> _caseStageList = [];
+  List<Map<String, String>> _companyList = [];
+  List<Map<String, String>> _cityList = [];
+  List<Map<String, String>> _courtList = [];
+
   bool _isSubmitting = false;
+  bool _isLoading = true;
+
+  final String baseUrl =
+      "https://pragmanxt.com/case_sync/services/admin/v1/index.php";
 
   @override
   void dispose() {
@@ -41,6 +54,109 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     _opponentController.dispose();
     _summonDateController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDropdownData();
+  }
+
+  Future<void> _fetchDropdownData() async {
+    try {
+      await Future.wait([
+        _getCaseTypeList(),
+        _getCompanyList(),
+        _getCityList(),
+        _getCourtList(),
+        _getCaseStageList("initial_stage"),
+      ]);
+    } catch (e) {
+      print("Error fetching dropdown data: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _getCaseTypeList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_case_type_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _caseTypeList = List<Map<String, String>>.from(
+            data['data'].map(
+                (item) => {"id": item['id'], "case_type": item['case_type']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCaseStageList(String caseStage) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/get_stage_list"),
+      headers: {"Content-Type": "application/json"},
+      body: json.encode({"case_stage": caseStage}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _caseStageList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "stage": item['stage']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCompanyList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_company_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _companyList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "name": item['name']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCityList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_city_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _cityList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "name": item['name']}),
+          );
+        });
+      }
+    }
+  }
+
+  Future<void> _getCourtList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_court_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _courtList = List<Map<String, String>>.from(
+            data['data']
+                .map((item) => {"id": item['id'], "name": item['name']}),
+          );
+        });
+      }
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -114,6 +230,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
@@ -171,14 +291,20 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                   }
                   return null;
                 }),
-                _buildDropdownField('Case Type', 'Select Case Type',
-                    ['Case 1', 'Case 2', 'Case 3'], _selectedCaseType, (value) {
+                _buildDropdownField(
+                    'Case Type',
+                    'Select Case Type',
+                    _caseTypeList.map((e) => e['case_type']!).toList(),
+                    _selectedCaseType, (value) {
                   setState(() {
                     _selectedCaseType = value;
                   });
                 }),
-                _buildDropdownField('Case Stage', 'Select Case Stage',
-                    ['Pending', 'Dismissed'], _selectedCaseStage, (value) {
+                _buildDropdownField(
+                    'Case Stage',
+                    'Select Case Stage',
+                    _caseStageList.map((e) => e['stage']!).toList(),
+                    _selectedCaseStage, (value) {
                   setState(() {
                     _selectedCaseStage = value;
                   });
@@ -195,7 +321,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                 _buildDropdownField(
                     'Company Name',
                     'Select Company',
-                    ['Company 1', 'Company 2', 'Company 3'],
+                    _companyList.map((e) => e['name']!).toList(),
                     _selectedCompany, (value) {
                   setState(() {
                     _selectedCompany = value;
@@ -218,14 +344,17 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                 _buildDropdownField(
                     'Court Name',
                     'Select Court Name',
-                    ['Court 1', 'Court 2', 'Court 3'],
+                    _courtList.map((e) => e['name']!).toList(),
                     _selectedCourtName, (value) {
                   setState(() {
                     _selectedCourtName = value;
                   });
                 }),
-                _buildDropdownField('City Name', 'Select City',
-                    ['Surat', 'Bardoli', 'Rajkot'], _selectedCityName, (value) {
+                _buildDropdownField(
+                    'City Name',
+                    'Select City',
+                    _cityList.map((e) => e['name']!).toList(),
+                    _selectedCityName, (value) {
                   setState(() {
                     _selectedCityName = value;
                   });
@@ -312,7 +441,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   }
 
   Widget _buildDropdownField(String label, String hintText, List<String> items,
-      String? value, Function(String?)? onChanged) {
+      String? value, Function(dynamic)? onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[

@@ -44,6 +44,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
               'year': caseData['year'] ?? 'No data found',
               'type': caseData['case_type'] ?? 'No data found',
               'Current Stage': caseData['stage'] ?? 'No data found',
+              'Next Stage': caseData['next_stage'] ?? 'No data found',
               'applicant': caseData['applicant'] ?? 'No data found',
               'opponent': caseData['opp_name'] ?? 'No data found',
               'court': caseData['court_name'] ?? 'No data found',
@@ -51,7 +52,8 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
               'summonDate': caseData['sr_date'] ?? 'No data found',
               'assignedBy': 'Unknown', // Adjust as needed
               'assignedTo': 'Unknown', // Adjust as needed
-              'assignedDate': 'Unknown', // Adjust as needed
+              'nextDate':
+                  caseData['next_date'] ?? 'No data found', // Adjust as needed
               'remark': 'No remarks available.', // Adjust as needed
             };
           });
@@ -116,6 +118,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                           'Case Year': _caseDetails['year']!,
                           'Case Type': _caseDetails['type']!,
                           'Current Stage': _caseDetails['Current Stage']!,
+                          'Next Stage': _caseDetails['Next Stage']!,
                           'Plaintiff Name': _caseDetails['applicant']!,
                           'Opponent Name': _caseDetails['opponent']!,
                           'Court': _caseDetails['court']!,
@@ -129,7 +132,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                         details: {
                           'Assigned By': _caseDetails['assignedBy']!,
                           'Assigned To': _caseDetails['assignedTo']!,
-                          'Assigned Date': _caseDetails['assignedDate']!,
+                          'Next Date': _caseDetails['nextDate']!,
                         },
                       ),
                       const SizedBox(height: 16),
