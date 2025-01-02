@@ -127,7 +127,9 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                       'Next Date': _caseDetails['nextDate']!,
                     },
                   ),
-                ),
+                ],
+              ),
+            ),
     );
   }
 
