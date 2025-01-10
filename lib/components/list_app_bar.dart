@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback onSearchPressed;
-  final VoidCallback onFilterPressed;
+  final VoidCallback? onSearchPressed;
+  final VoidCallback? onFilterPressed; // Allow nullable
   final bool isSearching;
+  final String title;
 
   const ListAppBar({
     super.key,
     required this.onSearchPressed,
-    required this.onFilterPressed,
-    this.isSearching = false, // Default is false (not searching)
+    this.onFilterPressed, // Make it optional
+    this.isSearching = false,
+    required this.title,
   });
 
   @override
@@ -19,7 +21,6 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
       elevation: 0,
-      leadingWidth: 56 + 30,
       leading: IconButton(
         icon: SvgPicture.asset(
           'assets/icons/back_arrow.svg',
@@ -30,22 +31,29 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
           Navigator.pop(context);
         },
       ),
-      actions: [
-        // Filter Icon
-        IconButton(
-          icon: const Icon(Icons.filter_list_alt, size: 32, color: Colors.black),
-          onPressed: onFilterPressed,
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
         ),
-
-        // Search Icon (changes to cross when searching)
+      ),
+      actions: [
+        if (onFilterPressed != null)
+          IconButton(
+            icon: const Icon(Icons.filter_list_alt,
+                size: 32, color: Colors.black),
+            onPressed: onFilterPressed,
+          ),
         IconButton(
-          padding: EdgeInsets.only(left: 10.0 ,right: 20.0),
+          padding: const EdgeInsets.only(left: 10.0, right: 20.0),
           icon: Icon(
             isSearching ? Icons.close : Icons.search_rounded,
-            size: 32,// Toggle between search and close icons
+            size: 32,
             color: Colors.black,
           ),
-          onPressed: onSearchPressed, // Trigger the search bar toggle
+          onPressed: onSearchPressed,
         ),
       ],
     );

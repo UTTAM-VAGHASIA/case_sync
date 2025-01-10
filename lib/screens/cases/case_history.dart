@@ -2,7 +2,6 @@ import 'package:case_sync/models/case_list.dart';
 import 'package:flutter/material.dart';
 
 import '../../components/case_card.dart';
-import '../../components/filter_modal.dart';
 import '../../components/list_app_bar.dart';
 import '../../services/case_services.dart';
 import '../constants/date_constants.dart';
@@ -111,6 +110,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
       appBar: ListAppBar(
+        title: "History",
         onSearchPressed: () {
           setState(() {
             _isSearching = !_isSearching;
@@ -123,7 +123,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           });
         },
         isSearching: _isSearching,
-        onFilterPressed: () => FilterModal.showFilterModal(context),
+        onFilterPressed: null, // Removed filter functionality
       ),
       body: Column(
         children: [

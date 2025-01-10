@@ -81,25 +81,6 @@ class CompaniesScreenState extends State<CompaniesScreen> {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/settings.svg',
-                width: 35,
-                height: 35,
-              ),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
-                  builder: (context) => const SettingsDrawer(),
-                );
-              },
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [

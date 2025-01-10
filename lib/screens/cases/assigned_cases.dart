@@ -1,8 +1,8 @@
 import 'dart:convert';
-
-import 'package:case_sync/screens/cases/caseinfo.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../components/list_app_bar.dart';
+import 'caseinfo.dart';
 
 class AssignedCases extends StatefulWidget {
   const AssignedCases({Key? key}) : super(key: key);
@@ -19,7 +19,6 @@ class _AssignedCasesState extends State<AssignedCases> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Filter options
   String? _selectedCity;
   String? _selectedCourt;
   final List<String> _cities = [];
@@ -29,6 +28,18 @@ class _AssignedCasesState extends State<AssignedCases> {
   void initState() {
     super.initState();
     _fetchCases();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+        _updateFilteredCases();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchCases() async {
@@ -39,7 +50,6 @@ class _AssignedCasesState extends State<AssignedCases> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         if (data['success'] == true) {
           setState(() {
             _assignedCases = (data['data'] as List)
@@ -53,7 +63,6 @@ class _AssignedCasesState extends State<AssignedCases> {
                 .toList();
             _filteredCases = List.from(_assignedCases);
 
-            // Populate cities and courts for filter options
             _cities.addAll(
               _assignedCases.map((caseItem) => caseItem['city_name']!).toSet(),
             );
@@ -81,7 +90,6 @@ class _AssignedCasesState extends State<AssignedCases> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // Update filtered cases based on search query and filter options
   void _updateFilteredCases() {
     setState(() {
       _filteredCases = _assignedCases.where((caseItem) {
@@ -118,6 +126,31 @@ class _AssignedCasesState extends State<AssignedCases> {
       _selectedCourt = null;
       _filteredCases = List.from(_assignedCases);
     });
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Search by case number, applicant, court, or city',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildFilterOptions() {
@@ -203,134 +236,92 @@ class _AssignedCasesState extends State<AssignedCases> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Assigned Cases",
-            style: TextStyle(
-                color: Colors.black,
-                fontSize: 24,
-                fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFFF3F3F3),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: IconButton(
-              icon: const Icon(Icons.search, size: 30, color: Colors.black),
-              onPressed: () {
-                setState(() {
-                  _isSearching = !_isSearching;
-                  if (!_isSearching) {
-                    _resetFilters();
-                  }
-                });
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: IconButton(
-              icon: const Icon(Icons.filter_alt, size: 30, color: Colors.black),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) => _buildFilterOptions(),
-                );
-              },
-            ),
-          ),
-        ],
+      appBar: ListAppBar(
+        title: "Assigned Cases",
+        isSearching: _isSearching,
+        onSearchPressed: () {
+          setState(() {
+            _isSearching = !_isSearching;
+            if (!_isSearching) {
+              _resetFilters();
+            }
+          });
+        },
+        onFilterPressed: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => _buildFilterOptions(),
+          );
+        },
       ),
       backgroundColor: const Color(0xFFF3F3F3),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                if (_isSearching)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                                _updateFilteredCases();
-                              });
+      body: Column(
+        children: [
+          if (_isSearching) _buildSearchBar(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredCases.isEmpty
+                    ? const Center(child: Text('No cases found.'))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: _filteredCases.length,
+                        itemBuilder: (context, index) {
+                          final caseItem = _filteredCases[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CaseInfoPage(
+                                    caseId: caseItem['case_id'] ?? '',
+                                  ),
+                                ),
+                              );
                             },
-                            decoration: InputDecoration(
-                              hintText: 'Search cases...',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
+                            child: Card(
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
                               ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: _filteredCases.length,
-                    itemBuilder: (context, index) {
-                      final caseItem = _filteredCases[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CaseInfoPage(
-                                caseId: caseItem['case_id'] ?? '',
+                              elevation: 3,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Case No: ${caseItem['case_no'] ?? ''}",
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Applicant: ${caseItem['applicant'] ?? 'N/A'}",
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Court: ${caseItem['court_name'] ?? 'N/A'}",
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "City: ${caseItem['city_name'] ?? 'N/A'}",
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
                         },
-                        child: Card(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 3,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Case No: ${caseItem['case_no'] ?? ''}",
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Applicant: ${caseItem['applicant'] ?? 'N/A'}",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Court: ${caseItem['court_name'] ?? 'N/A'}",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "City: ${caseItem['city_name'] ?? 'N/A'}",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }
