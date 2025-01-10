@@ -3,6 +3,8 @@ import 'package:case_sync/screens/cases/caseinfo.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../components/list_app_bar.dart';
+import '../../models/case_list.dart'; // Import CaseListData model
+import '../../components/case_card.dart'; // Import CaseCard widget
 
 class UnassignedCases extends StatefulWidget {
   const UnassignedCases({Key? key}) : super(key: key);
@@ -13,8 +15,8 @@ class UnassignedCases extends StatefulWidget {
 
 class _UnassignedCasesState extends State<UnassignedCases> {
   bool _isLoading = true;
-  List<Map<String, String>> _unassignedCases = [];
-  List<Map<String, String>> _filteredCases = [];
+  List<CaseListData> _unassignedCases = [];
+  List<CaseListData> _filteredCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -54,25 +56,24 @@ class _UnassignedCasesState extends State<UnassignedCases> {
         if (data['success'] == true) {
           setState(() {
             _unassignedCases = (data['data'] as List)
-                .map((caseItem) => {
-                      "case_id": caseItem['id']?.toString() ?? '',
-                      "case_no": caseItem['case_no']?.toString() ?? '',
-                      "applicant": caseItem['applicant']?.toString() ?? 'N/A',
-                      "court_name": caseItem['court_name']?.toString() ?? 'N/A',
-                      "city_name": caseItem['city_name']?.toString() ?? 'N/A',
-                    })
+                .map((caseItem) => CaseListData(
+                      id: caseItem['id']?.toString() ?? '',
+                      caseNo: caseItem['case_no']?.toString() ?? '',
+                      applicant: caseItem['applicant']?.toString() ?? 'N/A',
+                      opponent: caseItem['opponent']?.toString() ?? 'N/A',
+                      courtName: caseItem['court_name']?.toString() ?? 'N/A',
+                      cityName: caseItem['city_name']?.toString() ?? 'N/A',
+                      srDate: DateTime.parse(caseItem['sr_date']),
+                      handleBy: '',
+                    ))
                 .toList();
             _filteredCases = List.from(_unassignedCases);
 
             _cities.addAll(
-              _unassignedCases
-                  .map((caseItem) => caseItem['city_name']!)
-                  .toSet(),
+              _unassignedCases.map((caseItem) => caseItem.cityName).toSet(),
             );
             _courts.addAll(
-              _unassignedCases
-                  .map((caseItem) => caseItem['court_name']!)
-                  .toSet(),
+              _unassignedCases.map((caseItem) => caseItem.courtName).toSet(),
             );
           });
         } else {
@@ -98,25 +99,25 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   void _updateFilteredCases() {
     setState(() {
       _filteredCases = _unassignedCases.where((caseItem) {
-        final matchesSearchQuery = (caseItem['case_no'] ?? '')
+        final matchesSearchQuery = caseItem.caseNo
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            (caseItem['applicant'] ?? '')
+            caseItem.applicant
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            (caseItem['court_name'] ?? '')
+            caseItem.courtName
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            (caseItem['city_name'] ?? '')
+            caseItem.cityName
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase());
 
         final matchesCity = _selectedCity == null ||
             _selectedCity == 'All' ||
-            caseItem['city_name'] == _selectedCity;
+            caseItem.cityName == _selectedCity;
         final matchesCourt = _selectedCourt == null ||
             _selectedCourt == 'All' ||
-            caseItem['court_name'] == _selectedCourt;
+            caseItem.courtName == _selectedCourt;
 
         return matchesSearchQuery && matchesCity && matchesCourt;
       }).toList();
@@ -162,7 +163,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ListAppBar(
-        title: "Unassigned Cases", // Add the title here
+        title: "Unassigned Cases",
         isSearching: _isSearching,
         onSearchPressed: () {
           setState(() {
@@ -193,55 +194,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                         itemCount: _filteredCases.length,
                         itemBuilder: (context, index) {
                           final caseItem = _filteredCases[index];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CaseInfoPage(
-                                    caseId: caseItem['case_id'] ?? '',
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Card(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
-                              ),
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Case No: ${caseItem['case_no'] ?? ''}",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "Applicant: ${caseItem['applicant'] ?? 'N/A'}",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "Court: ${caseItem['court_name'] ?? 'N/A'}",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "City: ${caseItem['city_name'] ?? 'N/A'}",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
+                          return CaseCard(caseItem: caseItem);
                         },
                       ),
           ),
@@ -313,13 +266,13 @@ class _UnassignedCasesState extends State<UnassignedCases> {
               ElevatedButton(
                 onPressed: () {
                   _resetFilters();
-                  Navigator.pop(context); // Close the modal
+                  Navigator.pop(context);
                 },
                 child: const Text("Reset"),
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close the modal
+                  Navigator.pop(context);
                 },
                 child: const Text("Apply"),
               ),

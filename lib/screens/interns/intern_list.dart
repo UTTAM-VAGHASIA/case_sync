@@ -1,8 +1,12 @@
 import 'dart:convert'; // For JSON decoding
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
 import 'package:intl/intl.dart'; // For date formatting
+
+// CaseCard dependencies
+import '../../components/case_card.dart';
+import '../../models/case_list.dart';
 
 class InternListScreen extends StatefulWidget {
   const InternListScreen({super.key});
@@ -24,7 +28,7 @@ class _InternListScreenState extends State<InternListScreen> {
   // Function to fetch data from the API
   Future<void> fetchInterns() async {
     const String apiUrl =
-        "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list"; // Replace this with your API endpoint
+        "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -64,8 +68,7 @@ class _InternListScreenState extends State<InternListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF3F3F3), // Set the background color to #f3f3f3
+      backgroundColor: const Color(0xFFF3F3F3), // Set the background color
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -104,20 +107,43 @@ class _InternListScreenState extends State<InternListScreen> {
           ),
           Expanded(
             child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator()) // Show loading spinner
+                ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     padding: const EdgeInsets.all(16.0),
                     itemCount: interns.length,
                     itemBuilder: (context, index) {
                       final intern = interns[index];
+
+                      // Show CaseCard for interns with case details
+                      if (intern['has_case'] == true) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: CaseCard(
+                            caseItem: CaseListData(
+                              id: intern['case_id'] ?? '',
+                              caseNo: intern['case_no'] ?? '',
+                              applicant: intern['name'] ?? '',
+                              opponent: intern['opponent'] ?? 'N/A',
+                              srDate:
+                                  DateTime.tryParse(intern['sr_date'] ?? '') ??
+                                      DateTime.now(),
+                              courtName: intern['court_name'] ?? 'N/A',
+                              cityName: intern['city_name'] ?? 'N/A',
+                              handleBy: intern['handle_by'] ?? 'N/A',
+                            ),
+                            isHighlighted: false, // Modify if needed
+                          ),
+                        );
+                      }
+
+                      // Default to InternCard for interns without case details
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: InternCard(
                           id: intern['id'].toString(),
                           name: intern['name'],
                           contact: intern['contact'],
-                          email: intern['email'], // Added email field
+                          email: intern['email'],
                           dateTime: formatDate(intern['date_time']),
                         ),
                       );
@@ -134,7 +160,7 @@ class InternCard extends StatelessWidget {
   final String id;
   final String name;
   final String contact;
-  final String email; // Added email field
+  final String email;
   final String dateTime;
 
   const InternCard({

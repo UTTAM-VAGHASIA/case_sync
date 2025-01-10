@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../components/list_app_bar.dart';
+import '../../models/case_list.dart'; // Import your CaseListData model
+import '../../components/case_card.dart'; // Import your CaseCard component
 import 'caseinfo.dart';
 
 class AssignedCases extends StatefulWidget {
@@ -13,8 +15,8 @@ class AssignedCases extends StatefulWidget {
 
 class _AssignedCasesState extends State<AssignedCases> {
   bool _isLoading = true;
-  List<Map<String, String>> _assignedCases = [];
-  List<Map<String, String>> _filteredCases = [];
+  List<CaseListData> _assignedCases = [];
+  List<CaseListData> _filteredCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -53,21 +55,24 @@ class _AssignedCasesState extends State<AssignedCases> {
         if (data['success'] == true) {
           setState(() {
             _assignedCases = (data['data'] as List)
-                .map((caseItem) => {
-                      "case_id": caseItem['id']?.toString() ?? '',
-                      "case_no": caseItem['case_no']?.toString() ?? '',
-                      "applicant": caseItem['applicant']?.toString() ?? 'N/A',
-                      "court_name": caseItem['court_name']?.toString() ?? 'N/A',
-                      "city_name": caseItem['city_name']?.toString() ?? 'N/A',
-                    })
+                .map((caseItem) => CaseListData(
+                      id: caseItem['id']?.toString() ?? '',
+                      caseNo: caseItem['case_no']?.toString() ?? '',
+                      applicant: caseItem['applicant']?.toString() ?? 'N/A',
+                      opponent: caseItem['opponent']?.toString() ?? 'N/A',
+                      courtName: caseItem['court_name']?.toString() ?? 'N/A',
+                      cityName: caseItem['city_name']?.toString() ?? 'N/A',
+                      srDate: DateTime.parse(caseItem['sr_date']),
+                      handleBy: '',
+                    ))
                 .toList();
             _filteredCases = List.from(_assignedCases);
 
             _cities.addAll(
-              _assignedCases.map((caseItem) => caseItem['city_name']!).toSet(),
+              _assignedCases.map((caseItem) => caseItem.cityName).toSet(),
             );
             _courts.addAll(
-              _assignedCases.map((caseItem) => caseItem['court_name']!).toSet(),
+              _assignedCases.map((caseItem) => caseItem.courtName).toSet(),
             );
           });
         } else {
@@ -93,38 +98,28 @@ class _AssignedCasesState extends State<AssignedCases> {
   void _updateFilteredCases() {
     setState(() {
       _filteredCases = _assignedCases.where((caseItem) {
-        final matchesSearchQuery = (caseItem['case_no'] ?? '')
+        final matchesSearchQuery = caseItem.caseNo
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            (caseItem['applicant'] ?? '')
+            caseItem.applicant
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            (caseItem['court_name'] ?? '')
+            caseItem.courtName
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            (caseItem['city_name'] ?? '')
+            caseItem.cityName
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase());
 
         final matchesCity = _selectedCity == null ||
             _selectedCity == 'All' ||
-            caseItem['city_name'] == _selectedCity;
+            caseItem.cityName == _selectedCity;
         final matchesCourt = _selectedCourt == null ||
             _selectedCourt == 'All' ||
-            caseItem['court_name'] == _selectedCourt;
+            caseItem.courtName == _selectedCourt;
 
         return matchesSearchQuery && matchesCity && matchesCourt;
       }).toList();
-    });
-  }
-
-  void _resetFilters() {
-    setState(() {
-      _searchQuery = '';
-      _searchController.clear();
-      _selectedCity = null;
-      _selectedCourt = null;
-      _filteredCases = List.from(_assignedCases);
     });
   }
 
@@ -153,86 +148,6 @@ class _AssignedCasesState extends State<AssignedCases> {
     );
   }
 
-  Widget _buildFilterOptions() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            "Filter Options",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _selectedCity,
-            onChanged: (value) {
-              setState(() {
-                _selectedCity = value;
-                _updateFilteredCases();
-              });
-            },
-            decoration: const InputDecoration(labelText: 'City'),
-            items: [
-              const DropdownMenuItem(
-                value: 'All',
-                child: Text('All Cities'),
-              ),
-              ..._cities.map(
-                (city) => DropdownMenuItem(
-                  value: city,
-                  child: Text(city),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _selectedCourt,
-            onChanged: (value) {
-              setState(() {
-                _selectedCourt = value;
-                _updateFilteredCases();
-              });
-            },
-            decoration: const InputDecoration(labelText: 'Court'),
-            items: [
-              const DropdownMenuItem(
-                value: 'All',
-                child: Text('All Courts'),
-              ),
-              ..._courts.map(
-                (court) => DropdownMenuItem(
-                  value: court,
-                  child: Text(court),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _resetFilters();
-                  Navigator.pop(context); // Close the modal
-                },
-                child: const Text("Reset"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close the modal
-                },
-                child: const Text("Apply"),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,15 +158,9 @@ class _AssignedCasesState extends State<AssignedCases> {
           setState(() {
             _isSearching = !_isSearching;
             if (!_isSearching) {
-              _resetFilters();
+              _searchController.clear();
             }
           });
-        },
-        onFilterPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (context) => _buildFilterOptions(),
-          );
         },
       ),
       backgroundColor: const Color(0xFFF3F3F3),
@@ -268,55 +177,7 @@ class _AssignedCasesState extends State<AssignedCases> {
                         itemCount: _filteredCases.length,
                         itemBuilder: (context, index) {
                           final caseItem = _filteredCases[index];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CaseInfoPage(
-                                    caseId: caseItem['case_id'] ?? '',
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Card(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
-                              ),
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Case No: ${caseItem['case_no'] ?? ''}",
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "Applicant: ${caseItem['applicant'] ?? 'N/A'}",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "Court: ${caseItem['court_name'] ?? 'N/A'}",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "City: ${caseItem['city_name'] ?? 'N/A'}",
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
+                          return CaseCard(caseItem: caseItem);
                         },
                       ),
           ),

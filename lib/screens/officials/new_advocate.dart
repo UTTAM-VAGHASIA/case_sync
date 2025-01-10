@@ -44,8 +44,8 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
     String password = _passwordController.text;
 
     try {
-      Map<String, dynamic> response = await ApiService.registerAdvocate(
-          name, contact, email, password);
+      Map<String, dynamic> response =
+          await ApiService.registerAdvocate(name, contact, email, password);
 
       if (response['success'] == true) {
         // Navigate or show a success message
@@ -113,32 +113,35 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.06),
-                _buildTextField('Advocate Name', 'Name', _nameController, validator: (value) {
+                _buildTextField('Advocate Name', 'Name', _nameController,
+                    validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Name is required';
                   }
                   return null;
                 }),
-                _buildTextField('Advocate Contact', '+91 XXXXXXXXXX', _contactController,
+                _buildTextField(
+                    'Advocate Contact', '+91 XXXXXXXXXX', _contactController,
                     keyboardType: TextInputType.phone, validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Contact is required';
-                      } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
-                        return 'Enter a valid 10-digit phone number';
-                      }
-                      return null;
-                    }),
+                  if (value == null || value.isEmpty) {
+                    return 'Contact is required';
+                  } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                    return 'Enter a valid 10-digit phone number';
+                  }
+                  return null;
+                }),
                 _buildTextField('Email', 'example@gmail.com', _emailController,
-                    keyboardType: TextInputType.emailAddress, validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Email is required';
-                      } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return 'Enter a valid email address';
-                      }
-                      return null;
-                    }),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email is required';
+                  } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Enter a valid email address';
+                  }
+                  return null;
+                }),
                 _buildPasswordField(),
-                SizedBox(height: screenHeight * 0.05),
+                SizedBox(height: screenHeight * 0.03),
                 Center(
                   child: SizedBox(
                     width: screenWidth * 0.5,
@@ -153,18 +156,19 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
+                              color: Colors.white,
+                            )
                           : const Text(
-                        'Register',
-                        style: TextStyle(
-                          fontSize: 22,
-                          color: Colors.white,
-                        ),
-                      ),
+                              'Register',
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.05),
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 20),
@@ -181,9 +185,10 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText,
-      TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text, String? Function(String?)? validator}) {
+  Widget _buildTextField(
+      String label, String hintText, TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text,
+      String? Function(String?)? validator}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -195,7 +200,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -218,7 +223,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: IconButton(
               icon: Icon(
                 color: Colors.black,
