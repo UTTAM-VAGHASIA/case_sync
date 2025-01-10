@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
+import '../../components/basicUIcomponent.dart';
 import '../../models/advocate.dart';
 import '../../services/api_service.dart';
 import '../../services/shared_pref.dart';
@@ -64,13 +65,12 @@ class _LoginScreenState extends State<LoginScreen> {
           if (data is List && data.isNotEmpty) {
             // Cast the first item in the list to Map<String, dynamic>
             Map<String, dynamic> userJson =
-            (data[0] as Map).cast<String, dynamic>();
+                (data[0] as Map).cast<String, dynamic>();
             Advocate advocate = Advocate.fromJson(userJson);
             await SharedPrefService.saveUser(advocate);
           } else if (data is Map) {
             // If it's a map, cast it to Map<String, dynamic>
-            Map<String, dynamic> userJson =
-            (data).cast<String, dynamic>();
+            Map<String, dynamic> userJson = (data).cast<String, dynamic>();
             Advocate advocate = Advocate.fromJson(userJson);
             await SharedPrefService.saveUser(advocate);
           }
@@ -104,16 +104,14 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 SizedBox(height: screenHeight * 0.25),
+                // App Icon (Logo)
                 SvgPicture.asset('assets/icons/casesync_text.svg'),
                 const SizedBox(height: 50),
                 TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(
+                  decoration: AppTheme.textFieldDecoration(
                     labelText: 'User ID',
                     hintText: 'Your email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
                   ),
                   validator: _validateEmail,
                 ),
@@ -121,12 +119,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscureText,
-                  decoration: InputDecoration(
+                  decoration: AppTheme.textFieldDecoration(
                     labelText: 'Password',
                     hintText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
+                  ).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureText ? Icons.visibility : Icons.visibility_off,
@@ -142,15 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 100),
                 SizedBox(
                   width: screenWidth * 0.5,
-                  height: 70,
                   child: ElevatedButton(
                     onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50.0),
-                      ),
-                    ),
+                    style: AppTheme.elevatedButtonStyle,
                     child: _isLoading
                         ? const CircularProgressIndicator(
                             color: Colors.white,
