@@ -24,14 +24,47 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //
+  //   // Initialize the TabController and set it to the current month
+  //   _tabController = TabController(length: months.length, vsync: this);
+  //   final currentMonthIndex = DateTime.now().month - 1; // Index starts at 0
+  //   _tabController.animateTo(currentMonthIndex);
+  //
+  //   _tabController.addListener(() {
+  //     if (!_tabController.indexIsChanging) {
+  //       setState(() {});
+  //     }
+  //   });
+  // }
+
   @override
   void initState() {
     super.initState();
 
-    // Initialize the TabController and set it to the current month
+    // Initialize the TabController
     _tabController = TabController(length: months.length, vsync: this);
+
     final currentMonthIndex = DateTime.now().month - 1; // Index starts at 0
-    _tabController.animateTo(currentMonthIndex);
+    final availableMonths = caseData[selectedYear]
+        ?.entries
+        .where((entry) => entry.value.isNotEmpty)
+        .map((entry) => months.indexOf(entry.key))
+        .toList();
+
+    // Determine the initial tab
+    int initialTabIndex = currentMonthIndex;
+    if (availableMonths != null && availableMonths.isNotEmpty) {
+      if (!availableMonths.contains(currentMonthIndex)) {
+        initialTabIndex = availableMonths.last;
+      }
+    } else {
+      initialTabIndex = 0; // Default to the first month if no data exists
+    }
+
+    _tabController.animateTo(initialTabIndex);
 
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -39,6 +72,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
       }
     });
   }
+
 
   @override
   void dispose() {

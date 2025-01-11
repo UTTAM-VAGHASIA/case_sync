@@ -25,11 +25,11 @@ class _TasksPageState extends State<TasksPage> {
   Future<void> _fetchTasks() async {
     try {
       final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_task_list');
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_task');
       final request = http.MultipartRequest('POST', url);
 
       // Add the multipart data
-      request.fields['data'] = jsonEncode({"case_no": widget.caseNo});
+      request.fields["case_no"] =  widget.caseNo;
 
       // Send the request and get the response
       final response = await request.send();

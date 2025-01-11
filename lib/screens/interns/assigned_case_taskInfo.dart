@@ -163,7 +163,8 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                               cityName: caseItem['city_name'].toString(),
                               handleBy: caseItem['handle_by'] ?? 'N/A',
                             ),
-                            isHighlighted: false, // Modify as needed
+                            isHighlighted: false,
+                            isTask: true// Modify as needed
                           ),
                         ),
                       );

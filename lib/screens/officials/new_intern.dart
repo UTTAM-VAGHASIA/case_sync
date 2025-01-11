@@ -20,6 +20,8 @@ class _NewInternScreenState extends State<NewInternScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _joiningDateController = TextEditingController();
   bool _isPasswordVisible = false; // Track password visibility
+  bool _isLoading = false;
+  String _errorMessage = '';
 
   Future<void> _selectDate(BuildContext context) async {
     DateTime? selectedDate = await showDatePicker(
@@ -41,6 +43,11 @@ class _NewInternScreenState extends State<NewInternScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
     // Collect form input
     String name = _nameController.text;
@@ -81,7 +88,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
 
         if (responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['message'])),
+            const SnackBar(content: Text('Intern registered successfully!')),
           );
 
           // Clear the input fields
@@ -105,10 +112,17 @@ class _NewInternScreenState extends State<NewInternScreen> {
         SnackBar(content: Text('Error: $error')),
       );
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
@@ -289,21 +303,47 @@ class _NewInternScreenState extends State<NewInternScreen> {
                     SizedBox(height: 30),
 
                     // Register Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _registerIntern,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(vertical: 15),
-                          textStyle: TextStyle(fontSize: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    // SizedBox(
+                    //   width: screenWidth * 0.5,
+                    //   child: ElevatedButton(
+                    //     onPressed: _registerIntern,
+                    //     style: ElevatedButton.styleFrom(
+                    //       backgroundColor: Colors.black,
+                    //       padding: EdgeInsets.symmetric(vertical: 15),
+                    //       textStyle: TextStyle(fontSize: 18),
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(12),
+                    //       ),
+                    //     ),
+                    //     child: Text(
+                    //       'Register',
+                    //       style: TextStyle(color: Colors.white),
+                    //     ),
+                    //   ),
+                    // ),
+                    Center(
+                      child: SizedBox(
+                        width: screenWidth * 0.5,
+                        height: 70,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _registerIntern,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          'Register',
-                          style: TextStyle(color: Colors.white),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                              : const Text(
+                            'Register',
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),

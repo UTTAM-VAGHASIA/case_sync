@@ -222,6 +222,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
           controller: _passwordController,
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
+            hintText: "Enter Password",
             contentPadding:
                 const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: IconButton(

@@ -1,3 +1,5 @@
+import 'package:case_sync/screens/interns/TaskInfoPage.dart';
+import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:flutter/material.dart';
 
 import '../models/case_list.dart';
@@ -6,11 +8,12 @@ import '../screens/cases/caseinfo.dart';
 class CaseCard extends StatelessWidget {
   final CaseListData caseItem;
   final bool isHighlighted;
+  final bool isTask;
 
   const CaseCard({
     super.key,
     required this.caseItem,
-    this.isHighlighted = false,
+    this.isHighlighted = false, this.isTask = false,
   });
 
   @override
@@ -20,9 +23,8 @@ class CaseCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CaseInfoPage(
-              caseId: caseItem.id, // Pass case_id here
-            ),
+            builder: (context) => isTask ? TasksPage(caseNo: caseItem.id,) : CaseInfoPage(
+              caseId: caseItem.id),
           ),
         );
       },
