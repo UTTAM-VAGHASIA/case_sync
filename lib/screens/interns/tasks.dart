@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'TaskInfoPage.dart';
+import 'add_tasks.dart';
 
 class TasksPage extends StatefulWidget {
   final String caseNo;
@@ -133,6 +134,16 @@ class _TasksPageState extends State<TasksPage> {
                     },
                   ),
                 ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTaskScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+      ),
     );
   }
 

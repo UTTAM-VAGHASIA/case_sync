@@ -150,16 +150,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           physics: const NeverScrollableScrollPhysics(),
                           children: [
                             _buildCard(
-                              'Unassigned Cases',
-                              'assets/icons/unassigned.svg',
-                              cardWidth,
-                              cardHeight,
-                              cardIconPositionX,
-                              cardIconPositionY,
-                              cardTextPositionY,
-                              UnassignedCases(),
-                            ),
-                            _buildCard(
                               'Assigned Cases',
                               'assets/icons/assigned.svg',
                               cardWidth,
@@ -168,6 +158,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               cardIconPositionY,
                               cardTextPositionY,
                               AssignedCases(),
+                            ),
+                            _buildCard(
+                              'Unassigned Cases',
+                              'assets/icons/unassigned.svg',
+                              cardWidth,
+                              cardHeight,
+                              cardIconPositionX,
+                              cardIconPositionY,
+                              cardTextPositionY,
+                              UnassignedCases(),
                             ),
                             _buildCard(
                               'Case History',
