@@ -1,7 +1,8 @@
-import 'dart:convert';
-import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+import 'TaskInfoPage.dart';
 
 class TasksPage extends StatefulWidget {
   final String caseNo;
@@ -29,7 +30,7 @@ class _TasksPageState extends State<TasksPage> {
       final request = http.MultipartRequest('POST', url);
 
       // Add the multipart data
-      request.fields["case_no"] =  widget.caseNo;
+      request.fields["case_no"] = widget.caseNo;
 
       // Send the request and get the response
       final response = await request.send();
@@ -72,9 +73,10 @@ class _TasksPageState extends State<TasksPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Tasks",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: Text(
+          "Case: ${widget.caseNo}", // Display the case number
+          style:
+              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
       body: _isLoading
