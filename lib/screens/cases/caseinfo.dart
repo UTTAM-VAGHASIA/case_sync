@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -20,21 +19,24 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
   @override
   void initState() {
     super.initState();
-    _fetchCaseInfo();
+    _fetchCaseInfo().then((_) {
+      if (_caseDetails['case_no'] != null &&
+          _caseDetails['case_no']!.isNotEmpty) {
+        _fetchAssignedInfo();
+      }
+    });
   }
 
   Future<void> _fetchCaseInfo() async {
     try {
       final url = Uri.parse(
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
-      final response = await http.post(url, body: {
-        'case_id': widget.caseId,
-      });
+      final response = await http.post(url, body: {'case_id': widget.caseId});
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (kDebugMode) {
-          print(data);
+          print("Case Info API Response: $data");
         }
         if (data['success'] == true && data['data'].isNotEmpty) {
           setState(() {
@@ -50,11 +52,10 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
               'court': caseData['court_name'] ?? 'No data found',
               'location': caseData['city_name'] ?? 'No data found',
               'summonDate': caseData['sr_date'] ?? 'No data found',
-              'assignedBy': 'Unknown', // Adjust as needed
-              'assignedTo': 'Unknown', // Adjust as needed
-              'nextDate':
-                  caseData['next_date'] ?? 'No data found', // Adjust as needed
-              'remark': 'No remarks available.', // Adjust as needed
+              'assignedBy': 'Fetching...', // Placeholder
+              'assignedTo': 'Fetching...', // Placeholder
+              'nextDate': caseData['next_date'] ?? 'No data found',
+              'remark': 'No remarks available.', // Placeholder
             };
           });
         } else {
@@ -72,12 +73,61 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
     }
   }
 
+  Future<void> _fetchAssignedInfo() async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_task');
+      final response = await http.post(
+        url,
+        body: {
+          'case_no': _caseDetails['case_no'] ?? ''
+        }, // Ensure case_no is passed correctly
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (kDebugMode) {
+          print("Assigned Info API Response: $data");
+        }
+
+        if (data['success'] == true &&
+            data['data'] != null &&
+            data['data'].isNotEmpty) {
+          setState(() {
+            final firstTask = data['data'][0]; // Get the first task object
+            _caseDetails['assignedBy'] = firstTask['alloted_by_name'] ??
+                'Unknown'; // Fallback to 'Unknown'
+            _caseDetails['assignedTo'] =
+                firstTask['alloted_to_name'] ?? 'Unknown';
+          });
+        } else {
+          setState(() {
+            _caseDetails['assignedBy'] = 'No Data';
+            _caseDetails['assignedTo'] = 'No Data';
+          });
+          if (kDebugMode) {
+            print("Assigned Info API returned no data.");
+          }
+        }
+      } else {
+        _showError(
+            "Failed to fetch assigned info. Status Code: ${response.statusCode}");
+      }
+    } catch (e) {
+      _showError("An error occurred while fetching assigned info: $e");
+      setState(() {
+        _caseDetails['assignedBy'] = 'Error';
+        _caseDetails['assignedTo'] = 'Error';
+      });
+    }
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
