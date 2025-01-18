@@ -13,45 +13,73 @@ class ViewDocs extends StatefulWidget {
 }
 
 class _ViewDocsState extends State<ViewDocs> {
-  String? _documentUrl;
+  final List<Map<String, dynamic>> _documents = [];
   bool _isLoading = true;
   String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchDocument();
+    _fetchDocuments();
   }
 
-  Future<void> _fetchDocument() async {
+  Future<void> _fetchDocuments() async {
     try {
-      final url = Uri.parse(
+      // First API call
+      final caseInfoUrl = Uri.parse(
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
-      final response = await http.post(
-        url,
+      final caseInfoResponse = await http.post(
+        caseInfoUrl,
         body: {'case_id': widget.caseId},
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true && data['data'].isNotEmpty) {
-          setState(() {
-            _documentUrl = data['data'][0]['docs'] ?? '';
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _errorMessage = 'No document found for the given case.';
-            _isLoading = false;
+      if (caseInfoResponse.statusCode == 200) {
+        final caseInfoData = jsonDecode(caseInfoResponse.body);
+        if (caseInfoData['success'] == true &&
+            caseInfoData['data'].isNotEmpty) {
+          final documentUrl = caseInfoData['data'][0]['docs'] ?? '';
+          _documents.add({
+            'id': 'N/A',
+            'docs': documentUrl,
+            'added_by': 'N/A',
+            'user_type': 'N/A',
+            'date_time': 'N/A',
           });
         }
       } else {
         setState(() {
           _errorMessage =
-              'Failed to fetch document. Status code: ${response.statusCode}';
-          _isLoading = false;
+              'Failed to fetch case info. Status code: ${caseInfoResponse.statusCode}';
         });
+        return;
       }
+
+      // Second API call
+      final caseDocumentsUrl = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_documents');
+      final caseDocumentsResponse = await http.post(
+        caseDocumentsUrl,
+        body: {'case_no': widget.caseId},
+      );
+
+      if (caseDocumentsResponse.statusCode == 200) {
+        final caseDocumentsData = jsonDecode(caseDocumentsResponse.body);
+        if (caseDocumentsData['success'] == true &&
+            caseDocumentsData['data'].isNotEmpty) {
+          final documents = caseDocumentsData['data'] as List<dynamic>;
+          _documents.addAll(documents.cast<Map<String, dynamic>>());
+        }
+      } else {
+        setState(() {
+          _errorMessage =
+              'Failed to fetch additional documents. Status code: ${caseDocumentsResponse.statusCode}';
+        });
+        return;
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _errorMessage = 'An error occurred: $e';
@@ -65,7 +93,7 @@ class _ViewDocsState extends State<ViewDocs> {
       await launch(url);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open the document')),
+        const SnackBar(content: Text('Could not open the document')),
       );
     }
   }
@@ -74,36 +102,56 @@ class _ViewDocsState extends State<ViewDocs> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View Document'),
+        title: const Text('View Documents'),
+        backgroundColor: Colors.blueAccent,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
               ? Center(child: Text(_errorMessage))
-              : Center(
-                  child: _documentUrl != null && _documentUrl!.isNotEmpty
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+              : ListView.builder(
+                  padding: const EdgeInsets.all(8.0),
+                  itemCount: _documents.length,
+                  itemBuilder: (context, index) {
+                    final doc = _documents[index];
+                    return Card(
+                      elevation: 4.0,
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Document Link:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            Text(
+                              'Document ID: ${doc['id']}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8.0),
+                            Text('Added By: ${doc['added_by']}'),
+                            const SizedBox(height: 8.0),
+                            Text('User Type: ${doc['user_type']}'),
+                            const SizedBox(height: 8.0),
+                            Text('Date Time: ${doc['date_time']}'),
+                            const SizedBox(height: 8.0),
                             GestureDetector(
-                              onTap: () => _openDocument(_documentUrl!),
+                              onTap: () => _openDocument(doc['docs']),
                               child: Text(
-                                _documentUrl!,
+                                doc['docs'],
                                 style: const TextStyle(
                                   color: Colors.blue,
                                   decoration: TextDecoration.underline,
                                 ),
-                                textAlign: TextAlign.center,
                               ),
                             ),
                           ],
-                        )
-                      : const Text('No document URL available'),
+                        ),
+                      ),
+                    );
+                  },
                 ),
     );
   }
