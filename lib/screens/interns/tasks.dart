@@ -1,3 +1,9 @@
+<<<<<<< Updated upstream
+=======
+import 'dart:convert';
+
+import 'package:case_sync/screens/interns/TaskInfoPage.dart';
+>>>>>>> Stashed changes
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -31,8 +37,17 @@ class _TasksPageState extends State<TasksPage> {
       final request = http.MultipartRequest('POST', url);
 
       // Add the multipart data
+<<<<<<< Updated upstream
       request.fields["case_no"] = widget.caseNo;
+=======
+      request.fields['case_no'] = widget.caseNo;
+>>>>>>> Stashed changes
 
+      // print("##############################################");
+      // print(widget.caseNo);
+      //
+      // print("##############################################");
+      // print(request.fields.toString());
       // Send the request and get the response
       final response = await request.send();
 

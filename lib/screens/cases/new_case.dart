@@ -69,7 +69,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         _getCompanyList(),
         _getCityList(),
         _getCourtList(),
-        _getCaseStageList("initial_stage"),
       ]);
     } catch (e) {
       print("Error fetching dropdown data: $e");
@@ -87,28 +86,37 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       if (data['success']) {
         setState(() {
           _caseTypeList = List<Map<String, String>>.from(
-            data['data'].map(
-                (item) => {"id": item['id'], "case_type": item['case_type']}),
+            data['data'].map((item) => {
+                  "id": item['id']?.toString() ?? '',
+                  "case_type": item['case_type']?.toString() ?? '',
+                }),
           );
         });
       }
     }
   }
 
-  Future<void> _getCaseStageList(String caseStage) async {
+  Future<void> _getCaseStageList(String caseTypeId) async {
     final response = await http.post(
       Uri.parse("$baseUrl/get_stage_list"),
       headers: {"Content-Type": "application/json"},
-      body: json.encode({"case_stage": caseStage}),
+      body: json.encode({"case_type_id": caseTypeId}),
     );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['success']) {
+      print("Stage Response Data: ${data['data']}");
+      if (data['success'] && data['data'] != null) {
         setState(() {
           _caseStageList = List<Map<String, String>>.from(
-            data['data']
-                .map((item) => {"id": item['id'], "stage": item['stage']}),
+            data['data'].map((item) => {
+                  "id": item['id']?.toString() ?? '',
+                  "stage": item['stage']?.toString() ?? '',
+                }),
           );
+        });
+      } else {
+        setState(() {
+          _caseStageList = []; // No stages available
         });
       }
     }
@@ -117,12 +125,20 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   Future<void> _getCompanyList() async {
     final response = await http.get(Uri.parse("$baseUrl/get_company_list"));
     if (response.statusCode == 200) {
+      print('Company');
       final data = json.decode(response.body);
+      print("Company Response Data: ${data['data']}");
       if (data['success']) {
         setState(() {
           _companyList = List<Map<String, String>>.from(
-            data['data']
-                .map((item) => {"id": item['id'], "name": item['name']}),
+            data['data'].map((item) => {
+                  "id": item['id']?.toString() ?? '',
+                  "name": item['name']?.toString() ?? '',
+                  "contact_person": item['contact_person']?.toString() ?? '',
+                  "contact_no": item['contact_no']?.toString() ?? '',
+                  "status": item['status']?.toString() ?? '',
+                  "date_time": item['date_time']?.toString() ?? '',
+                }),
           );
         });
       }
@@ -132,12 +148,16 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   Future<void> _getCityList() async {
     final response = await http.get(Uri.parse("$baseUrl/get_city_list"));
     if (response.statusCode == 200) {
+      print('City');
       final data = json.decode(response.body);
+      print("City Response Data: ${data['data']}");
       if (data['success']) {
         setState(() {
           _cityList = List<Map<String, String>>.from(
-            data['data']
-                .map((item) => {"id": item['id'], "name": item['name']}),
+            data['data'].map((item) => {
+                  "id": item['id']?.toString() ?? '',
+                  "name": item['name']?.toString() ?? '',
+                }),
           );
         });
       }
@@ -147,12 +167,16 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   Future<void> _getCourtList() async {
     final response = await http.get(Uri.parse("$baseUrl/get_court_list"));
     if (response.statusCode == 200) {
+      print('Court');
       final data = json.decode(response.body);
+      print("Court Response Data: ${data['data']}");
       if (data['success']) {
         setState(() {
           _courtList = List<Map<String, String>>.from(
-            data['data']
-                .map((item) => {"id": item['id'], "name": item['name']}),
+            data['data'].map((item) => {
+                  "id": item['id']?.toString() ?? '',
+                  "name": item['name']?.toString() ?? '',
+                }),
           );
         });
       }
@@ -292,14 +316,22 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                   return null;
                 }),
                 _buildDropdownField(
-                    'Case Type',
-                    'Select Case Type',
-                    _caseTypeList.map((e) => e['case_type']!).toList(),
-                    _selectedCaseType, (value) {
-                  setState(() {
-                    _selectedCaseType = value;
-                  });
-                }),
+                  'Case Type',
+                  'Select Case Type',
+                  _caseTypeList.map((e) => e['case_type']!).toList(),
+                  _selectedCaseType,
+                  (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedCaseType = value;
+                        String selectedCaseTypeId = _caseTypeList.firstWhere(
+                            (element) => element['case_type'] == value)['id']!;
+                        _getCaseStageList(
+                            selectedCaseTypeId); // Call stage list API
+                      });
+                    }
+                  },
+                ),
                 _buildDropdownField(
                     'Case Stage',
                     'Select Case Stage',
@@ -442,38 +474,90 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   Widget _buildDropdownField(String label, String hintText, List<String> items,
       String? value, Function(dynamic)? onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(label, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          decoration: InputDecoration(
-            hintText: hintText,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
+    if (items.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              hintText: "No options available",
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
+            items: [],
+            onChanged: null,
           ),
-          value: value,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select $label';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
+          const SizedBox(height: 20),
+        ],
+      );
+    } else if (items.length == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              hintText: "Only one option available",
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            value: items.first,
+            items: items.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (onChanged != null) onChanged(value);
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              hintText: hintText,
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            value: value,
+            items: items.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select $label';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      );
+    }
   }
 
   Widget _buildDateField(String label, String hintText,

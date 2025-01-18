@@ -1,10 +1,15 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+
 import 'package:case_sync/screens/interns/tasks.dart';
+<<<<<<< Updated upstream
 import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
+=======
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+>>>>>>> Stashed changes
 
 class AssignedCaseTaskinfo extends StatefulWidget {
   const AssignedCaseTaskinfo({Key? key}) : super(key: key);
@@ -38,8 +43,23 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
 
         if (data['success'] == true) {
           setState(() {
+<<<<<<< Updated upstream
             _assignedCases = data['data'];
+=======
+            _assignedCases = (data['data'] as List)
+                .map((caseItem) => {
+                      "case_id": caseItem['id'].toString(),
+                      "case_no": caseItem['case_no'].toString(),
+                      "applicant": caseItem['applicant'].toString(),
+                      "court_name": caseItem['court_name'].toString(),
+                      "city_name": caseItem['city_name'].toString(),
+                    })
+                .toList();
+>>>>>>> Stashed changes
             _filteredCases = List.from(_assignedCases);
+            if (kDebugMode) {
+              print(_filteredCases);
+            }
           });
         } else {
           _showError("No cases found.");
@@ -137,6 +157,7 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                     itemCount: _filteredCases.length,
                     itemBuilder: (context, index) {
                       final caseItem = _filteredCases[index];
+<<<<<<< Updated upstream
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2.0),
                         child: GestureDetector(
@@ -147,6 +168,15 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                                 builder: (context) => TasksPage(
                                   caseNo: caseItem['case_no'],
                                 ),
+=======
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TasksPage(
+                                caseNo: caseItem['case_id']!,
+>>>>>>> Stashed changes
                               ),
                             );
                           },
