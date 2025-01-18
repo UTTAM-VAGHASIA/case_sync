@@ -45,7 +45,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
               'case_no': caseData['case_no'] ?? 'No data found',
               'year': caseData['year'] ?? 'No data found',
               'type': caseData['case_type'] ?? 'No data found',
-              'Current Stage': caseData['stage'] ?? 'No data found',
+              'Current Stage': caseData['stage_name'] ?? 'No data found',
               'Next Stage': caseData['next_stage'] ?? 'No data found',
               'applicant': caseData['applicant'] ?? 'No data found',
               'opponent': caseData['opp_name'] ?? 'No data found',
@@ -79,9 +79,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_task');
       final response = await http.post(
         url,
-        body: {
-          'case_no': _caseDetails['case_no'] ?? ''
-        }, // Ensure case_no is passed correctly
+        body: {'case_no': _caseDetails['case_no'] ?? ''},
       );
 
       if (response.statusCode == 200) {
@@ -95,20 +93,21 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
             data['data'] != null &&
             data['data'].isNotEmpty) {
           setState(() {
-            final firstTask = data['data'][0]; // Get the first task object
-            _caseDetails['assignedBy'] = firstTask['alloted_by_name'] ??
-                'Unknown'; // Fallback to 'Unknown'
+            final assignedData = data['data'][0]; // Get the first task object
+            _caseDetails['assignedBy'] =
+                assignedData['alloted_by_name'] ?? 'No data found';
             _caseDetails['assignedTo'] =
-                firstTask['alloted_to_name'] ?? 'Unknown';
+                assignedData['alloted_to_name'] ?? 'No data found';
+            _caseDetails['remark'] =
+                assignedData['remarks'] ?? 'No remarks available.';
           });
         } else {
           setState(() {
-            _caseDetails['assignedBy'] = 'No Data';
-            _caseDetails['assignedTo'] = 'No Data';
+            _caseDetails['assignedBy'] = 'No data found';
+            _caseDetails['assignedTo'] = 'No data found';
+            _caseDetails['remark'] = 'No remarks available.';
           });
-          if (kDebugMode) {
-            print("Assigned Info API returned no data.");
-          }
+          _showError("No data found for the assigned info.");
         }
       } else {
         _showError(
@@ -119,6 +118,11 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
       setState(() {
         _caseDetails['assignedBy'] = 'Error';
         _caseDetails['assignedTo'] = 'Error';
+        _caseDetails['remark'] = 'Error retrieving remarks.';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
