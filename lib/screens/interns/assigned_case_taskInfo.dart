@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../models/case_list.dart';
+import 'add_tasks.dart';
+
 class AssignedCaseTaskinfo extends StatefulWidget {
   const AssignedCaseTaskinfo({Key? key}) : super(key: key);
 
@@ -14,11 +17,11 @@ class AssignedCaseTaskinfo extends StatefulWidget {
 
 class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
   bool _isLoading = true;
-  List<Map<String, String>> _assignedCases = [];
+  List<CaseListData> _assignedCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  List<Map<String, String>> _filteredCases = [];
+  List<CaseListData> _filteredCases = [];
 
   @override
   void initState() {
@@ -38,13 +41,15 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
         if (data['success'] == true) {
           setState(() {
             _assignedCases = (data['data'] as List)
-                .map((caseItem) => {
-                      "case_id": caseItem['id'].toString(),
-                      "case_no": caseItem['case_no'].toString(),
-                      "applicant": caseItem['applicant'].toString(),
-                      "court_name": caseItem['court_name'].toString(),
-                      "city_name": caseItem['city_name'].toString(),
-                    })
+                .map((caseItem) => CaseListData(
+                    id: caseItem['id']?.toString() ?? '',
+                    caseNo: caseItem['case_no']?.toString() ?? '',
+                    applicant: caseItem['applicant']?.toString() ?? 'N/A',
+                    courtName: caseItem['court_name']?.toString() ?? 'N/A',
+                    cityName: caseItem['city_name']?.toString() ?? 'N/A',
+                    handleBy: '',
+                    opponent: '',
+                    srDate: DateTime(2025)))
                 .toList();
             _filteredCases = List.from(_assignedCases);
             if (kDebugMode) {
@@ -75,16 +80,16 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
   void _updateFilteredCases() {
     setState(() {
       _filteredCases = _assignedCases.where((caseItem) {
-        return caseItem['case_no']!
+        return caseItem.caseNo
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            caseItem['applicant']!
+            caseItem.applicant
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            caseItem['court_name']!
+            caseItem.courtName
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
-            caseItem['city_name']!
+            caseItem.cityName
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase());
       }).toList();
@@ -164,7 +169,8 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => TasksPage(
-                                caseNo: caseItem['case_id']!,
+                                caseNumber: caseItem.caseNo,
+                                caseNo: caseItem.id,
                               ),
                             ),
                           );
@@ -181,7 +187,7 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Case No: ${caseItem['case_no']}",
+                                  "Case No: ${caseItem.caseNo}",
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -189,17 +195,17 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "Applicant: ${caseItem['applicant']}",
+                                  "Applicant: ${caseItem.applicant}",
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "Court: ${caseItem['court_name']}",
+                                  "Court: ${caseItem.courtName}",
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "City: ${caseItem['city_name']}",
+                                  "City: ${caseItem.cityName}",
                                   style: const TextStyle(fontSize: 16),
                                 ),
                               ],
