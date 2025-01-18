@@ -202,6 +202,7 @@ class _TasksPageState extends State<TasksPage> {
                 builder: (context) => AddTaskScreen(
                       caseType: caseDetails['case_type'].toString(),
                       caseNumber: widget.caseNumber,
+                      caseId: widget.caseId,
                     )),
           );
         },

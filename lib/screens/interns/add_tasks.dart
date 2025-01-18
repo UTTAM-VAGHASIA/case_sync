@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,11 +7,15 @@ import '../../services/shared_pref.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final String caseNumber;
+  final String caseType;
+  final String caseId;
 
-  final String caseType; // Receive case number from the previous screen
-
-  const AddTaskScreen(
-      {super.key, required this.caseNumber, required this.caseType});
+  const AddTaskScreen({
+    super.key,
+    required this.caseNumber,
+    required this.caseType,
+    required this.caseId,
+  });
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -22,16 +25,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _advocateName;
   String? _assignedTo;
   String? _assignDate;
+  String? _expectedEndDate;
   final _taskInstructionController = TextEditingController();
 
-  // Lists to store advocates and interns fetched from the API
-  List<Map<String, String>> _advocateList = [];
   List<Map<String, String>> _internList = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchAdvocateList();
     _fetchInternList();
     getUsername();
   }
@@ -41,8 +42,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     if (user == null) {
       throw Exception('User not found. Please log in again.');
     }
-
-    _advocateName = user.name;
+    setState(() {
+      _advocateName = user.name;
+    });
   }
 
   @override
@@ -51,35 +53,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     super.dispose();
   }
 
-  // Function to fetch advocate list from the API
-  Future<void> _fetchAdvocateList() async {
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_advocate_list';
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          setState(() {
-            _advocateList = (data['data'] as List)
-                .map((advocate) => {
-                      'id': advocate['id'].toString(),
-                      'name': advocate['name'].toString(),
-                    })
-                .toList();
-          });
-        } else {
-          _showErrorSnackBar('Failed to load advocate list.');
-        }
-      } else {
-        _showErrorSnackBar('Server error: ${response.statusCode}');
-      }
-    } catch (error) {
-      _showErrorSnackBar('Failed to fetch data: $error');
-    }
-  }
-
-  // Function to fetch intern list from the API
   Future<void> _fetchInternList() async {
     const url =
         'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list';
@@ -116,7 +89,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(BuildContext context, bool isEndDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -125,16 +98,22 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
     if (picked != null) {
       setState(() {
-        _assignDate = "${picked.day}/${picked.month}/${picked.year}";
+        final date = "${picked.day}/${picked.month}/${picked.year}";
+        if (isEndDate) {
+          _expectedEndDate = date;
+        } else {
+          _assignDate = date;
+        }
       });
     }
   }
 
-  void _confirmTask() {
+  Future<void> _confirmTask() async {
     if (_advocateName == null ||
         _assignedTo == null ||
         _taskInstructionController.text.isEmpty ||
-        _assignDate == null) {
+        _assignDate == null ||
+        _expectedEndDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill out all fields"),
@@ -143,13 +122,42 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       );
       return;
     }
-    // Add task confirmation logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Task added successfully!"),
-        backgroundColor: Colors.green,
-      ),
-    );
+
+    const url =
+        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_task';
+
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.fields['data'] = jsonEncode({
+        "case_id": widget.caseId,
+        "alloted_to": _assignedTo,
+        "instructions": _taskInstructionController.text,
+        "alloted_by": _advocateName,
+        "alloted_date": _assignDate,
+        "expected_end_date": _expectedEndDate,
+        "status": "pending",
+        "remark": "Some remark",
+      });
+
+      print("*********************************************");
+      print(request.fields['data']);
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Task added successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        _showErrorSnackBar("Failed to add task: ${response.statusCode}");
+      }
+    } catch (error) {
+      _showErrorSnackBar("Error adding task: $error");
+    }
   }
 
   @override
@@ -199,8 +207,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 20),
             _buildTextField(
               label: 'Assigned by',
-              hint: _advocateName.toString(),
-              controller: TextEditingController(text: _advocateName.toString()),
+              hint: _advocateName ?? '',
+              controller: TextEditingController(text: _advocateName ?? ''),
               readOnly: true,
             ),
             const SizedBox(height: 20),
@@ -221,7 +229,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             _buildDateField(
               label: 'Assign Date',
               hint: _assignDate ?? 'Select Date',
-              onTap: () => _selectDate(context),
+              onTap: () => _selectDate(context, false),
+            ),
+            const SizedBox(height: 20),
+            _buildDateField(
+              label: 'Expected End Date',
+              hint: _expectedEndDate ?? 'Select Date',
+              onTap: () => _selectDate(context, true),
             ),
             const SizedBox(height: 30),
             SizedBox(
