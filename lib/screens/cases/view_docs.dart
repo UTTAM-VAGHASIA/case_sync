@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -89,13 +90,39 @@ class _ViewDocsState extends State<ViewDocs> {
   }
 
   void _openDocument(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+    final encodedUrl = Uri.encodeFull(url);
+    if (await canLaunch(encodedUrl)) {
+      await launch(encodedUrl);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the document')),
+        SnackBar(
+          content: const Text(
+              'Could not open the document. Please check if you have the required viewer installed.'),
+          action: SnackBarAction(
+            label: 'Copy Link',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: url));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Link copied to clipboard')),
+              );
+            },
+          ),
+        ),
       );
     }
+  }
+
+  bool _isImageUrl(String url) {
+    final lowerUrl = url.toLowerCase();
+    return lowerUrl.endsWith('.png') ||
+        lowerUrl.endsWith('.jpg') ||
+        lowerUrl.endsWith('.jpeg') ||
+        lowerUrl.endsWith('.gif');
+  }
+
+  bool _isDocumentUrl(String url) {
+    final lowerUrl = url.toLowerCase();
+    return lowerUrl.endsWith('.docx') || lowerUrl.endsWith('.pdf');
   }
 
   @override
@@ -114,6 +141,7 @@ class _ViewDocsState extends State<ViewDocs> {
                   itemCount: _documents.length,
                   itemBuilder: (context, index) {
                     final doc = _documents[index];
+                    final docUrl = doc['docs'];
                     return Card(
                       elevation: 4.0,
                       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -137,16 +165,58 @@ class _ViewDocsState extends State<ViewDocs> {
                             const SizedBox(height: 8.0),
                             Text('Date Time: ${doc['date_time']}'),
                             const SizedBox(height: 8.0),
-                            GestureDetector(
-                              onTap: () => _openDocument(doc['docs']),
-                              child: Text(
-                                doc['docs'],
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
+                            _isImageUrl(docUrl)
+                                ? GestureDetector(
+                                    onTap: () => _openDocument(docUrl),
+                                    child: Image.network(
+                                      docUrl,
+                                      height: 150,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                        .cumulativeBytesLoaded /
+                                                    (loadingProgress
+                                                            .expectedTotalBytes ??
+                                                        1)
+                                                : null,
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return const Text(
+                                          'Error loading image',
+                                          style: TextStyle(color: Colors.red),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : _isDocumentUrl(docUrl)
+                                    ? ElevatedButton(
+                                        onPressed: () => _openDocument(docUrl),
+                                        child: const Text('Open Document'),
+                                      )
+                                    : GestureDetector(
+                                        onTap: () => _openDocument(docUrl),
+                                        child: Text(
+                                          docUrl,
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            decoration:
+                                                TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
                           ],
                         ),
                       ),
