@@ -13,7 +13,8 @@ class CaseCard extends StatelessWidget {
   const CaseCard({
     super.key,
     required this.caseItem,
-    this.isHighlighted = false, this.isTask = false,
+    this.isHighlighted = false,
+    this.isTask = false,
   });
 
   @override
@@ -23,8 +24,12 @@ class CaseCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => isTask ? TasksPage(caseNo: caseItem.id,) : CaseInfoPage(
-              caseId: caseItem.id),
+            builder: (context) => isTask
+                ? TasksPage(
+                    caseNo: caseItem.id,
+                    caseNumber: '',
+                  )
+                : CaseInfoPage(caseId: caseItem.id),
           ),
         );
       },

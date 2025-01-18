@@ -1,13 +1,19 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/interns/TaskInfoPage.dart';
+import 'package:case_sync/screens/interns/add_tasks.dart';
+import 'package:case_sync/services/case_services.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../components/basicUIcomponent.dart';
+
 class TasksPage extends StatefulWidget {
   final String caseNo;
+  final String caseNumber;
 
-  const TasksPage({required this.caseNo, Key? key}) : super(key: key);
+  const TasksPage({required this.caseNo, Key? key, required this.caseNumber})
+      : super(key: key);
 
   @override
   State<TasksPage> createState() => _TasksPageState();
@@ -32,11 +38,6 @@ class _TasksPageState extends State<TasksPage> {
       // Add the multipart data
       request.fields['case_no'] = widget.caseNo;
 
-      // print("##############################################");
-      // print(widget.caseNo);
-      //
-      // print("##############################################");
-      // print(request.fields.toString());
       // Send the request and get the response
       final response = await request.send();
 
@@ -137,6 +138,32 @@ class _TasksPageState extends State<TasksPage> {
                     },
                   ),
                 ),
+      // Add the floating action button here
+      floatingActionButton: ElevatedButton(
+        style: AppTheme.elevatedButtonStyle, // Use the style from AppTheme
+        onPressed: () {
+          // Navigate to the AddTaskPage
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => AddTaskScreen(
+                      caseNumber: widget.caseNumber,
+                    )),
+          );
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.add, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              "Add Task",
+              style: AppTheme
+                  .buttonTextStyle, // Use the button text style from AppTheme
+            ),
+          ],
+        ),
+      ),
     );
   }
 

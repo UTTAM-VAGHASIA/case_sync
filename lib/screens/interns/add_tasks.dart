@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class AddTaskScreen extends StatefulWidget {
-  const AddTaskScreen({Key? key}) : super(key: key);
+  final String caseNumber; // Receive case number from the previous screen
+
+  const AddTaskScreen({Key? key, required this.caseNumber}) : super(key: key);
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -9,15 +13,91 @@ class AddTaskScreen extends StatefulWidget {
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _caseType;
-  String? _caseNumber;
+  String? _advocateName;
   String? _assignedTo;
   String? _assignDate;
   final _taskInstructionController = TextEditingController();
+
+  // Lists to store advocates and interns fetched from the API
+  List<Map<String, String>> _advocateList = [];
+  List<Map<String, String>> _internList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAdvocateList();
+    _fetchInternList();
+  }
 
   @override
   void dispose() {
     _taskInstructionController.dispose();
     super.dispose();
+  }
+
+  // Function to fetch advocate list from the API
+  Future<void> _fetchAdvocateList() async {
+    const url =
+        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_advocate_list';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _advocateList = (data['data'] as List)
+                .map((advocate) => {
+                      'id': advocate['id'].toString(),
+                      'name': advocate['name'].toString(),
+                    })
+                .toList();
+          });
+        } else {
+          _showErrorSnackBar('Failed to load advocate list.');
+        }
+      } else {
+        _showErrorSnackBar('Server error: ${response.statusCode}');
+      }
+    } catch (error) {
+      _showErrorSnackBar('Failed to fetch data: $error');
+    }
+  }
+
+  // Function to fetch intern list from the API
+  Future<void> _fetchInternList() async {
+    const url =
+        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _internList = (data['data'] as List)
+                .map((intern) => {
+                      'id': intern['id'].toString(),
+                      'name': intern['name'].toString(),
+                    })
+                .toList();
+          });
+        } else {
+          _showErrorSnackBar('Failed to load intern list.');
+        }
+      } else {
+        _showErrorSnackBar('Server error: ${response.statusCode}');
+      }
+    } catch (error) {
+      _showErrorSnackBar('Failed to fetch data: $error');
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -36,7 +116,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   void _confirmTask() {
     if (_caseType == null ||
-        _caseNumber == null ||
+        _advocateName == null ||
         _assignedTo == null ||
         _taskInstructionController.text.isEmpty ||
         _assignDate == null) {
@@ -88,6 +168,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               ),
             ),
             const SizedBox(height: 30),
+            _buildTextField(
+              label: 'Case Number',
+              hint: widget.caseNumber,
+              controller: TextEditingController(text: widget.caseNumber),
+              readOnly: true,
+            ),
+            const SizedBox(height: 20),
             _buildDropdownField(
               label: 'Case Type',
               hint: 'Select Case Type',
@@ -97,18 +184,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ),
             const SizedBox(height: 20),
             _buildDropdownField(
-              label: 'Case Number',
-              hint: 'Select Case',
-              value: _caseNumber,
-              items: ['Case 001', 'Case 002', 'Case 003'],
-              onChanged: (value) => setState(() => _caseNumber = value),
+              label: 'Advocate Name',
+              hint: 'Select Advocate',
+              value: _advocateName,
+              items:
+                  _advocateList.map((advocate) => advocate['name']!).toList(),
+              onChanged: (value) => setState(() => _advocateName = value),
             ),
             const SizedBox(height: 20),
             _buildDropdownField(
               label: 'Assign to',
               hint: 'Select Intern',
               value: _assignedTo,
-              items: ['John Doe', 'Jane Smith', 'Alex Brown'],
+              items: _internList.map((intern) => intern['name']!).toList(),
               onChanged: (value) => setState(() => _assignedTo = value),
             ),
             const SizedBox(height: 20),
@@ -171,9 +259,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           child: DropdownButtonFormField<String>(
             value: value,
             decoration: InputDecoration(
-              isDense: true, // Compact appearance
+              isDense: true,
               contentPadding: const EdgeInsets.symmetric(
-                vertical: 16, // Increased padding
+                vertical: 16,
                 horizontal: 20,
               ),
               border: InputBorder.none,
@@ -196,6 +284,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     required String label,
     required String hint,
     required TextEditingController controller,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,12 +293,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         const SizedBox(height: 10),
         TextField(
           controller: controller,
-          maxLines: 4,
+          readOnly: readOnly,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey),
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 16, // Increased padding
+              vertical: 16,
               horizontal: 20,
             ),
             border: OutlineInputBorder(
@@ -238,11 +327,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(
-              vertical: 16, // Increased padding
+              vertical: 16,
               horizontal: 20,
             ),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300), // Added border
+              border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(20),
               color: Colors.white,
             ),
