@@ -1,18 +1,21 @@
 import 'dart:convert';
 
+import 'package:case_sync/screens/cases/caseinfo.dart';
 import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:case_sync/screens/interns/add_tasks.dart';
 import 'package:case_sync/services/case_services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../components/basicUIcomponent.dart';
+import '../../models/case.dart';
 
 class TasksPage extends StatefulWidget {
-  final String caseNo;
+  final String caseId;
   final String caseNumber;
 
-  const TasksPage({required this.caseNo, Key? key, required this.caseNumber})
+  const TasksPage({required this.caseId, Key? key, required this.caseNumber})
       : super(key: key);
 
   @override
@@ -22,11 +25,61 @@ class TasksPage extends StatefulWidget {
 class _TasksPageState extends State<TasksPage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _tasks = [];
+  late Map<String, String> caseDetails = {};
+
+  Future<void> fetchCaseInfo() async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
+      final response = await http.post(url, body: {'case_id': widget.caseId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (kDebugMode) {
+          print("Case Info API Response: $data");
+        }
+        if (data['success'] == true && data['data'].isNotEmpty) {
+          setState(() {
+            final caseData = data['data'][0];
+            caseDetails = {
+              'case_no': caseData['case_no'] ?? 'No data found',
+              'year': caseData['year'] ?? 'No data found',
+              'case_type': caseData['case_type'] ?? 'No data found',
+              'Current Stage': caseData['stage_name'] ?? 'No data found',
+              'Next Stage': caseData['next_stage'] ?? 'No data found',
+              'applicant': caseData['applicant'] ?? 'No data found',
+              'opponent': caseData['opp_name'] ?? 'No data found',
+              'court': caseData['court_name'] ?? 'No data found',
+              'location': caseData['city_name'] ?? 'No data found',
+              'summonDate': caseData['sr_date'] ?? 'No data found',
+              'assignedBy': 'Fetching...', // Placeholder
+              'assignedTo': 'Fetching...', // Placeholder
+              'nextDate': caseData['next_date'] ?? 'No data found',
+              'remark': 'No remarks available.', // Placeholder
+            };
+          });
+        } else {
+          _showError("No data found for the given case.");
+        }
+      } else {
+        _showError("Failed to fetch case details.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+    print("######################################################33");
+    print(caseDetails['case_type']);
+  }
 
   @override
   void initState() {
     super.initState();
     _fetchTasks();
+    fetchCaseInfo();
   }
 
   Future<void> _fetchTasks() async {
@@ -36,7 +89,7 @@ class _TasksPageState extends State<TasksPage> {
       final request = http.MultipartRequest('POST', url);
 
       // Add the multipart data
-      request.fields['case_no'] = widget.caseNo;
+      request.fields['case_no'] = widget.caseId;
 
       // Send the request and get the response
       final response = await request.send();
@@ -147,6 +200,7 @@ class _TasksPageState extends State<TasksPage> {
             context,
             MaterialPageRoute(
                 builder: (context) => AddTaskScreen(
+                      caseType: caseDetails['case_type'].toString(),
                       caseNumber: widget.caseNumber,
                     )),
           );

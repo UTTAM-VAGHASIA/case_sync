@@ -1,18 +1,24 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class AddTaskScreen extends StatefulWidget {
-  final String caseNumber; // Receive case number from the previous screen
+import '../../models/advocate.dart';
+import '../../services/shared_pref.dart';
 
-  const AddTaskScreen({Key? key, required this.caseNumber}) : super(key: key);
+class AddTaskScreen extends StatefulWidget {
+  final String caseNumber;
+
+  final String caseType; // Receive case number from the previous screen
+
+  const AddTaskScreen(
+      {super.key, required this.caseNumber, required this.caseType});
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
 }
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
-  String? _caseType;
   String? _advocateName;
   String? _assignedTo;
   String? _assignDate;
@@ -27,6 +33,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     super.initState();
     _fetchAdvocateList();
     _fetchInternList();
+    getUsername();
+  }
+
+  Future<void> getUsername() async {
+    Advocate? user = await SharedPrefService.getUser();
+    if (user == null) {
+      throw Exception('User not found. Please log in again.');
+    }
+
+    _advocateName = user.name;
   }
 
   @override
@@ -115,8 +131,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   void _confirmTask() {
-    if (_caseType == null ||
-        _advocateName == null ||
+    if (_advocateName == null ||
         _assignedTo == null ||
         _taskInstructionController.text.isEmpty ||
         _assignDate == null) {
@@ -175,21 +190,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               readOnly: true,
             ),
             const SizedBox(height: 20),
-            _buildDropdownField(
+            _buildTextField(
               label: 'Case Type',
-              hint: 'Select Case Type',
-              value: _caseType,
-              items: ['Civil', 'Criminal', 'Corporate'],
-              onChanged: (value) => setState(() => _caseType = value),
+              hint: widget.caseType,
+              controller: TextEditingController(text: widget.caseType),
+              readOnly: true,
             ),
             const SizedBox(height: 20),
-            _buildDropdownField(
-              label: 'Advocate Name',
-              hint: 'Select Advocate',
-              value: _advocateName,
-              items:
-                  _advocateList.map((advocate) => advocate['name']!).toList(),
-              onChanged: (value) => setState(() => _advocateName = value),
+            _buildTextField(
+              label: 'Assigned by',
+              hint: _advocateName.toString(),
+              controller: TextEditingController(text: _advocateName.toString()),
+              readOnly: true,
             ),
             const SizedBox(height: 20),
             _buildDropdownField(

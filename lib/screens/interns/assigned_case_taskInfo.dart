@@ -170,7 +170,7 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                             MaterialPageRoute(
                               builder: (context) => TasksPage(
                                 caseNumber: caseItem.caseNo,
-                                caseNo: caseItem.id,
+                                caseId: caseItem.id,
                               ),
                             ),
                           );
