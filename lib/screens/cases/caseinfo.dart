@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:case_sync/screens/cases/view_docs.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -199,6 +200,18 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                     ],
                   ),
                 ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ViewDocs(caseId: widget.caseId),
+            ),
+          );
+        },
+        child: const Icon(Icons.visibility),
+        backgroundColor: Colors.black,
+      ),
     );
   }
 
