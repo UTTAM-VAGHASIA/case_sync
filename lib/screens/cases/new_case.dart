@@ -7,7 +7,8 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import '../../services/api_service.dart';
+import '../../models/advocate.dart';
+import '../../services/shared_pref.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -39,6 +40,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   List<Map<String, String>> _companyList = [];
   List<Map<String, String>> _cityList = [];
   List<Map<String, String>> _courtList = [];
+  List<Map<String, String>> _advocateList = [];
 
   bool _isSubmitting = false;
   bool _isLoading = true;
@@ -69,6 +71,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         _getCompanyList(),
         _getCityList(),
         _getCourtList(),
+        _getAdvocateList(),
       ]);
     } catch (e) {
       print("Error fetching dropdown data: $e");
@@ -88,7 +91,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
           _caseTypeList = List<Map<String, String>>.from(
             data['data'].map((item) => {
                   "id": item['id']?.toString() ?? '',
-                  "case_type": item['case_type']?.toString() ?? '',
+                  "name": item['case_type']?.toString() ?? '',
                 }),
           );
         });
@@ -97,10 +100,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   }
 
   Future<void> _getCaseStageList(String caseTypeId) async {
+    print("case type id: $caseTypeId");
     final response = await http.post(
       Uri.parse("$baseUrl/get_stage_list"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode({"case_type_id": caseTypeId}),
+      body: {'case_stage': caseTypeId},
     );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -110,13 +113,31 @@ class NewCaseScreenState extends State<NewCaseScreen> {
           _caseStageList = List<Map<String, String>>.from(
             data['data'].map((item) => {
                   "id": item['id']?.toString() ?? '',
-                  "stage": item['stage']?.toString() ?? '',
+                  "name": item['stage']?.toString() ?? '',
                 }),
           );
         });
       } else {
         setState(() {
+          print("Api Call Unsuccessful");
           _caseStageList = []; // No stages available
+        });
+      }
+    }
+  }
+
+  Future<void> _getAdvocateList() async {
+    final response = await http.get(Uri.parse("$baseUrl/get_advocate_list"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        setState(() {
+          _advocateList = List<Map<String, String>>.from(
+            data['data'].map((item) => {
+                  "id": item['id']?.toString() ?? '',
+                  "name": item['name']?.toString() ?? '',
+                }),
+          );
         });
       }
     }
@@ -219,36 +240,117 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   Future<void> _submitCase() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Ensure files are selected
+    if (_filePaths.isEmpty) {
+      Get.snackbar('Error', 'Please select at least one document!',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
 
-    Map<String, dynamic> caseData = {
-      'case_no': _caseNumberController.text,
-      'year': _caseYearController.text,
-      'case_type': _selectedCaseType,
-      'handled_by': _selectedHandler,
-      'applicant': _applicantController.text,
-      'company_id': _selectedCompany,
-      'opp_name': _opponentController.text,
-      'court_name': _selectedCourtName,
-      'city_id': _selectedCityName,
-      'sr_date': _summonDateController.text,
-    };
+    try {
+      // Retrieve user details from SharedPreferences
+      Advocate? user = await SharedPrefService.getUser();
+      if (user == null) {
+        throw Exception('User not found. Please log in again.');
+      }
 
-    var response = await ApiService.submitNewCase(caseData, _filePaths);
+      // Split files: first file as case_image, rest as case_docs[]
+      String caseImage = _filePaths.first;
+      List<String> caseDocs =
+          _filePaths.length > 1 ? _filePaths.sublist(1) : [];
 
-    setState(() {
-      _isSubmitting = false;
-    });
+      // Prepare data for API
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse("$baseUrl/add_case"),
+      );
 
-    if (response['success']) {
-      Get.snackbar('Success', 'Case submitted successfully!',
+      // Add fields to the request
+      request.fields["data"] = json.encode({
+        "case_no": _caseNumberController.text,
+        "year": _caseYearController.text,
+        "case_type": _caseTypeList.firstWhere(
+          (element) => element['id'] == _selectedCaseType,
+          orElse: () =>
+              {'id': ''}, // Default to an empty string or handle appropriately
+        )['id'],
+        "handle_by": _advocateList.firstWhere(
+          (element) => element['id'] == _selectedHandler,
+          orElse: () =>
+              {'id': ''}, // Default to an empty string or handle appropriately
+        )['id'],
+        "applicant": _applicantController.text,
+        "stage": _caseStageList.firstWhere(
+          (element) => element['id'] == _selectedCaseStage,
+          orElse: () =>
+              {'id': ''}, // Default to an empty string or handle appropriately
+        )['id'],
+        "added_by": user.id, // Dynamically pass the user ID
+        "user_type": "advocate", // Hardcoded as per your requirement
+        "company_id": _companyList.firstWhere(
+          (element) => element['id'] == _selectedCompany,
+          orElse: () =>
+              {'id': ''}, // Default to an empty string or handle appropriately
+        )['id'],
+        "opp_name": _opponentController.text,
+        "court_name": _selectedCourtName!,
+        "city_id": _cityList.firstWhere(
+          (element) => element['id'] == _selectedCityName,
+          orElse: () =>
+              {'id': ''}, // Default to an empty string or handle appropriately
+        )['id'],
+        "sr_date": _summonDateController.text,
+      });
+
+      // Add case_image file
+      request.files
+          .add(await http.MultipartFile.fromPath('case_image', caseImage));
+
+      // Add case_docs[] files
+      for (String docPath in caseDocs) {
+        request.files
+            .add(await http.MultipartFile.fromPath('case_docs[]', docPath));
+      }
+
+      print("##########################################");
+      print(request.fields);
+      print("##########################################");
+      // Send the request
+      var response = await request.send();
+      print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+      print('${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        var responseData = await response.stream.bytesToString();
+        var data = json.decode(responseData);
+
+        if (data['success']) {
+          Get.snackbar('Success', 'Case submitted successfully!',
+              snackPosition: SnackPosition.BOTTOM);
+          Get.back();
+        } else {
+          Get.snackbar('Error', 'Failed to submit case: ${data['message']}',
+              snackPosition: SnackPosition.BOTTOM);
+          print('Error, failed to submit case: ${data['message']}');
+        }
+      } else {
+        Get.snackbar('Error: ${response.statusCode}',
+            'Failed to submit case. Try again later!',
+            snackPosition: SnackPosition.BOTTOM);
+        print('Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'An error occurred: $e',
           snackPosition: SnackPosition.BOTTOM);
-      Get.back();
-    } else {
-      Get.snackbar('Error', 'Failed to submit case: ${response['message']}',
-          snackPosition: SnackPosition.BOTTOM);
+      print('Error: $e');
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -318,43 +420,38 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                 _buildDropdownField(
                   'Case Type',
                   'Select Case Type',
-                  _caseTypeList.map((e) => e['case_type']!).toList(),
+                  _caseTypeList,
                   _selectedCaseType,
                   (value) {
                     if (value != null) {
                       setState(() {
                         _selectedCaseType = value;
-                        String selectedCaseTypeId = _caseTypeList.firstWhere(
-                            (element) => element['case_type'] == value)['id']!;
-                        _getCaseStageList(
-                            selectedCaseTypeId); // Call stage list API
+                        _selectedCaseStage = null;
+                        _caseStageList = [];
+                        _getCaseStageList(value);
                       });
                     }
                   },
                 ),
-                _buildDropdownField(
-                    'Case Stage',
-                    'Select Case Stage',
-                    _caseStageList.map((e) => e['stage']!).toList(),
-                    _selectedCaseStage, (value) {
+                _buildDropdownField('Case Stage', 'Select Case Stage',
+                    _caseStageList, _selectedCaseStage, (value) {
                   setState(() {
                     _selectedCaseStage = value;
                   });
                 }),
                 _buildDropdownField(
-                    'Handled By',
-                    'Select Handler',
-                    ['Advocate 1', 'Advocate 2', 'Advocate 3'],
-                    _selectedHandler, (value) {
-                  setState(() {
-                    _selectedHandler = value;
-                  });
-                }),
-                _buildDropdownField(
-                    'Company Name',
-                    'Select Company',
-                    _companyList.map((e) => e['name']!).toList(),
-                    _selectedCompany, (value) {
+                  'Handled By',
+                  'Select Advocate',
+                  _advocateList,
+                  _selectedHandler,
+                  (value) {
+                    setState(() {
+                      _selectedHandler = value;
+                    });
+                  },
+                ),
+                _buildDropdownField('Company Name', 'Select Company',
+                    _companyList, _selectedCompany, (value) {
                   setState(() {
                     _selectedCompany = value;
                   });
@@ -373,20 +470,15 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                   }
                   return null;
                 }),
-                _buildDropdownField(
-                    'Court Name',
-                    'Select Court Name',
-                    _courtList.map((e) => e['name']!).toList(),
-                    _selectedCourtName, (value) {
+                _buildDropdownField('Court Name', 'Select Court Name',
+                    _courtList, _selectedCourtName, (value) {
                   setState(() {
                     _selectedCourtName = value;
                   });
                 }),
                 _buildDropdownField(
-                    'City Name',
-                    'Select City',
-                    _cityList.map((e) => e['name']!).toList(),
-                    _selectedCityName, (value) {
+                    'City Name', 'Select City', _cityList, _selectedCityName,
+                    (value) {
                   setState(() {
                     _selectedCityName = value;
                   });
@@ -472,92 +564,45 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     );
   }
 
-  Widget _buildDropdownField(String label, String hintText, List<String> items,
-      String? value, Function(dynamic)? onChanged) {
-    if (items.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              hintText: "No options available",
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
+  Widget _buildDropdownField(
+      String label,
+      String hintText,
+      List<Map<String, String>> items,
+      String? value,
+      Function(dynamic)? onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            items: [],
-            onChanged: null,
           ),
-          const SizedBox(height: 20),
-        ],
-      );
-    } else if (items.length == 1) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              hintText: "Only one option available",
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            value: items.first,
-            items: items.map((String item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(item),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (onChanged != null) onChanged(value);
-            },
-          ),
-          const SizedBox(height: 20),
-        ],
-      );
-    } else {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 10),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              hintText: hintText,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            value: value,
-            items: items.map((String item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(item),
-              );
-            }).toList(),
-            onChanged: onChanged,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please select $label';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 20),
-        ],
-      );
-    }
+          value: value,
+          items: items.map((item) {
+            return DropdownMenuItem<String>(
+              value: item['id'], // Use the ID as the unique value
+              child:
+                  Text(item['name'] ?? 'Contact Developer'), // Display the name
+            );
+          }).toList(),
+          onChanged: onChanged,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please select $label';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
   }
 
   Widget _buildDateField(String label, String hintText,
