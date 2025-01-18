@@ -1,15 +1,8 @@
-<<<<<<< Updated upstream
-=======
 import 'dart:convert';
 
 import 'package:case_sync/screens/interns/TaskInfoPage.dart';
->>>>>>> Stashed changes
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-
-import 'TaskInfoPage.dart';
-import 'add_tasks.dart';
 
 class TasksPage extends StatefulWidget {
   final String caseNo;
@@ -37,11 +30,7 @@ class _TasksPageState extends State<TasksPage> {
       final request = http.MultipartRequest('POST', url);
 
       // Add the multipart data
-<<<<<<< Updated upstream
-      request.fields["case_no"] = widget.caseNo;
-=======
       request.fields['case_no'] = widget.caseNo;
->>>>>>> Stashed changes
 
       // print("##############################################");
       // print(widget.caseNo);
@@ -89,10 +78,9 @@ class _TasksPageState extends State<TasksPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          "Case: ${widget.caseNo}", // Display the case number
-          style:
-              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: const Text(
+          "Tasks",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
       body: _isLoading
@@ -149,16 +137,6 @@ class _TasksPageState extends State<TasksPage> {
                     },
                   ),
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddTaskScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.black,
-      ),
     );
   }
 
