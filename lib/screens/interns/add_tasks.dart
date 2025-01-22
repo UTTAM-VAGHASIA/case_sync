@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import '../../models/advocate.dart';
 import '../../services/shared_pref.dart';
 
@@ -28,7 +27,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _assignDate;
   String? _expectedEndDate;
   final _taskInstructionController = TextEditingController();
-
   List<Map<String, String>> _internList = [];
 
   @override
@@ -49,7 +47,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
   }
 
-  // tulsi--200, jasmine--300, neem--1000, yellow elder--1000, ajma--300
   @override
   void dispose() {
     _taskInstructionController.dispose();
@@ -67,9 +64,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           setState(() {
             _internList = (data['data'] as List)
                 .map((intern) => {
-                      'id': intern['id'].toString(),
-                      'name': intern['name'].toString(),
-                    })
+              'id': intern['id'].toString(),
+              'name': intern['name'].toString(),
+            })
                 .toList();
           });
         } else {
@@ -142,14 +139,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         "remark": "Some remark",
       });
 
-      // Debugging logs
-      print("Request Payload: ${request.fields['data']}");
-
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
       final decodedResponse = jsonDecode(responseBody);
-
-      print("API Response: $decodedResponse");
 
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -158,7 +150,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);  // Return true to indicate a successful task addition
       } else {
         _showErrorSnackBar(
             "Failed to add task: ${decodedResponse['message'] ?? response.statusCode}");
@@ -303,9 +295,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             hint: Text(hint, style: const TextStyle(color: Colors.grey)),
             items: items
                 .map((item) => DropdownMenuItem<String>(
-                      value: item['id'],
-                      child: Text(item['name']!),
-                    ))
+              value: item['id'],
+              child: Text(item['name']!),
+            ))
                 .toList(),
             onChanged: onChanged,
           ),
@@ -360,20 +352,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 20,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
+              color: Colors.white,
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(20),
-              color: Colors.white,
             ),
-            child: Text(
-              hint,
-              style: TextStyle(
-                color: hint == 'Select Date' ? Colors.grey : Colors.black,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(hint, style: const TextStyle(color: Colors.grey)),
+                const Icon(Icons.calendar_today, color: Colors.grey),
+              ],
             ),
           ),
         ),
