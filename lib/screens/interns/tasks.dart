@@ -1,15 +1,12 @@
 import 'dart:convert';
 
-import 'package:case_sync/screens/cases/caseinfo.dart';
 import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:case_sync/screens/interns/add_tasks.dart';
-import 'package:case_sync/services/case_services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../components/basicUIcomponent.dart';
-import '../../models/case.dart';
 
 class TasksPage extends StatefulWidget {
   final String caseId;
@@ -194,17 +191,22 @@ class _TasksPageState extends State<TasksPage> {
       // Add the floating action button here
       floatingActionButton: ElevatedButton(
         style: AppTheme.elevatedButtonStyle, // Use the style from AppTheme
-        onPressed: () {
-          // Navigate to the AddTaskPage
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => AddTaskScreen(
-                      caseType: caseDetails['case_type'].toString(),
-                      caseNumber: widget.caseNumber,
-                      caseId: widget.caseId,
-                    )),
+              builder: (context) => AddTaskScreen(
+                caseType: caseDetails['case_type'].toString(),
+                caseNumber: widget.caseNumber,
+                caseId: widget.caseId,
+              ),
+            ),
           );
+
+          // Refresh the task list if a new task was added
+          if (result == true) {
+            _fetchTasks();
+          }
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -23,6 +23,7 @@ class AddTaskScreen extends StatefulWidget {
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _advocateName;
+  String? _advocateid;
   String? _assignedTo;
   String? _assignDate;
   String? _expectedEndDate;
@@ -44,9 +45,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
     setState(() {
       _advocateName = user.name;
+      _advocateid = user.id;
     });
   }
 
+  // tulsi--200, jasmine--300, neem--1000, yellow elder--1000, ajma--300
   @override
   void dispose() {
     _taskInstructionController.dispose();
@@ -98,7 +101,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.day}/${picked.month}/${picked.year}";
+        final date = "${picked.year}/${picked.month}/${picked.day}";
         if (isEndDate) {
           _expectedEndDate = date;
         } else {
@@ -132,19 +135,23 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         "case_id": widget.caseId,
         "alloted_to": _assignedTo,
         "instructions": _taskInstructionController.text,
-        "alloted_by": _advocateName,
+        "alloted_by": _advocateid,
         "alloted_date": _assignDate,
         "expected_end_date": _expectedEndDate,
         "status": "pending",
         "remark": "Some remark",
       });
 
-      print("*********************************************");
-      print(request.fields['data']);
+      // Debugging logs
+      print("Request Payload: ${request.fields['data']}");
 
       final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      final decodedResponse = jsonDecode(responseBody);
 
-      if (response.statusCode == 200) {
+      print("API Response: $decodedResponse");
+
+      if (response.statusCode == 200 && decodedResponse['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Task added successfully!"),
@@ -153,7 +160,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         );
         Navigator.pop(context);
       } else {
-        _showErrorSnackBar("Failed to add task: ${response.statusCode}");
+        _showErrorSnackBar(
+            "Failed to add task: ${decodedResponse['message'] ?? response.statusCode}");
       }
     } catch (error) {
       _showErrorSnackBar("Error adding task: $error");
@@ -207,7 +215,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 20),
             _buildTextField(
               label: 'Assigned by',
-              hint: _advocateName ?? '',
+              hint: _advocateid ?? '',
               controller: TextEditingController(text: _advocateName ?? ''),
               readOnly: true,
             ),
@@ -216,7 +224,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               label: 'Assign to',
               hint: 'Select Intern',
               value: _assignedTo,
-              items: _internList.map((intern) => intern['name']!).toList(),
+              items: _internList,
               onChanged: (value) => setState(() => _assignedTo = value),
             ),
             const SizedBox(height: 20),
@@ -268,7 +276,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     required String label,
     required String hint,
     required String? value,
-    required List<String> items,
+    required List<Map<String, String>> items,
     required ValueChanged<String?> onChanged,
   }) {
     return Column(
@@ -295,8 +303,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             hint: Text(hint, style: const TextStyle(color: Colors.grey)),
             items: items
                 .map((item) => DropdownMenuItem<String>(
-                      value: item,
-                      child: Text(item),
+                      value: item['id'],
+                      child: Text(item['name']!),
                     ))
                 .toList(),
             onChanged: onChanged,
@@ -349,7 +357,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       children: [
         Text(label, style: const TextStyle(fontSize: 16)),
         const SizedBox(height: 10),
-        InkWell(
+        GestureDetector(
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(
@@ -361,15 +369,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               borderRadius: BorderRadius.circular(20),
               color: Colors.white,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  hint,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const Icon(Icons.calendar_today, color: Colors.grey),
-              ],
+            child: Text(
+              hint,
+              style: TextStyle(
+                color: hint == 'Select Date' ? Colors.grey : Colors.black,
+              ),
             ),
           ),
         ),
