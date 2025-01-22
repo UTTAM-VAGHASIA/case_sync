@@ -75,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
             await SharedPrefService.saveUser(advocate);
           }
 
-          // Navigate to the home screen
           Get.offAll(() => const HomeScreen());
         } else {
           // Handle login failure
