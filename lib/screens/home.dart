@@ -12,6 +12,7 @@ import 'cases/case_history.dart';
 import 'cases/new_case.dart';
 import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
+import 'interns/advocate_list.dart';
 import 'interns/assigned_case_taskInfo.dart';
 import 'interns/intern_list.dart';
 import 'interns/tasks.dart';
@@ -218,6 +219,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               cardIconPositionY,
                               cardTextPositionY,
                               InternListScreen(),
+                            ),
+                            _buildCard(
+                              'Advocate List',
+                              'assets/icons/intern_list.svg',
+                              cardWidth,
+                              cardHeight,
+                              cardIconPositionX,
+                              cardIconPositionY,
+                              cardTextPositionY,
+                              AdvocateListScreen(),
                             ),
                             _buildCard(
                               'Tasks',
