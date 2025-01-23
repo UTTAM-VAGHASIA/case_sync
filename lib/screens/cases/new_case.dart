@@ -356,185 +356,190 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
-
-    return Scaffold(
-      backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
-      appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
-        elevation: 0,
-        leadingWidth: 56 + 30,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/back_arrow.svg',
-            width: 35,
-            height: 35,
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Colors.black,
           ),
-          onPressed: () {
-            Get.back();
-          },
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Center(
-                  child: Text(
-                    'New Case',
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.06),
-                _buildTextField(
-                    'Case Number', 'Case Number', _caseNumberController,
-                    validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the Case Number';
-                  }
-                  return null;
-                }),
-                _buildTextField('Case Year', 'Case Year', _caseYearController,
-                    validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the Case Year';
-                  }
-                  return null;
-                }),
-                _buildDropdownField(
-                  'Case Type',
-                  'Select Case Type',
-                  _caseTypeList,
-                  _selectedCaseType,
-                  (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedCaseType = value;
-                        _selectedCaseStage = null;
-                        _caseStageList = [];
-                        _getCaseStageList(value);
-                      });
-                    }
-                  },
-                ),
-                _buildDropdownField('Case Stage', 'Select Case Stage',
-                    _caseStageList, _selectedCaseStage, (value) {
-                  setState(() {
-                    _selectedCaseStage = value;
-                  });
-                }),
-                _buildDropdownField(
-                  'Handled By',
-                  'Select Advocate',
-                  _advocateList,
-                  _selectedHandler,
-                  (value) {
-                    setState(() {
-                      _selectedHandler = value;
-                    });
-                  },
-                ),
-                _buildDropdownField('Company Name', 'Select Company',
-                    _companyList, _selectedCompany, (value) {
-                  setState(() {
-                    _selectedCompany = value;
-                  });
-                }),
-                _buildTextField('Applicant / Appellant / Complainant',
-                    'Enter Name', _applicantController, validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the name';
-                  }
-                  return null;
-                }),
-                _buildTextField('Opponent / Respondent / Accused', 'Enter Name',
-                    _opponentController, validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the name';
-                  }
-                  return null;
-                }),
-                _buildDropdownField('Court Name', 'Select Court Name',
-                    _courtList, _selectedCourtName, (value) {
-                  setState(() {
-                    _selectedCourtName = value;
-                  });
-                }),
-                _buildDropdownField(
-                    'City Name', 'Select City', _cityList, _selectedCityName,
-                    (value) {
-                  setState(() {
-                    _selectedCityName = value;
-                  });
-                }),
-                _buildDateField(
-                    'Summon Date',
-                    'Select Summon Date',
-                    _summonDateController,
-                    () => _selectDate(context), validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select Summon Date';
-                  }
-                  return null;
-                }),
-                _buildFilePickerField(
-                    'Attach Documents', 'Attach Documents', _pickDocuments),
-                const SizedBox(height: 10),
-                if (_fileNames.isNotEmpty)
-                  ..._fileNames
-                      .map((fileName) => Padding(
-                            padding: const EdgeInsets.only(bottom: 5),
-                            child: Text(fileName),
-                          ))
-                      .toList(),
-                SizedBox(height: screenHeight * 0.05),
-                Center(
-                  child: SizedBox(
-                    width: screenWidth * 0.5,
-                    height: 70,
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitCase,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
+      );
+    } else {
+      return Scaffold(
+        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        appBar: AppBar(
+          surfaceTintColor: Colors.transparent,
+          backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+          elevation: 0,
+          leadingWidth: 56 + 30,
+          leading: IconButton(
+            icon: SvgPicture.asset(
+              'assets/icons/back_arrow.svg',
+              width: 35,
+              height: 35,
+            ),
+            onPressed: () {
+              Get.back();
+            },
+          ),
+        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Center(
+                    child: Text(
+                      'New Case',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        height: 1.2,
                       ),
-                      child: _isSubmitting
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              'Register',
-                              style: TextStyle(
-                                fontSize: 22,
-                                color: Colors.white,
-                              ),
-                            ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                ),
-                const SizedBox(height: 80),
-              ],
+                  SizedBox(height: screenHeight * 0.06),
+                  _buildTextField(
+                      'Case Number', 'Case Number', _caseNumberController,
+                      validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the Case Number';
+                    }
+                    return null;
+                  }),
+                  _buildTextField('Case Year', 'Case Year', _caseYearController,
+                      validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the Case Year';
+                    }
+                    return null;
+                  }),
+                  _buildDropdownField(
+                    'Case Type',
+                    'Select Case Type',
+                    _caseTypeList,
+                    _selectedCaseType,
+                    (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedCaseType = value;
+                          _selectedCaseStage = null;
+                          _caseStageList = [];
+                          _getCaseStageList(value);
+                        });
+                      }
+                    },
+                  ),
+                  _buildDropdownField('Case Stage', 'Select Case Stage',
+                      _caseStageList, _selectedCaseStage, (value) {
+                    setState(() {
+                      _selectedCaseStage = value;
+                    });
+                  }),
+                  _buildDropdownField(
+                    'Handled By',
+                    'Select Advocate',
+                    _advocateList,
+                    _selectedHandler,
+                    (value) {
+                      setState(() {
+                        _selectedHandler = value;
+                      });
+                    },
+                  ),
+                  _buildDropdownField('Company Name', 'Select Company',
+                      _companyList, _selectedCompany, (value) {
+                    setState(() {
+                      _selectedCompany = value;
+                    });
+                  }),
+                  _buildTextField('Applicant / Appellant / Complainant',
+                      'Enter Name', _applicantController, validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the name';
+                    }
+                    return null;
+                  }),
+                  _buildTextField('Opponent / Respondent / Accused',
+                      'Enter Name', _opponentController, validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the name';
+                    }
+                    return null;
+                  }),
+                  _buildDropdownField('Court Name', 'Select Court Name',
+                      _courtList, _selectedCourtName, (value) {
+                    setState(() {
+                      _selectedCourtName = value;
+                    });
+                  }),
+                  _buildDropdownField(
+                      'City Name', 'Select City', _cityList, _selectedCityName,
+                      (value) {
+                    setState(() {
+                      _selectedCityName = value;
+                    });
+                  }),
+                  _buildDateField(
+                      'Summon Date',
+                      'Select Summon Date',
+                      _summonDateController,
+                      () => _selectDate(context), validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select Summon Date';
+                    }
+                    return null;
+                  }),
+                  _buildFilePickerField(
+                      'Attach Documents', 'Attach Documents', _pickDocuments),
+                  const SizedBox(height: 10),
+                  if (_fileNames.isNotEmpty)
+                    ..._fileNames
+                        .map((fileName) => Padding(
+                              padding: const EdgeInsets.only(bottom: 5),
+                              child: Text(fileName),
+                            ))
+                        .toList(),
+                  SizedBox(height: screenHeight * 0.05),
+                  Center(
+                    child: SizedBox(
+                      width: screenWidth * 0.5,
+                      height: 70,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitCase,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                'Register',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Widget _buildTextField(

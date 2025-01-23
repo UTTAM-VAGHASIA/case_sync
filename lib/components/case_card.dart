@@ -1,9 +1,8 @@
-import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:flutter/material.dart';
 
 import '../models/case_list.dart';
-import '../screens/cases/caseinfo.dart';
+import '../screens/cases/case_info.dart';
 
 class CaseCard extends StatelessWidget {
   final CaseListData caseItem;

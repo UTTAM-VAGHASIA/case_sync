@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../models/case_list.dart';
-import 'add_tasks.dart';
 
 class AssignedCaseTaskinfo extends StatefulWidget {
   const AssignedCaseTaskinfo({Key? key}) : super(key: key);
@@ -100,6 +99,7 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
         title: const Text("Select Case",
             style: TextStyle(
                 color: Colors.black,
@@ -129,7 +129,10 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : Column(
               children: [
                 if (_isSearching)

@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'package:case_sync/screens/cases/caseinfo.dart';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+import '../../components/case_card.dart'; // Import CaseCard widget
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart'; // Import CaseListData model
-import '../../components/case_card.dart'; // Import CaseCard widget
 
 class UnassignedCases extends StatefulWidget {
   const UnassignedCases({Key? key}) : super(key: key);
@@ -60,7 +61,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                       id: caseItem['id']?.toString() ?? '',
                       caseNo: caseItem['case_no']?.toString() ?? '',
                       applicant: caseItem['applicant']?.toString() ?? 'N/A',
-                      opponent: caseItem['opponent']?.toString() ?? 'N/A',
+                      opponent: caseItem['opp_name']?.toString() ?? 'N/A',
                       courtName: caseItem['court_name']?.toString() ?? 'N/A',
                       cityName: caseItem['city_name']?.toString() ?? 'N/A',
                       srDate: DateTime.parse(caseItem['sr_date']),
@@ -186,7 +187,10 @@ class _UnassignedCasesState extends State<UnassignedCases> {
           if (_isSearching) _buildSearchBar(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : _filteredCases.isEmpty
                     ? const Center(child: Text('No cases found.'))
                     : ListView.builder(

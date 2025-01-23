@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -49,7 +50,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
   }
 
-  // tulsi--200, jasmine--300, neem--1000, yellow elder--1000, ajma--300
   @override
   void dispose() {
     _taskInstructionController.dispose();
@@ -101,7 +101,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.year}/${picked.month}/${picked.day}";
+        final date = "${picked.day}/${picked.month}/${picked.year}";
         if (isEndDate) {
           _expectedEndDate = date;
         } else {
@@ -173,6 +173,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F3F3),
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
         backgroundColor: const Color(0xFFF3F3F3),
         elevation: 0,
         leading: IconButton(
@@ -266,6 +267,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 60),
           ],
         ),
       ),
@@ -369,11 +371,17 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               borderRadius: BorderRadius.circular(20),
               color: Colors.white,
             ),
-            child: Text(
-              hint,
-              style: TextStyle(
-                color: hint == 'Select Date' ? Colors.grey : Colors.black,
-              ),
+            child: Row(
+              children: [
+                Text(
+                  hint,
+                  style: TextStyle(
+                    color: hint == 'Select Date' ? Colors.grey : Colors.black,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(Icons.calendar_today),
+              ],
             ),
           ),
         ),

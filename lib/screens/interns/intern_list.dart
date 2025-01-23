@@ -1,4 +1,5 @@
 import 'dart:convert'; // For JSON decoding
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
@@ -107,7 +108,10 @@ class _InternListScreenState extends State<InternListScreen> {
           ),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16.0),
                     itemCount: interns.length,

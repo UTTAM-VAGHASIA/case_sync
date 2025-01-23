@@ -1,9 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
-import '../appbar/settings_drawer.dart';
 import 'add_companies.dart';
 
 class CompaniesScreen extends StatefulWidget {
@@ -81,25 +81,6 @@ class CompaniesScreenState extends State<CompaniesScreen> {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/settings.svg',
-                width: 35,
-                height: 35,
-              ),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
-                  builder: (context) => const SettingsDrawer(),
-                );
-              },
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -126,7 +107,10 @@ class CompaniesScreenState extends State<CompaniesScreen> {
           // Body
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16.0),
                     itemCount: companies.length,

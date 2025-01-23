@@ -14,7 +14,6 @@ import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
 import 'interns/assigned_case_taskInfo.dart';
 import 'interns/intern_list.dart';
-import 'interns/tasks.dart';
 import 'officials/new_advocate.dart';
 import 'officials/new_intern.dart';
 
@@ -105,7 +104,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 future: SharedPrefService.getUser(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const CircularProgressIndicator(
+                      color: Colors.black,
+                    );
                   } else if (snapshot.hasError) {
                     return const Text('Error loading user data');
                   } else if (snapshot.hasData && snapshot.data != null) {

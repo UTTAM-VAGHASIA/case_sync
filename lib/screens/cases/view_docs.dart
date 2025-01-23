@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -133,7 +134,10 @@ class _ViewDocsState extends State<ViewDocs> {
         backgroundColor: Colors.blueAccent,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : _errorMessage.isNotEmpty
               ? Center(child: Text(_errorMessage))
               : ListView.builder(
@@ -180,6 +184,7 @@ class _ViewDocsState extends State<ViewDocs> {
                                         }
                                         return Center(
                                           child: CircularProgressIndicator(
+                                            color: Colors.black,
                                             value: loadingProgress
                                                         .expectedTotalBytes !=
                                                     null
