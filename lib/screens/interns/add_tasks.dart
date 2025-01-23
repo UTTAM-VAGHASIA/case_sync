@@ -158,7 +158,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       } else {
         _showErrorSnackBar(
             "Failed to add task: ${decodedResponse['message'] ?? response.statusCode}");

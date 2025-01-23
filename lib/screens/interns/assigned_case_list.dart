@@ -7,14 +7,14 @@ import 'package:http/http.dart' as http;
 
 import '../../models/case_list.dart';
 
-class AssignedCaseTaskinfo extends StatefulWidget {
-  const AssignedCaseTaskinfo({Key? key}) : super(key: key);
+class AssignedCaseList extends StatefulWidget {
+  const AssignedCaseList({super.key});
 
   @override
-  State<AssignedCaseTaskinfo> createState() => _AssignedCaseTaskinfoState();
+  State<AssignedCaseList> createState() => _AssignedCaseListState();
 }
 
-class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
+class _AssignedCaseListState extends State<AssignedCaseList> {
   bool _isLoading = true;
   List<CaseListData> _assignedCases = [];
   bool _isSearching = false;
