@@ -1,8 +1,8 @@
 import 'dart:convert'; // For JSON decoding
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
-import 'package:intl/intl.dart'; // For date formatting
 
 class AdvocateListScreen extends StatefulWidget {
   const AdvocateListScreen({super.key});
@@ -35,7 +35,8 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
             isLoading = false;
           });
         } else {
-          throw Exception(responseBody['message'] ?? 'Failed to load advocates');
+          throw Exception(
+              responseBody['message'] ?? 'Failed to load advocates');
         }
       } else {
         throw Exception('Failed to load advocates');
@@ -72,7 +73,8 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
         children: [
           Container(
             color: const Color(0xFFF3F3F3),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
@@ -89,24 +91,27 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
           ),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: advocates.length,
-              itemBuilder: (context, index) {
-                final advocate = advocates[index];
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: advocates.length,
+                    itemBuilder: (context, index) {
+                      final advocate = advocates[index];
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: AdvocateCard(
-                    id: advocate['id'].toString(),
-                    name: advocate['name'] ?? 'N/A',
-                    contact: advocate['contact'] ?? 'N/A',
-                    email: advocate['email'] ?? 'N/A',
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(),
+                        child: AdvocateCard(
+                          id: advocate['id'].toString(),
+                          name: advocate['name'],
+                          contact: advocate['contact'],
+                          email: advocate['email'],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -133,41 +138,36 @@ class AdvocateCard extends StatelessWidget {
     return Card(
       color: Colors.white, // Set card background to white
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Colors.grey, width: 1),
-        borderRadius: BorderRadius.circular(10.0),
+        side: const BorderSide(color: Colors.black, width: 1),
+        borderRadius: BorderRadius.circular(20.0),
       ),
       elevation: 3, // Adds shadow effect
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left section: ID, name, and placeholder details
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                  ),
-                ),
-                const SizedBox(height: 4.0),
-                Text(
-                  '+91 $contact',
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                  ),
-                ),
-                const SizedBox(height: 4.0),
-                Text(
-                  email, // Displaying email dynamically
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                  ),
-                ),
-              ],
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 14.0,
+              ),
             ),
+            const SizedBox(height: 10.0),
+            Text(
+              'Contact No.: +91 $contact',
+              style: const TextStyle(
+                fontSize: 14.0,
+              ),
+            ),
+            const SizedBox(height: 5.0),
+            Text(
+              'Email: $email', // Displaying email dynamically
+              style: const TextStyle(
+                fontSize: 14.0,
+              ),
+            ),
+            const SizedBox(height: 5.0),
           ],
         ),
       ),
