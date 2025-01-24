@@ -13,8 +13,7 @@ class TasksPage extends StatefulWidget {
   final String caseId;
   final String caseNumber;
 
-  const TasksPage({required this.caseId, Key? key, required this.caseNumber})
-      : super(key: key);
+  const TasksPage({required this.caseId, super.key, required this.caseNumber});
 
   @override
   State<TasksPage> createState() => _TasksPageState();

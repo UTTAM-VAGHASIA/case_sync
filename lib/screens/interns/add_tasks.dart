@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../../models/advocate.dart';
 import '../../services/shared_pref.dart';
 
@@ -175,6 +176,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.caseNumber);
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -197,7 +199,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             children: [
               const Center(
                 child: Text(
-                  'Add\nTask',
+                  'Add Task',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -375,7 +377,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               horizontal: 20,
             ),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Colors.black),
               borderRadius: BorderRadius.circular(20),
               color: Colors.white,
             ),
