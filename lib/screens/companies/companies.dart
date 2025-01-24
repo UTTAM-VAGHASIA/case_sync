@@ -17,7 +17,6 @@ class CompaniesScreenState extends State<CompaniesScreen> {
   List<Map<String, dynamic>> companies = [];
   bool isLoading = true;
 
-  // API URL
   final String apiUrl =
       "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_company_list";
 
@@ -34,16 +33,15 @@ class CompaniesScreenState extends State<CompaniesScreen> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData['success'] == true) {
-          // Transform API data into a usable list format
           final List<dynamic> data = responseData['data'];
           setState(() {
             companies = data
                 .map((company) => {
-                      'company': '#${company['id']}',
-                      'name': company['name'],
-                      'contact_person': company['contact_person'],
-                      'phone': company['contact_no'],
-                    })
+              'company': '#${company['id']}',
+              'name': company['name'],
+              'contact_person': company['contact_person'],
+              'phone': company['contact_no'],
+            })
                 .toList();
             isLoading = false;
           });
@@ -84,11 +82,10 @@ class CompaniesScreenState extends State<CompaniesScreen> {
       ),
       body: Column(
         children: [
-          // Title below the AppBar
           Container(
             color: const Color(0xFFF3F3F3),
             padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
@@ -103,73 +100,75 @@ class CompaniesScreenState extends State<CompaniesScreen> {
               ],
             ),
           ),
-
-          // Body
           Expanded(
             child: isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                    color: Colors.black,
-                  ))
+                child: CircularProgressIndicator(
+                  color: Colors.black,
+                ))
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: companies.length,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                          side: BorderSide(width: 1, color: Colors.black),
-                        ),
-                        elevation: 2,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${companies[index]['name']!}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    'Contact Person: ${companies[index]['contact_person']!}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    'Contact No.: +91 ${companies[index]['phone']!}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+              padding: const EdgeInsets.all(16.0),
+              itemCount: companies.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                    side: BorderSide(width: 1, color: Colors.black),
                   ),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${companies[index]['name']!}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Contact Person: ${companies[index]['contact_person']!}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Contact No.: +91 ${companies[index]['phone']!}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddCompanyScreen()),
           );
+
+          if (result == true) {
+            fetchCompanies(); // Refresh company list
+          }
         },
         child: const Icon(Icons.add),
         backgroundColor: Colors.black,

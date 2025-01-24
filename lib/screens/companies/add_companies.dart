@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-import 'companies.dart';
+import '../../utils/validator.dart';
 
 class AddCompanyScreen extends StatefulWidget {
   const AddCompanyScreen({super.key});
@@ -26,52 +25,45 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
   }
 
   Future<void> _registerCompany() async {
+    String companyName = _companyNameController.text.trim();
+    String contactPerson = _contactPersonController.text.trim();
+    String contact = _contactController.text.trim();
+
+    _companyNameController.text = companyName;
+    _contactPersonController.text = contactPerson;
+    _contactController.text = contact;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Collect form input
-    String companyName = _companyNameController.text;
-    String contactPerson = _contactPersonController.text;
-    String contact = _contactController.text;
-
     try {
-      // API URL
       final url = Uri.parse(
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_company');
-
-      // Create a multipart request
       var request = http.MultipartRequest('POST', url);
 
-      // Add fields as form data
       request.fields['data'] = jsonEncode({
         "name": companyName,
         "contact_person": contactPerson,
         "contact_no": contact,
       });
 
-      // Send the request
       final response = await request.send();
-
-      // Handle the response
       final responseBody = await response.stream.bytesToString();
 
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: $responseBody');
-
       if (response.statusCode == 200) {
-        // Decode the response body
         final responseData = jsonDecode(responseBody);
-
         if (responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData['message'])),
           );
 
-          // Clear the input fields
           _companyNameController.clear();
           _contactPersonController.clear();
           _contactController.clear();
+
+          // Pass true back to the previous screen
+          Navigator.pop(context, true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed: ${responseData['message']}')),
@@ -86,8 +78,6 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $error')),
       );
-    } finally {
-      Navigator.pop(context);
     }
   }
 
@@ -105,8 +95,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => CompaniesScreen()));
+            Navigator.pop(context);
           },
         ),
       ),
@@ -136,10 +125,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                   'Company Name',
                   _companyNameController,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Company Name is required';
-                    }
-                    return null;
+                    return validateTrimmedField(value, 'Company Name');
                   },
                 ),
                 _buildTextField(
@@ -147,10 +133,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                   'Contact Person',
                   _contactPersonController,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Contact Person is required';
-                    }
-                    return null;
+                    return validateTrimmedField(value, 'Contact Person');
                   },
                 ),
                 _buildTextField(
@@ -159,12 +142,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                   _contactController,
                   keyboardType: TextInputType.phone,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Contact No. is required';
-                    } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
-                      return 'Enter a valid 10-digit phone number';
-                    }
-                    return null;
+                    return validateAndTrimPhoneNumber(value);
                   },
                 ),
                 SizedBox(height: screenHeight * 0.05),
@@ -199,12 +177,12 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
   }
 
   Widget _buildTextField(
-    String label,
-    String hintText,
-    TextEditingController controller, {
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
+      String label,
+      String hintText,
+      TextEditingController controller, {
+        TextInputType keyboardType = TextInputType.text,
+        String? Function(String?)? validator,
+      }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -216,7 +194,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
             ),

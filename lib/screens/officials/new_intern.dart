@@ -1,9 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import '../../utils/validator.dart'; // Import validators file
 
 class NewInternScreen extends StatefulWidget {
   const NewInternScreen({super.key});
@@ -14,15 +14,23 @@ class NewInternScreen extends StatefulWidget {
 
 class _NewInternScreenState extends State<NewInternScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _contactNumberController =
-      TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _joiningDateController = TextEditingController();
-  bool _isPasswordVisible = false; // Track password visibility
+  final _nameController = TextEditingController();
+  final _contactNumberController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _joiningDateController = TextEditingController();
+  bool _isPasswordVisible = false;
   bool _isLoading = false;
-  String _errorMessage = '';
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _contactNumberController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _joiningDateController.dispose();
+    super.dispose();
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     DateTime? selectedDate = await showDatePicker(
@@ -35,7 +43,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
     if (selectedDate != null) {
       String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate);
       setState(() {
-        _joiningDateController.text = formattedDate; // Display formatted date
+        _joiningDateController.text = formattedDate;
       });
     }
   }
@@ -47,25 +55,19 @@ class _NewInternScreenState extends State<NewInternScreen> {
 
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
 
-    // Collect form input
-    String name = _nameController.text;
-    String contact = _contactNumberController.text;
-    String email = _emailController.text;
-    String password = _passwordController.text;
-    String startDate = _joiningDateController.text;
+    String name = _nameController.text.trim();
+    String contact = _contactNumberController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+    String startDate = _joiningDateController.text.trim();
 
     try {
-      // API URL
       final url = Uri.parse(
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/intern_registration');
 
-      // Create a multipart request
       var request = http.MultipartRequest('POST', url);
-
-      // Add fields as form data
       request.fields['data'] = jsonEncode({
         "name": name,
         "contact": contact,
@@ -74,25 +76,17 @@ class _NewInternScreenState extends State<NewInternScreen> {
         "start_date": startDate,
       });
 
-      // Send the request
       final response = await request.send();
-
-      // Handle the response
       final responseBody = await response.stream.bytesToString();
 
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: $responseBody');
-
       if (response.statusCode == 200) {
-        // Decode the response body
         final responseData = jsonDecode(responseBody);
-
         if (responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Intern registered successfully!')),
           );
 
-          // Clear the input fields
+          _formKey.currentState?.reset();
           _nameController.clear();
           _contactNumberController.clear();
           _emailController.clear();
@@ -121,255 +115,174 @@ class _NewInternScreenState extends State<NewInternScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        leadingWidth: 56 + 30,
         leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/back_arrow.svg',
-            width: 35,
-            height: 35,
-          ),
+          icon: SvgPicture.asset('assets/icons/back_arrow.svg', width: 35),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
+            children: [
               Center(
                 child: Text(
                   'Register Intern',
-                  style: TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 38, fontWeight: FontWeight.w900),
                 ),
               ),
-              SizedBox(height: 30),
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    // Name Label and Input Field
-                    Text('Name', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 5),
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        hintText: 'Intern name',
-                        hintStyle: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black38,
-                        ),
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter intern name';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
-
-                    // Contact Number Label and Input Field
-                    Text('Contact number', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 5),
-                    TextFormField(
-                      controller: _contactNumberController,
-                      decoration: InputDecoration(
-                        hintText: '+91 XXXXXXXXXX',
-                        hintStyle: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black38,
-                        ),
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter contact number';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
-
-                    // Email Label and Input Field
-                    Text('Email', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 5),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        hintText: 'example@gmail.com',
-                        hintStyle: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black38,
-                        ),
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter email';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
-
-                    // Password Label and Input Field
-                    Text('Password', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 5),
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        hintText: 'must be 8 characters',
-                        hintStyle: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black38,
-                        ),
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                      obscureText: !_isPasswordVisible,
-                      validator: (value) {
-                        if (value == null || value.length < 8) {
-                          return 'Password must be at least 8 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 20),
-
-                    // Joining Date Label and Input Field
-                    Text('Joining Date', style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 5),
-                    TextFormField(
-                      controller: _joiningDateController,
-                      decoration: InputDecoration(
-                        hintText: 'DD/MM/YYYY',
-                        hintStyle: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Colors.black38,
-                        ),
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(Icons.calendar_today),
-                          onPressed: () {
-                            _selectDate(context);
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter joining date';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 30),
-
-                    // Register Button
-                    // SizedBox(
-                    //   width: screenWidth * 0.5,
-                    //   child: ElevatedButton(
-                    //     onPressed: _registerIntern,
-                    //     style: ElevatedButton.styleFrom(
-                    //       backgroundColor: Colors.black,
-                    //       padding: EdgeInsets.symmetric(vertical: 15),
-                    //       textStyle: TextStyle(fontSize: 18),
-                    //       shape: RoundedRectangleBorder(
-                    //         borderRadius: BorderRadius.circular(12),
-                    //       ),
-                    //     ),
-                    //     child: Text(
-                    //       'Register',
-                    //       style: TextStyle(color: Colors.white),
-                    //     ),
-                    //   ),
-                    // ),
-                    Center(
-                      child: SizedBox(
-                        width: screenWidth * 0.5,
-                        height: 70,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _registerIntern,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  'Register',
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                        ),
+              const SizedBox(height: 30),
+              _buildTextField('Name', 'Intern name', _nameController),
+              _buildTextField(
+                'Contact number',
+                '+91 XXXXXXXXXX',
+                _contactNumberController,
+                keyboardType: TextInputType.phone,
+                additionalValidator: validatePhoneNumber,
+              ),
+              _buildTextField(
+                'Email',
+                'example@gmail.com',
+                _emailController,
+                keyboardType: TextInputType.emailAddress,
+                additionalValidator: validateEmail,
+              ),
+              _buildPasswordField(),
+              _buildDateField('Joining Date', 'DD/MM/YYYY'),
+              const SizedBox(height: 30),
+              Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  height: 70,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _registerIntern,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
                       ),
                     ),
-                  ],
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      'Register',
+                      style: TextStyle(fontSize: 22, color: Colors.white),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(String label, String hintText,
+      TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text,
+        String? Function(String?)? additionalValidator}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: (value) {
+            String? result = validateAndTrimField(value, label);
+            if (result != null) return result;
+            if (additionalValidator != null) return additionalValidator(value);
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Password', style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _passwordController,
+          obscureText: !_isPasswordVisible,
+          decoration: InputDecoration(
+            hintText: "must be 8 characters",
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordVisible = !_isPasswordVisible;
+                });
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: validatePassword,
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDateField(String label, String hintText) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _joiningDateController,
+          readOnly: true,
+          onTap: () {
+            _selectDate(context);
+          },
+          decoration: InputDecoration(
+            hintText: hintText,
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            suffixIcon: const Icon(Icons.calendar_today),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a joining date';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }
