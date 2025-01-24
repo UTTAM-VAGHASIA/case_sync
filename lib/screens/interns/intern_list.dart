@@ -90,8 +90,7 @@ class _InternListScreenState extends State<InternListScreen> {
         children: [
           Container(
             color: const Color(0xFFF3F3F3),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
@@ -142,7 +141,7 @@ class _InternListScreenState extends State<InternListScreen> {
 
                       // Default to InternCard for interns without case details
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(),
                         child: InternCard(
                           id: intern['id'].toString(),
                           name: intern['name'],
