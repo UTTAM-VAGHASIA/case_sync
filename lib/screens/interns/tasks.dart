@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:case_sync/screens/interns/add_tasks.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -145,13 +145,11 @@ class _TasksPageState extends State<TasksPage> {
 
   void _handleEdit(Map<String, dynamic> task) {
     print("Edit task: ${task['instruction']}");
-    // Add your edit functionality here
   }
 
   void _handleDelete(Map<String, dynamic> task) {
     print("Delete task: ${task['instruction']}");
     _deleteTask(task['id']);
-    // Add your delete functionality here
   }
 
   @override
@@ -190,82 +188,98 @@ class _TasksPageState extends State<TasksPage> {
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(color: Colors.black),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Dismissible(
-                              key: UniqueKey(),
-                              background: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.indigoAccent,
-                                  borderRadius: BorderRadius.circular(14),
+                          // child: ClipRRect(
+                          //   borderRadius: BorderRadius.circular(14),
+                          //   child: Dismissible(
+                          //     key: UniqueKey(),
+                          //     background: Container(
+                          //       decoration: BoxDecoration(
+                          //         color: Colors.indigoAccent,
+                          //         borderRadius: BorderRadius.circular(14),
+                          //       ),
+                          //       alignment: Alignment.centerLeft,
+                          //       padding:
+                          //           const EdgeInsets.symmetric(horizontal: 40),
+                          //       child:
+                          //           const Icon(Icons.edit, color: Colors.white),
+                          //     ),
+                          //     secondaryBackground: Container(
+                          //       decoration: BoxDecoration(
+                          //         color: Colors.red,
+                          //         borderRadius: BorderRadius.circular(14),
+                          //       ),
+                          //       alignment: Alignment.centerRight,
+                          //       padding:
+                          //           const EdgeInsets.symmetric(horizontal: 40),
+                          //       child: const Icon(CupertinoIcons.trash,
+                          //           color: Colors.white),
+                          //     ),
+                          //     confirmDismiss: (direction) async {
+                          //       if (direction == DismissDirection.startToEnd) {
+                          //         _handleEdit(task);
+                          //         return false;
+                          //       } else if (direction ==
+                          //           DismissDirection.endToStart) {
+                          //         final confirm =
+                          //             await showCupertinoDialog<bool>(
+                          //           context: context,
+                          //           builder: (context) => IOSAlertDialog(
+                          //             title: "Delete Task",
+                          //             message:
+                          //                 "Are you sure you want to delete this task?",
+                          //             cancelButtonText: "Cancel",
+                          //             confirmButtonText: "Delete",
+                          //             onConfirm: () {
+                          //               _handleDelete(
+                          //                   task); // Call the delete function
+                          //             },
+                          //           ),
+                          //         );
+                          //         return false; // Prevent the swipe from dismissing
+                          //       }
+                          //       return false;
+                          //     },
+                          // ),
+                          child: DismissibleCard(
+                            child: Container(
+                              color: Colors.white,
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                title: Text(
+                                  "Instruction: ${task['instruction']}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                                alignment: Alignment.centerLeft,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 40),
-                                child:
-                                    const Icon(Icons.edit, color: Colors.white),
-                              ),
-                              secondaryBackground: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                alignment: Alignment.centerRight,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 40),
-                                child: const Icon(CupertinoIcons.trash,
-                                    color: Colors.white),
-                              ),
-                              confirmDismiss: (direction) async {
-                                if (direction == DismissDirection.startToEnd) {
-                                  _handleEdit(task);
-                                  return false;
-                                } else if (direction ==
-                                    DismissDirection.endToStart) {
-                                  _handleDelete(task);
-                                  return false;
-                                }
-                                return false;
-                              },
-                              child: Container(
-                                color: Colors.white,
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
-                                  title: Text(
-                                    "Instruction: ${task['instruction']}",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 5),
+                                    Text("Alloted By: ${task['alloted_by']}"),
+                                    Text(
+                                      "Alloted Date: ${_formatDate(task['alloted_date'])}",
                                     ),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 5),
-                                      Text("Alloted By: ${task['alloted_by']}"),
-                                      Text(
-                                        "Alloted Date: ${_formatDate(task['alloted_date'])}",
-                                      ),
-                                      Text(
-                                        "Expected End Date: ${_formatDate(task['expected_end_date'])}",
-                                      ),
-                                      Text("Status: ${task['status']}"),
-                                    ],
-                                  ),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            TaskInfoPage(task: task),
-                                      ),
-                                    );
-                                  },
+                                    Text(
+                                      "Expected End Date: ${_formatDate(task['expected_end_date'])}",
+                                    ),
+                                    Text("Status: ${task['status']}"),
+                                  ],
                                 ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          TaskInfoPage(task: task),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
+                            onEdit: () => _handleEdit,
+                            onDelete: () => _handleDelete,
                           ),
                         ),
                       );
