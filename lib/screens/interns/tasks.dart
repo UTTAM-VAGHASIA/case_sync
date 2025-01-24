@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:case_sync/screens/interns/add_tasks.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -68,8 +69,6 @@ class _TasksPageState extends State<TasksPage> {
         _isLoading = false;
       });
     }
-    print("######################################################33");
-    print(caseDetails['case_type']);
   }
 
   @override
@@ -114,9 +113,46 @@ class _TasksPageState extends State<TasksPage> {
     }
   }
 
+  Future<void> _deleteTask(String taskId) async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_task');
+      final response = await http.post(url, body: {'task_id': taskId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _tasks.removeWhere((task) => task['id'] == taskId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Task deleted successfully.")),
+          );
+        } else {
+          _showError(data['message'] ?? "Failed to delete task.");
+        }
+      } else {
+        _showError("Failed to delete task.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    }
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _handleEdit(Map<String, dynamic> task) {
+    print("Edit task: ${task['instruction']}");
+    // Add your edit functionality here
+  }
+
+  void _handleDelete(Map<String, dynamic> task) {
+    print("Delete task: ${task['instruction']}");
+    _deleteTask(task['id']);
+    // Add your delete functionality here
   }
 
   @override
@@ -150,52 +186,93 @@ class _TasksPageState extends State<TasksPage> {
                       final task = _tasks[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              side: BorderSide(
-                                width: 1,
-                                color: Colors.black,
-                              )),
-                          child: ListTile(
-                            title: Text(
-                              "Instruction: ${task['instruction']}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.black),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Dismissible(
+                              key: UniqueKey(),
+                              background: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.indigoAccent,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                alignment: Alignment.centerLeft,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 40),
+                                child:
+                                    const Icon(Icons.edit, color: Colors.white),
+                              ),
+                              secondaryBackground: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                alignment: Alignment.centerRight,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 40),
+                                child: const Icon(CupertinoIcons.trash,
+                                    color: Colors.white),
+                              ),
+                              confirmDismiss: (direction) async {
+                                if (direction == DismissDirection.startToEnd) {
+                                  _handleEdit(task);
+                                  return false;
+                                } else if (direction ==
+                                    DismissDirection.endToStart) {
+                                  _handleDelete(task);
+                                  return false;
+                                }
+                                return false;
+                              },
+                              child: Container(
+                                color: Colors.white,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  title: Text(
+                                    "Instruction: ${task['instruction']}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 5),
+                                      Text("Alloted By: ${task['alloted_by']}"),
+                                      Text(
+                                        "Alloted Date: ${_formatDate(task['alloted_date'])}",
+                                      ),
+                                      Text(
+                                        "Expected End Date: ${_formatDate(task['expected_end_date'])}",
+                                      ),
+                                      Text("Status: ${task['status']}"),
+                                    ],
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            TaskInfoPage(task: task),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 5),
-                                Text("Alloted By: ${task['alloted_by']}"),
-                                Text(
-                                  "Alloted Date: ${_formatDate(task['alloted_date'])}",
-                                ),
-                                Text(
-                                  "Expected End Date: ${_formatDate(task['expected_end_date'])}",
-                                ),
-                                Text("Status: ${task['status']}"),
-                              ],
-                            ),
-                            onTap: () {
-                              // Navigate to TaskInfoPage when the task is tapped
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      TaskInfoPage(task: task),
-                                ),
-                              );
-                            },
                           ),
                         ),
                       );
                     },
                   ),
                 ),
-      // Add the floating action button here
       floatingActionButton: ElevatedButton(
         style: AppTheme.elevatedButtonStyle, // Use the style from AppTheme
         onPressed: () async {
