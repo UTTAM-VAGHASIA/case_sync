@@ -13,7 +13,7 @@ import 'cases/new_case.dart';
 import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
 import 'interns/advocate_list.dart';
-import 'interns/assigned_case_taskInfo.dart';
+import 'interns/assigned_case_list.dart';
 import 'interns/intern_list.dart';
 import 'interns/tasks.dart';
 import 'officials/new_advocate.dart';
