@@ -8,8 +8,10 @@ import 'package:intl/intl.dart';
 
 class CaseInfoPage extends StatefulWidget {
   final String caseId;
+  final String caseNo;
 
-  const CaseInfoPage({Key? key, required this.caseId}) : super(key: key);
+  const CaseInfoPage({Key? key, required this.caseId, required this.caseNo})
+      : super(key: key);
 
   @override
   _CaseInfoPageState createState() => _CaseInfoPageState();
@@ -33,6 +35,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
       final url = Uri.parse(
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
       final response = await http.post(url, body: {'case_id': widget.caseId});
+      print("Case Id: ${widget.caseId}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -102,7 +105,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
           },
         ),
         title: Text(
-          'Case No. ${_caseDetails['case_no'] ?? 'Unknown'}',
+          'Case No: ${widget.caseNo}',
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,

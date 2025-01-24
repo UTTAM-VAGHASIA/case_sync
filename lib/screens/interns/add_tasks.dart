@@ -24,10 +24,12 @@ class AddTaskScreen extends StatefulWidget {
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _advocateName;
-  String? _advocateid;
+  String? _advocateId;
   String? _assignedTo;
-  String? _assignDate;
-  String? _expectedEndDate;
+  String? _assignDateDisplay;
+  String? _expectedEndDateDisplay;
+  String? _assignDateApi;
+  String? _expectedEndDateApi;
   final _taskInstructionController = TextEditingController();
 
   List<Map<String, String>> _internList = [];
@@ -46,7 +48,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
     setState(() {
       _advocateName = user.name;
-      _advocateid = user.id;
+      _advocateId = user.id;
     });
   }
 
@@ -102,10 +104,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     if (picked != null) {
       setState(() {
         final date = "${picked.day}/${picked.month}/${picked.year}";
+        final apiDate =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
         if (isEndDate) {
-          _expectedEndDate = date;
+          _expectedEndDateDisplay = date;
+          _expectedEndDateApi = apiDate;
         } else {
-          _assignDate = date;
+          _assignDateDisplay = date;
+          _assignDateApi = apiDate;
         }
       });
     }
@@ -115,8 +121,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     if (_advocateName == null ||
         _assignedTo == null ||
         _taskInstructionController.text.isEmpty ||
-        _assignDate == null ||
-        _expectedEndDate == null) {
+        _assignDateDisplay == null ||
+        _expectedEndDateDisplay == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill out all fields"),
@@ -135,9 +141,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         "case_id": widget.caseId,
         "alloted_to": _assignedTo,
         "instructions": _taskInstructionController.text,
-        "alloted_by": _advocateid,
-        "alloted_date": _assignDate,
-        "expected_end_date": _expectedEndDate,
+        "alloted_by": _advocateId,
+        "alloted_date": _assignDateApi,
+        "expected_end_date": _expectedEndDateApi,
         "status": "pending",
         "remark": "Some remark",
       });
@@ -170,105 +176,108 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
-      appBar: AppBar(
-        surfaceTintColor: Colors.transparent,
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
         backgroundColor: const Color(0xFFF3F3F3),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        appBar: AppBar(
+          surfaceTintColor: Colors.transparent,
+          backgroundColor: const Color(0xFFF3F3F3),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Center(
-              child: Text(
-                'Add\nTask',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 30),
-            _buildTextField(
-              label: 'Case Number',
-              hint: widget.caseNumber,
-              controller: TextEditingController(text: widget.caseNumber),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Case Type',
-              hint: widget.caseType,
-              controller: TextEditingController(text: widget.caseType),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Assigned by',
-              hint: _advocateid ?? '',
-              controller: TextEditingController(text: _advocateName ?? ''),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            _buildDropdownField(
-              label: 'Assign to',
-              hint: 'Select Intern',
-              value: _assignedTo,
-              items: _internList,
-              onChanged: (value) => setState(() => _assignedTo = value),
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Task Instruction',
-              hint: 'Instructions',
-              controller: _taskInstructionController,
-            ),
-            const SizedBox(height: 20),
-            _buildDateField(
-              label: 'Assign Date',
-              hint: _assignDate ?? 'Select Date',
-              onTap: () => _selectDate(context, false),
-            ),
-            const SizedBox(height: 20),
-            _buildDateField(
-              label: 'Expected End Date',
-              hint: _expectedEndDate ?? 'Select Date',
-              onTap: () => _selectDate(context, true),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: _confirmTask,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text(
-                  'Confirm',
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text(
+                  'Add\nTask',
                   style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 30),
+              _buildTextField(
+                label: 'Case Number',
+                hint: widget.caseNumber,
+                controller: TextEditingController(text: widget.caseNumber),
+                readOnly: true,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Case Type',
+                hint: widget.caseType,
+                controller: TextEditingController(text: widget.caseType),
+                readOnly: true,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Assigned by',
+                hint: _advocateId ?? '',
+                controller: TextEditingController(text: _advocateName ?? ''),
+                readOnly: true,
+              ),
+              const SizedBox(height: 20),
+              _buildDropdownField(
+                label: 'Assign to',
+                hint: 'Select Intern',
+                value: _assignedTo,
+                items: _internList,
+                onChanged: (value) => setState(() => _assignedTo = value),
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Task Instruction',
+                hint: 'Instructions',
+                controller: _taskInstructionController,
+              ),
+              const SizedBox(height: 20),
+              _buildDateField(
+                label: 'Assign Date',
+                hint: _assignDateDisplay ?? 'Select Date',
+                onTap: () => _selectDate(context, false),
+              ),
+              const SizedBox(height: 20),
+              _buildDateField(
+                label: 'Expected End Date',
+                hint: _expectedEndDateDisplay ?? 'Select Date',
+                onTap: () => _selectDate(context, true),
+              ),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: _confirmTask,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Confirm',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 60),
-          ],
+              const SizedBox(height: 60),
+            ],
+          ),
         ),
       ),
     );

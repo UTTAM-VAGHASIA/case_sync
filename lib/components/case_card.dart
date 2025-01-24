@@ -28,7 +28,10 @@ class CaseCard extends StatelessWidget {
                     caseId: caseItem.id,
                     caseNumber: '',
                   )
-                : CaseInfoPage(caseId: caseItem.id),
+                : CaseInfoPage(
+                    caseId: caseItem.id,
+                    caseNo: caseItem.caseNo,
+                  ),
           ),
         );
       },
