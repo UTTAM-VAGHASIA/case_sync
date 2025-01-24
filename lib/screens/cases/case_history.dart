@@ -73,7 +73,6 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
-
   @override
   void dispose() {
     _tabController.dispose();
@@ -265,6 +264,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
 
                   // Wrap ListView with RefreshIndicator
                   return RefreshIndicator(
+                    color: Colors.black,
                     onRefresh: () async {
                       // Reload or update case data here
                       setState(() {

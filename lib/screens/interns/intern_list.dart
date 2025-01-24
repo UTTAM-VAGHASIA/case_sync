@@ -1,4 +1,5 @@
 import 'dart:convert'; // For JSON decoding
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
@@ -59,7 +60,7 @@ class _InternListScreenState extends State<InternListScreen> {
     }
     try {
       DateTime parsedDate = DateTime.parse(dateTime);
-      return DateFormat('d MMMM, yyyy').format(parsedDate);
+      return DateFormat('dd/MM/yyyy').format(parsedDate);
     } catch (e) {
       return "Invalid Date";
     }
@@ -89,8 +90,7 @@ class _InternListScreenState extends State<InternListScreen> {
         children: [
           Container(
             color: const Color(0xFFF3F3F3),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
@@ -107,7 +107,10 @@ class _InternListScreenState extends State<InternListScreen> {
           ),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16.0),
                     itemCount: interns.length,
@@ -138,7 +141,7 @@ class _InternListScreenState extends State<InternListScreen> {
 
                       // Default to InternCard for interns without case details
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(),
                         child: InternCard(
                           id: intern['id'].toString(),
                           name: intern['name'],
@@ -177,8 +180,8 @@ class InternCard extends StatelessWidget {
     return Card(
       color: Colors.white, // Set card background to white
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Colors.grey, width: 1),
-        borderRadius: BorderRadius.circular(10.0),
+        side: const BorderSide(color: Colors.black, width: 1),
+        borderRadius: BorderRadius.circular(20.0),
       ),
       elevation: 3, // Adds shadow effect
       child: Padding(
@@ -196,20 +199,21 @@ class InternCard extends StatelessWidget {
                     fontSize: 14.0,
                   ),
                 ),
-                const SizedBox(height: 4.0),
+                const SizedBox(height: 10.0),
                 Text(
-                  '+91 $contact',
+                  'Contact No.: +91 $contact',
                   style: const TextStyle(
                     fontSize: 14.0,
                   ),
                 ),
-                const SizedBox(height: 4.0),
+                const SizedBox(height: 5.0),
                 Text(
-                  email, // Displaying email dynamically
+                  'Email: $email', // Displaying email dynamically
                   style: const TextStyle(
                     fontSize: 14.0,
                   ),
                 ),
+                const SizedBox(height: 5.0),
               ],
             ),
             // Right section: date_time

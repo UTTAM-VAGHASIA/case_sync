@@ -1,21 +1,20 @@
 import 'dart:convert';
 
-import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../components/case_card.dart';
 import '../../models/case_list.dart';
-import 'add_tasks.dart';
 
-class AssignedCaseTaskinfo extends StatefulWidget {
-  const AssignedCaseTaskinfo({Key? key}) : super(key: key);
+class AssignedCaseList extends StatefulWidget {
+  const AssignedCaseList({super.key});
 
   @override
-  State<AssignedCaseTaskinfo> createState() => _AssignedCaseTaskinfoState();
+  State<AssignedCaseList> createState() => _AssignedCaseListState();
 }
 
-class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
+class _AssignedCaseListState extends State<AssignedCaseList> {
   bool _isLoading = true;
   List<CaseListData> _assignedCases = [];
   bool _isSearching = false;
@@ -100,6 +99,7 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
         title: const Text("Select Case",
             style: TextStyle(
                 color: Colors.black,
@@ -129,7 +129,10 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
       ),
       backgroundColor: const Color(0xFFF3F3F3),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : Column(
               children: [
                 if (_isSearching)
@@ -163,55 +166,10 @@ class _AssignedCaseTaskinfoState extends State<AssignedCaseTaskinfo> {
                     itemCount: _filteredCases.length,
                     itemBuilder: (context, index) {
                       final caseItem = _filteredCases[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TasksPage(
-                                caseNumber: caseItem.caseNo,
-                                caseId: caseItem.id,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 3,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Case No: ${caseItem.caseNo}",
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Applicant: ${caseItem.applicant}",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Court: ${caseItem.courtName}",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "City: ${caseItem.cityName}",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      return CaseCard(
+                        caseItem: caseItem,
+                        isHighlighted: false,
+                        isTask: true,
                       );
                     },
                   ),

@@ -1,8 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class NewInternScreen extends StatefulWidget {
   const NewInternScreen({super.key});
@@ -168,7 +169,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         hintText: 'Intern name',
-                        hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                        hintStyle: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black38,
+                        ),
                         fillColor: Colors.white,
                         filled: true,
                         border: OutlineInputBorder(
@@ -192,7 +196,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                       controller: _contactNumberController,
                       decoration: InputDecoration(
                         hintText: '+91 XXXXXXXXXX',
-                        hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                        hintStyle: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black38,
+                        ),
                         fillColor: Colors.white,
                         filled: true,
                         border: OutlineInputBorder(
@@ -217,7 +224,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                       controller: _emailController,
                       decoration: InputDecoration(
                         hintText: 'example@gmail.com',
-                        hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                        hintStyle: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black38,
+                        ),
                         fillColor: Colors.white,
                         filled: true,
                         border: OutlineInputBorder(
@@ -242,7 +252,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                       controller: _passwordController,
                       decoration: InputDecoration(
                         hintText: 'must be 8 characters',
-                        hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                        hintStyle: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black38,
+                        ),
                         fillColor: Colors.white,
                         filled: true,
                         border: OutlineInputBorder(
@@ -279,7 +292,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                       controller: _joiningDateController,
                       decoration: InputDecoration(
                         hintText: 'DD/MM/YYYY',
-                        hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                        hintStyle: TextStyle(
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black38,
+                        ),
                         fillColor: Colors.white,
                         filled: true,
                         border: OutlineInputBorder(
@@ -335,15 +351,15 @@ class _NewInternScreenState extends State<NewInternScreen> {
                           ),
                           child: _isLoading
                               ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
+                                  color: Colors.white,
+                                )
                               : const Text(
-                            'Register',
-                            style: TextStyle(
-                              fontSize: 22,
-                              color: Colors.white,
-                            ),
-                          ),
+                                  'Register',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                     ),

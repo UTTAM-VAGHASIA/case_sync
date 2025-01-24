@@ -1,13 +1,17 @@
 import 'dart:convert';
+
 import 'package:case_sync/screens/cases/view_docs.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class CaseInfoPage extends StatefulWidget {
   final String caseId;
+  final String caseNo;
 
-  const CaseInfoPage({Key? key, required this.caseId}) : super(key: key);
+  const CaseInfoPage({Key? key, required this.caseId, required this.caseNo})
+      : super(key: key);
 
   @override
   _CaseInfoPageState createState() => _CaseInfoPageState();
@@ -15,16 +19,14 @@ class CaseInfoPage extends StatefulWidget {
 
 class _CaseInfoPageState extends State<CaseInfoPage> {
   bool _isLoading = true;
-  Map<String, String> _caseDetails = {};
+  Map<String, dynamic> _caseDetails = {};
 
   @override
   void initState() {
     super.initState();
     _fetchCaseInfo().then((_) {
       if (_caseDetails['case_no'] != null &&
-          _caseDetails['case_no']!.isNotEmpty) {
-        _fetchAssignedInfo();
-      }
+          _caseDetails['case_no']!.isNotEmpty) {}
     });
   }
 
@@ -33,6 +35,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
       final url = Uri.parse(
           'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
       final response = await http.post(url, body: {'case_id': widget.caseId});
+      print("Case Id: ${widget.caseId}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -42,6 +45,18 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
         if (data['success'] == true && data['data'].isNotEmpty) {
           setState(() {
             final caseData = data['data'][0];
+
+            DateTime? parseDate(String? date) {
+              if (date == null || date.isEmpty || date == '0000-00-00') {
+                return null;
+              }
+              try {
+                return DateTime.parse(date);
+              } catch (_) {
+                return null;
+              }
+            }
+
             _caseDetails = {
               'case_no': caseData['case_no'] ?? 'No data found',
               'year': caseData['year'] ?? 'No data found',
@@ -52,10 +67,8 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
               'opponent': caseData['opp_name'] ?? 'No data found',
               'court': caseData['court_name'] ?? 'No data found',
               'location': caseData['city_name'] ?? 'No data found',
-              'summonDate': caseData['sr_date'] ?? 'No data found',
-              'assignedBy': 'Fetching...', // Placeholder
-              'assignedTo': 'Fetching...', // Placeholder
-              'nextDate': caseData['next_date'] ?? 'No data found',
+              'summonDate': parseDate(caseData['sr_date']) ?? 'No data found',
+              'nextDate': parseDate(caseData['next_date']) ?? 'No data found',
               'remark': 'No remarks available.', // Placeholder
             };
           });
@@ -67,60 +80,6 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
       }
     } catch (e) {
       _showError("An error occurred: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _fetchAssignedInfo() async {
-    try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_task');
-      final response = await http.post(
-        url,
-        body: {'case_no': _caseDetails['case_no'] ?? ''},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (kDebugMode) {
-          print("Assigned Info API Response: $data");
-        }
-
-        if (data['success'] == true &&
-            data['data'] != null &&
-            data['data'].isNotEmpty) {
-          setState(() {
-            final assignedData = data['data'][0]; // Get the first task object
-            _caseDetails['assignedBy'] =
-                assignedData['alloted_by_name'] ?? 'No data found';
-            _caseDetails['assignedTo'] =
-                assignedData['alloted_to_name'] ?? 'No data found';
-            _caseDetails['remark'] =
-                assignedData['remarks'] ?? 'No remarks available.';
-          });
-        } else {
-          setState(() {
-            _caseDetails['assignedBy'] = 'No data found';
-            _caseDetails['assignedTo'] = 'No data found';
-            _caseDetails['remark'] = 'No remarks available.';
-          });
-          _showError("No data found for the assigned info.");
-        }
-      } else {
-        _showError(
-            "Failed to fetch assigned info. Status Code: ${response.statusCode}");
-      }
-    } catch (e) {
-      _showError("An error occurred while fetching assigned info: $e");
-      setState(() {
-        _caseDetails['assignedBy'] = 'Error';
-        _caseDetails['assignedTo'] = 'Error';
-        _caseDetails['remark'] = 'Error retrieving remarks.';
-      });
     } finally {
       setState(() {
         _isLoading = false;
@@ -146,7 +105,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
           },
         ),
         title: Text(
-          'Case No. ${_caseDetails['case_no'] ?? 'Unknown'}',
+          'Case No: ${widget.caseNo}',
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -154,7 +113,10 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : _caseDetails.isEmpty || _caseDetails['case_no'] == 'No data found'
               ? const Center(
                   child: Text(
@@ -178,23 +140,14 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                           'Opponent Name': _caseDetails['opponent']!,
                           'Court': _caseDetails['court']!,
                           'City': _caseDetails['location']!,
-                          'Summon Date': _caseDetails['summonDate']!,
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDetailsCard(
-                        title: 'Intern Status',
-                        details: {
-                          'Assigned By': _caseDetails['assignedBy']!,
-                          'Assigned To': _caseDetails['assignedTo']!,
-                          'Next Date': _caseDetails['nextDate']!,
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDetailsCard(
-                        title: 'Remark Log',
-                        details: {
-                          'Remark': _caseDetails['remark']!,
+                          'Summon Date': _caseDetails['summonDate'] is DateTime
+                              ? DateFormat('dd-MM-yyyy')
+                                  .format(_caseDetails['summonDate'])
+                              : _caseDetails['summonDate'],
+                          'Next Date': _caseDetails['nextDate'] is DateTime
+                              ? DateFormat('dd-MM-yyyy')
+                                  .format(_caseDetails['nextDate'])
+                              : _caseDetails['nextDate'],
                         },
                       ),
                     ],
@@ -217,7 +170,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
 
   Widget _buildDetailsCard({
     required String title,
-    required Map<String, String> details,
+    required Map<String, dynamic> details,
   }) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -236,6 +189,15 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
             ),
             const SizedBox(height: 12),
             ...details.entries.map((entry) {
+              String displayValue;
+              if (entry.value is DateTime) {
+                displayValue = DateFormat('dd-MM-yyyy').format(entry.value);
+              } else if (entry.value == null ||
+                  entry.value.toString().isEmpty) {
+                displayValue = 'No data found';
+              } else {
+                displayValue = entry.value.toString();
+              }
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -251,7 +213,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                     ),
                     Flexible(
                       child: Text(
-                        entry.value,
+                        displayValue,
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.black54,

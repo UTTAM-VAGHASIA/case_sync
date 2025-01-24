@@ -106,7 +106,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 future: SharedPrefService.getUser(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const CircularProgressIndicator(
+                      color: Colors.black,
+                    );
                   } else if (snapshot.hasError) {
                     return const Text('Error loading user data');
                   } else if (snapshot.hasData && snapshot.data != null) {
@@ -238,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               cardIconPositionX,
                               cardIconPositionY,
                               cardTextPositionY,
-                              AssignedCaseTaskinfo(),
+                              AssignedCaseList(),
                             ),
                           ],
                         ),

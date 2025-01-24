@@ -123,6 +123,7 @@ class _TasksPageState extends State<TasksPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
         leading: IconButton(
@@ -135,7 +136,10 @@ class _TasksPageState extends State<TasksPage> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
           : _tasks.isEmpty
               ? const Center(child: Text("No tasks found for this case."))
               : Padding(
@@ -148,8 +152,11 @@ class _TasksPageState extends State<TasksPage> {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: Card(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
+                              borderRadius: BorderRadius.circular(15),
+                              side: BorderSide(
+                                width: 1,
+                                color: Colors.black,
+                              )),
                           child: ListTile(
                             title: Text(
                               "Instruction: ${task['instruction']}",
