@@ -60,7 +60,7 @@ class _InternListScreenState extends State<InternListScreen> {
     }
     try {
       DateTime parsedDate = DateTime.parse(dateTime);
-      return DateFormat('d MMMM, yyyy').format(parsedDate);
+      return DateFormat('dd/MM/yyyy').format(parsedDate);
     } catch (e) {
       return "Invalid Date";
     }
@@ -180,8 +180,8 @@ class InternCard extends StatelessWidget {
     return Card(
       color: Colors.white, // Set card background to white
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Colors.grey, width: 1),
-        borderRadius: BorderRadius.circular(10.0),
+        side: const BorderSide(color: Colors.black, width: 1),
+        borderRadius: BorderRadius.circular(20.0),
       ),
       elevation: 3, // Adds shadow effect
       child: Padding(
@@ -199,20 +199,21 @@ class InternCard extends StatelessWidget {
                     fontSize: 14.0,
                   ),
                 ),
-                const SizedBox(height: 4.0),
+                const SizedBox(height: 10.0),
                 Text(
-                  '+91 $contact',
+                  'Contact No.: +91 $contact',
                   style: const TextStyle(
                     fontSize: 14.0,
                   ),
                 ),
-                const SizedBox(height: 4.0),
+                const SizedBox(height: 5.0),
                 Text(
-                  email, // Displaying email dynamically
+                  'Email: $email', // Displaying email dynamically
                   style: const TextStyle(
                     fontSize: 14.0,
                   ),
                 ),
+                const SizedBox(height: 5.0),
               ],
             ),
             // Right section: date_time

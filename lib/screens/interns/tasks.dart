@@ -152,8 +152,11 @@ class _TasksPageState extends State<TasksPage> {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: Card(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
+                              borderRadius: BorderRadius.circular(15),
+                              side: BorderSide(
+                                width: 1,
+                                color: Colors.black,
+                              )),
                           child: ListTile(
                             title: Text(
                               "Instruction: ${task['instruction']}",
