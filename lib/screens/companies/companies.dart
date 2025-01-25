@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
 import 'add_companies.dart';
+import 'edit_company.dart';
 
 class CompaniesScreen extends StatefulWidget {
   const CompaniesScreen({super.key});
@@ -95,8 +96,23 @@ class CompaniesScreenState extends State<CompaniesScreen> {
     }
   }
 
-  void _handleEdit(String companyId) {
-    print("Edit Company: $companyId");
+  Future<void> _handleEdit(Map<String, dynamic> company) async {
+    print("Edit Company: ${company['id']}");
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCompanyScreen(
+          companyId: company['id'],
+          companyName: company['name'],
+          contactPerson: company['contact_person'],
+          contactNo: company['phone'],
+          status: company['status'],
+        ),
+      ),
+    );
+    if (result) {
+      fetchCompanies();
+    }
   }
 
   void _handleDelete(String companyId) {
@@ -157,7 +173,10 @@ class CompaniesScreenState extends State<CompaniesScreen> {
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
-                            side: BorderSide(width: 1, color: Colors.black),
+                            side: BorderSide(
+                              width: 1,
+                              color: Colors.black,
+                            ),
                           ),
                           elevation: 2,
                           child: Padding(
@@ -194,79 +213,50 @@ class CompaniesScreenState extends State<CompaniesScreen> {
                                     const SizedBox(height: 5),
                                   ],
                                 ),
+                                SizedBox(
+                                  width: 10,
+                                  height: 100,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          companies[index]['status'] == 'enable'
+                                              ? Colors.white
+                                              : Colors.black,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                )
                               ],
                             ),
                           ),
                         ),
                         onEdit: () => {
                           print("Editing: ${companies[index]['id']}"),
-                          _handleEdit(companies[index]['id'])
+                          _handleEdit(companies[index])
                         },
                         onDelete: () => _handleDelete(companies[index]['id']),
                       );
-
-                      // return Card(
-                      //   shape: RoundedRectangleBorder(
-                      //     borderRadius: BorderRadius.circular(20.0),
-                      //     side: BorderSide(width: 1, color: Colors.black),
-                      //   ),
-                      //   elevation: 2,
-                      //   child: Padding(
-                      //     padding: const EdgeInsets.all(16.0),
-                      //     child: Row(
-                      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //       children: [
-                      //         Column(
-                      //           crossAxisAlignment: CrossAxisAlignment.start,
-                      //           children: [
-                      //             Text(
-                      //               '${companies[index]['name']!}',
-                      //               style: const TextStyle(
-                      //                 fontWeight: FontWeight.bold,
-                      //                 fontSize: 18,
-                      //               ),
-                      //             ),
-                      //             const SizedBox(height: 10),
-                      //             Text(
-                      //               'Contact Person: ${companies[index]['contact_person']!}',
-                      //               style: const TextStyle(
-                      //                 fontWeight: FontWeight.bold,
-                      //                 fontSize: 14,
-                      //               ),
-                      //             ),
-                      //             const SizedBox(height: 5),
-                      //             Text(
-                      //               'Contact No.: +91 ${companies[index]['phone']!}',
-                      //               style: const TextStyle(
-                      //                 fontWeight: FontWeight.bold,
-                      //                 fontSize: 14,
-                      //               ),
-                      //             ),
-                      //             const SizedBox(height: 5),
-                      //           ],
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // );
                     },
                   ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddCompanyScreen()),
+            MaterialPageRoute(
+              builder: (context) => AddCompanyScreen(),
+            ),
           );
 
+          // Refresh the task list if a new task was added
           if (result == true) {
-            fetchCompanies(); // Refresh company list
+            fetchCompanies();
           }
         },
-        backgroundColor: Colors.black,
-        child: const Icon(Icons.add),
+        label: const Text('Add'),
+        icon: const Icon(Icons.add),
       ),
     );
   }
