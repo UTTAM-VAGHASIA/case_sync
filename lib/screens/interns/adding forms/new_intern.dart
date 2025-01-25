@@ -5,7 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import '../../utils/validator.dart';
+import '../../../utils/validator.dart';
 
 class NewInternScreen extends StatefulWidget {
   const NewInternScreen({super.key});

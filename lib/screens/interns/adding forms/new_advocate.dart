@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
-import '../../services/api_service.dart';
-import '../../utils/validator.dart';
+import '../../../services/api_service.dart';
+import '../../../utils/validator.dart';
 
 class NewAdvocateScreen extends StatefulWidget {
   const NewAdvocateScreen({super.key});

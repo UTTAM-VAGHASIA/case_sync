@@ -182,8 +182,25 @@ class CompaniesScreenState extends State<CompaniesScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
+                                SizedBox(
+                                  width: 10,
+                                  height: 100,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          companies[index]['status'] == 'enable'
+                                              ? Colors.black
+                                              : Colors.red,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                  height: 100,
+                                ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -213,19 +230,6 @@ class CompaniesScreenState extends State<CompaniesScreen> {
                                     const SizedBox(height: 5),
                                   ],
                                 ),
-                                SizedBox(
-                                  width: 10,
-                                  height: 100,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          companies[index]['status'] == 'enable'
-                                              ? Colors.white
-                                              : Colors.black,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                  ),
-                                )
                               ],
                             ),
                           ),

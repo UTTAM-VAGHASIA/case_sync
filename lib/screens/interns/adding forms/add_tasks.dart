@@ -1,10 +1,11 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../../models/advocate.dart';
-import '../../services/shared_pref.dart';
-import '../../utils/validator.dart';
+import '../../../models/advocate.dart';
+import '../../../services/shared_pref.dart';
+import '../../../utils/validator.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final String caseNumber;
@@ -69,9 +70,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           setState(() {
             _internList = (data['data'] as List)
                 .map((intern) => {
-              'id': intern['id'].toString(),
-              'name': intern['name'].toString(),
-            })
+                      'id': intern['id'].toString(),
+                      'name': intern['name'].toString(),
+                    })
                 .toList();
           });
         } else {
@@ -140,7 +141,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       request.fields['data'] = jsonEncode({
         "case_id": widget.caseId,
         "alloted_to": _assignedTo,
-        "instructions": _taskInstructionController.text.trim(), // Trim here before submitting
+        "instructions": _taskInstructionController.text
+            .trim(), // Trim here before submitting
         "alloted_by": _advocateId,
         "alloted_date": _assignDateApi,
         "expected_end_date": _expectedEndDateApi,
@@ -315,9 +317,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             hint: Text(hint, style: const TextStyle(color: Colors.grey)),
             items: items
                 .map((item) => DropdownMenuItem<String>(
-              value: item['id'],
-              child: Text(item['name']!),
-            ))
+                      value: item['id'],
+                      child: Text(item['name']!),
+                    ))
                 .toList(),
             onChanged: onChanged,
           ),

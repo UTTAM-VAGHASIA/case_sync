@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:case_sync/screens/interns/add_tasks.dart';
+import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
 import 'package:case_sync/screens/interns/task_info.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/foundation.dart';

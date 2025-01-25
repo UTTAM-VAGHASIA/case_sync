@@ -6,7 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
 import 'package:intl/intl.dart';
 
-import '../officials/new_intern.dart'; // For date formatting
+import 'adding forms/new_intern.dart';
+import 'editing forms/edit_intern.dart'; // For date formatting
 
 class InternListScreen extends StatefulWidget {
   const InternListScreen({super.key});
@@ -96,8 +97,17 @@ class _InternListScreenState extends State<InternListScreen> {
     }
   }
 
-  void _handleEdit(String internId) {
-    print("Edit Intern: $internId");
+  Future<void> _handleEdit(Map<String, dynamic> intern) async {
+    print(intern);
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditInternScreen(intern: intern),
+      ),
+    );
+    if (result) {
+      fetchInterns();
+    }
   }
 
   void _handleDelete(String internId) {
@@ -158,17 +168,81 @@ class _InternListScreenState extends State<InternListScreen> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(),
-                        child: DismissibleCard(
-                          child: InternCard(
-                            id: intern['id'].toString(),
-                            name: intern['name'],
-                            contact: intern['contact'],
-                            email: intern['email'],
-                            dateTime: formatDate(intern['date_time']),
+                        child: Card(
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            side:
+                                const BorderSide(color: Colors.black, width: 1),
+                            borderRadius: BorderRadius.circular(15.0),
                           ),
-                          onEdit: () => _handleEdit(intern['id'].toString()),
-                          onDelete: () =>
-                              _handleDelete(intern['id'].toString()),
+                          elevation: 3,
+                          child: DismissibleCard(
+                            onEdit: () => _handleEdit(intern),
+                            onDelete: () =>
+                                _handleDelete(intern['id'].toString()),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12.0, horizontal: 16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 10,
+                                    height: 100,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color:
+                                            interns[index]['status'] == 'enable'
+                                                ? Colors.black
+                                                : Colors.red,
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 15,
+                                    height: 100,
+                                  ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        intern['name'],
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 20.0,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5.0),
+                                      Text(
+                                        'Contact No.: +91 ${intern['contact']}',
+                                        style: const TextStyle(
+                                          fontSize: 14.0,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5.0),
+                                      Text(
+                                        'Email: ${intern['email']}', // Displaying email dynamically
+                                        style: const TextStyle(
+                                          fontSize: 14.0,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5.0),
+                                    ],
+                                  ),
+                                  // Right section: date_time
+                                  Text(
+                                    formatDate(intern['date_time']),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       );
                     },
@@ -194,77 +268,6 @@ class _InternListScreenState extends State<InternListScreen> {
         icon: SvgPicture.asset(
           'assets/icons/new_intern.svg',
           color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class InternCard extends StatelessWidget {
-  final String id;
-  final String name;
-  final String contact;
-  final String email;
-  final String dateTime;
-
-  const InternCard({
-    super.key,
-    required this.id,
-    required this.name,
-    required this.contact,
-    required this.email,
-    required this.dateTime,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white, // Set card background to white
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Colors.black, width: 1),
-        borderRadius: BorderRadius.circular(20.0),
-      ),
-      elevation: 3, // Adds shadow effect
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 20.0,
-                  ),
-                ),
-                Text(
-                  dateTime,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14.0,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 5.0),
-            Text(
-              'Contact No.: +91 $contact',
-              style: const TextStyle(
-                fontSize: 14.0,
-              ),
-            ),
-            const SizedBox(height: 5.0),
-            Text(
-              'Email: $email', // Displaying email dynamically
-              style: const TextStyle(
-                fontSize: 14.0,
-              ),
-            ),
-            const SizedBox(height: 5.0),
-          ],
         ),
       ),
     );
