@@ -142,7 +142,8 @@ class _UnassignedCasesState extends State<UnassignedCases> {
         controller: _searchController,
         decoration: InputDecoration(
           labelText: 'Search',
-          hintText: 'Search by case number, applicant, court, or city',
+          hintText: 'Search by case number, applicant, court or city',
+          hintStyle: TextStyle(fontSize: 12),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -176,6 +177,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
         },
         onFilterPressed: () {
           showModalBottomSheet(
+            backgroundColor: Colors.white,
             context: context,
             builder: (context) => _buildFilterOptions(),
           );
@@ -278,7 +280,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text("Apply"),
+                child: const Text("Done"),
               ),
             ],
           ),

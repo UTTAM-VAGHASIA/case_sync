@@ -227,12 +227,11 @@ class InternCard extends StatelessWidget {
       elevation: 3, // Adds shadow effect
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left section: ID, name, and placeholder details
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   name,
@@ -241,31 +240,30 @@ class InternCard extends StatelessWidget {
                     fontSize: 20.0,
                   ),
                 ),
-                const SizedBox(height: 5.0),
                 Text(
-                  'Contact No.: +91 $contact',
+                  dateTime,
                   style: const TextStyle(
+                    fontWeight: FontWeight.w500,
                     fontSize: 14.0,
                   ),
                 ),
-                const SizedBox(height: 5.0),
-                Text(
-                  'Email: $email', // Displaying email dynamically
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                  ),
-                ),
-                const SizedBox(height: 5.0),
               ],
             ),
-            // Right section: date_time
+            const SizedBox(height: 5.0),
             Text(
-              dateTime,
+              'Contact No.: +91 $contact',
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
                 fontSize: 14.0,
               ),
             ),
+            const SizedBox(height: 5.0),
+            Text(
+              'Email: $email', // Displaying email dynamically
+              style: const TextStyle(
+                fontSize: 14.0,
+              ),
+            ),
+            const SizedBox(height: 5.0),
           ],
         ),
       ),

@@ -210,6 +210,21 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Colors.black, // Header background color
+            colorScheme: ColorScheme.light(
+              primary: Colors.black, // Selection color
+              onPrimary: Colors.white, // Text color on the selection
+              surface: Colors.white, // Dialog background color
+              onSurface: Colors.black, // Text color
+            ),
+            dialogBackgroundColor: Colors.white, // Dialog background color
+          ),
+          child: child!,
+        );
+      },
     );
     if (pickedDate != null) {
       setState(() {
@@ -501,12 +516,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                       'Attach Documents', 'Attach Documents', _pickDocuments),
                   const SizedBox(height: 10),
                   if (_fileNames.isNotEmpty)
-                    ..._fileNames
-                        .map((fileName) => Padding(
-                              padding: const EdgeInsets.only(bottom: 5),
-                              child: Text(fileName),
-                            ))
-                        ,
+                    ..._fileNames.map((fileName) => Padding(
+                          padding: const EdgeInsets.only(bottom: 5),
+                          child: Text(fileName),
+                        )),
                   SizedBox(height: screenHeight * 0.05),
                   Center(
                     child: SizedBox(

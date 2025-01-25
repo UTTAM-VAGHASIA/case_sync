@@ -130,8 +130,15 @@ class _ViewDocsState extends State<ViewDocs> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View Documents'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text('View Documents',style: TextStyle(color: Colors.black),),
       ),
       body: _isLoading
           ? const Center(
@@ -158,12 +165,12 @@ class _ViewDocsState extends State<ViewDocs> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Document ID: ${doc['id']}',
+                              'Document ID: ${doc['file_id']}',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8.0),
-                            Text('Added By: ${doc['added_by']}'),
+                            Text('Added By: ${doc['handled_by']}'),
                             const SizedBox(height: 8.0),
                             Text('User Type: ${doc['user_type']}'),
                             const SizedBox(height: 8.0),

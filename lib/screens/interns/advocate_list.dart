@@ -217,10 +217,10 @@ class AdvocateCard extends StatelessWidget {
             Text(
               name,
               style: const TextStyle(
-                fontSize: 14.0,
+                fontSize: 20.0,
               ),
             ),
-            const SizedBox(height: 10.0),
+            const SizedBox(height: 5.0),
             Text(
               'Contact No.: +91 $contact',
               style: const TextStyle(

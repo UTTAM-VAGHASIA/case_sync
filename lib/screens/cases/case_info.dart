@@ -57,17 +57,17 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
             }
 
             _caseDetails = {
-              'case_no': caseData['case_no'] ?? 'No data found',
-              'year': caseData['year'] ?? 'No data found',
-              'type': caseData['case_type'] ?? 'No data found',
-              'Current Stage': caseData['stage_name'] ?? 'No data found',
-              'Next Stage': caseData['next_stage'] ?? 'No data found',
-              'applicant': caseData['applicant'] ?? 'No data found',
-              'opponent': caseData['opp_name'] ?? 'No data found',
-              'court': caseData['court_name'] ?? 'No data found',
-              'location': caseData['city_name'] ?? 'No data found',
-              'summonDate': parseDate(caseData['sr_date']) ?? 'No data found',
-              'nextDate': parseDate(caseData['next_date']) ?? 'No data found',
+              'case_no': caseData['case_no'],
+              'year': caseData['year'],
+              'type': caseData['case_type'],
+              'Current Stage': caseData['stage_name'],
+              'Next Stage': caseData['next_stage'],
+              'applicant': caseData['applicant'],
+              'opponent': caseData['opp_name'],
+              'court': caseData['court_name'],
+              'location': caseData['city_name'],
+              'summonDate': parseDate(caseData['sr_date']),
+              'nextDate': parseDate(caseData['next_date']),
               'remark': 'No remarks available.', // Placeholder
             };
           });
@@ -193,7 +193,7 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                 displayValue = DateFormat('dd-MM-yyyy').format(entry.value);
               } else if (entry.value == null ||
                   entry.value.toString().isEmpty) {
-                displayValue = 'No data found';
+                displayValue = '-';
               } else {
                 displayValue = entry.value.toString();
               }
