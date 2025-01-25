@@ -36,11 +36,13 @@ class ApiService {
             'success': true,
             'data': decodedResponse['data'],
             'message': decodedResponse['message'],
+            'error': decodedResponse['error'] ?? '',
           };
         } else {
           return {
             'success': false,
             'message': decodedResponse['message'] ?? 'Operation failed',
+            'error': decodedResponse['error'] ?? '',
           };
         }
       } else {

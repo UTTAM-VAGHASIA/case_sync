@@ -1,9 +1,11 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import '../../utils/validator.dart'; // Import validators file
+
+import '../../utils/validator.dart';
 
 class NewInternScreen extends StatefulWidget {
   const NewInternScreen({super.key});
@@ -92,6 +94,8 @@ class _NewInternScreenState extends State<NewInternScreen> {
           _emailController.clear();
           _passwordController.clear();
           _joiningDateController.clear();
+
+          Navigator.pop(context, true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed: ${responseData['message']}')),
@@ -174,9 +178,9 @@ class _NewInternScreenState extends State<NewInternScreen> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                      'Register',
-                      style: TextStyle(fontSize: 22, color: Colors.white),
-                    ),
+                            'Register',
+                            style: TextStyle(fontSize: 22, color: Colors.white),
+                          ),
                   ),
                 ),
               ),
@@ -187,10 +191,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
     );
   }
 
-  Widget _buildTextField(String label, String hintText,
-      TextEditingController controller,
+  Widget _buildTextField(
+      String label, String hintText, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text,
-        String? Function(String?)? additionalValidator}) {
+      String? Function(String?)? additionalValidator}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -202,7 +206,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -231,7 +235,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
           decoration: InputDecoration(
             hintText: "must be 8 characters",
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: IconButton(
               icon: Icon(
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -268,7 +272,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: const Icon(Icons.calendar_today),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),

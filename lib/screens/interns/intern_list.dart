@@ -4,7 +4,9 @@ import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
+
+import '../officials/new_intern.dart'; // For date formatting
 
 class InternListScreen extends StatefulWidget {
   const InternListScreen({super.key});
@@ -173,6 +175,26 @@ class _InternListScreenState extends State<InternListScreen> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewInternScreen(),
+            ),
+          );
+
+          // Refresh the task list if a new task was added
+          if (result == true) {
+            fetchInterns();
+          }
+        },
+        label: const Text('Add'),
+        icon: SvgPicture.asset(
+          'assets/icons/new_intern.svg',
+          color: Colors.white,
+        ),
       ),
     );
   }

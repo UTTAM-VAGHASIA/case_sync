@@ -1,5 +1,6 @@
 import 'dart:convert'; // For JSON decoding
 
+import 'package:case_sync/screens/officials/new_advocate.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -160,6 +161,26 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NewAdvocateScreen(),
+            ),
+          );
+
+          // Refresh the task list if a new task was added
+          if (result) {
+            fetchAdvocates();
+          }
+        },
+        label: const Text('Add'),
+        icon: SvgPicture.asset(
+          'assets/icons/new_advocate.svg',
+          color: Colors.white,
+        ),
       ),
     );
   }

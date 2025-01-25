@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+
 import '../../services/api_service.dart';
 import '../../utils/validator.dart';
 
@@ -47,16 +48,17 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
 
     try {
       Map<String, dynamic> response =
-      await ApiService.registerAdvocate(name, contact, email, password);
+          await ApiService.registerAdvocate(name, contact, email, password);
+      print("$response");
 
       if (response['success'] == true) {
-        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Advocate registered successfully!')),
         );
+        Navigator.pop(context, true);
       } else {
         setState(() {
-          _errorMessage = response['message'] ?? 'Registration failed';
+          _errorMessage = '${response['message']}\n${response['error']}';
         });
       }
     } catch (error) {
@@ -117,19 +119,21 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                 _buildTextField('Advocate Name', 'Name', _nameController),
                 _buildTextField(
                     'Advocate Contact', '+91 XXXXXXXXXX', _contactController,
-                    keyboardType: TextInputType.phone, additionalValidator: (value) {
+                    keyboardType: TextInputType.phone,
+                    additionalValidator: (value) {
                   if (!RegExp(r'^[0-9]{10}$').hasMatch(value!.trim())) {
                     return 'Enter a valid 10-digit phone number';
                   }
                   return null;
                 }),
                 _buildTextField('Email', 'example@gmail.com', _emailController,
-                    keyboardType: TextInputType.emailAddress, additionalValidator: (value) {
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!.trim())) {
-                        return 'Enter a valid email address';
-                      }
-                      return null;
-                    }),
+                    keyboardType: TextInputType.emailAddress,
+                    additionalValidator: (value) {
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!.trim())) {
+                    return 'Enter a valid email address';
+                  }
+                  return null;
+                }),
                 _buildPasswordField(),
                 SizedBox(height: screenHeight * 0.03),
                 Center(
@@ -146,22 +150,22 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
+                              color: Colors.white,
+                            )
                           : const Text(
-                        'Register',
-                        style: TextStyle(
-                          fontSize: 22,
-                          color: Colors.white,
-                        ),
-                      ),
+                              'Register',
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.05),
                 if (_errorMessage.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.only(),
                     child: Text(
                       _errorMessage,
                       style: const TextStyle(color: Colors.red),
@@ -178,7 +182,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
   Widget _buildTextField(
       String label, String hintText, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text,
-        String? Function(String?)? additionalValidator}) {
+      String? Function(String?)? additionalValidator}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -190,7 +194,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -219,7 +223,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
           decoration: InputDecoration(
             hintText: "Enter Password",
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: IconButton(
               icon: Icon(
                 color: Colors.black,
