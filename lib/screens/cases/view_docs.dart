@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 class ViewDocs extends StatefulWidget {
   final String caseId;
 
-  const ViewDocs({Key? key, required this.caseId}) : super(key: key);
+  const ViewDocs({super.key, required this.caseId});
 
   @override
   State<ViewDocs> createState() => _ViewDocsState();

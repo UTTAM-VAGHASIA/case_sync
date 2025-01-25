@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
@@ -37,11 +38,13 @@ class CompaniesScreenState extends State<CompaniesScreen> {
           setState(() {
             companies = data
                 .map((company) => {
-              'company': '#${company['id']}',
-              'name': company['name'],
-              'contact_person': company['contact_person'],
-              'phone': company['contact_no'],
-            })
+                      'id': company['id'],
+                      'company': '#${company['id']}',
+                      'name': company['name'],
+                      'contact_person': company['contact_person'],
+                      'phone': company['contact_no'],
+                      'status': company['status'],
+                    })
                 .toList();
             isLoading = false;
           });
@@ -59,6 +62,46 @@ class CompaniesScreenState extends State<CompaniesScreen> {
         SnackBar(content: Text('Error: ${error.toString()}')),
       );
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _deleteCompany(String companyId) async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_company');
+      final response = await http.post(url, body: {'company_id': companyId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            companies.removeWhere((company) => company['id'] == companyId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Company deleted successfully.")),
+          );
+        } else {
+          _showError(data['response']);
+        }
+      } else {
+        _showError("Failed to delete Company.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    }
+  }
+
+  void _handleEdit(String companyId) {
+    print("Edit Company: $companyId");
+  }
+
+  void _handleDelete(String companyId) {
+    print("Delete Company: $companyId");
+    _deleteCompany(companyId);
   }
 
   @override
@@ -85,7 +128,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
           Container(
             color: const Color(0xFFF3F3F3),
             padding:
-            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
@@ -103,59 +146,111 @@ class CompaniesScreenState extends State<CompaniesScreen> {
           Expanded(
             child: isLoading
                 ? const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.black,
-                ))
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: companies.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                    side: BorderSide(width: 1, color: Colors.black),
-                  ),
-                  elevation: 2,
-                  child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${companies[index]['name']!}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
+                    itemCount: companies.length,
+                    itemBuilder: (context, index) {
+                      return DismissibleCard(
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                            side: BorderSide(width: 1, color: Colors.black),
+                          ),
+                          elevation: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${companies[index]['name']!}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'Contact Person: ${companies[index]['contact_person']!}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      'Contact No.: +91 ${companies[index]['phone']!}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                  ],
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Contact Person: ${companies[index]['contact_person']!}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Contact No.: +91 ${companies[index]['phone']!}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                          ],
+                          ),
                         ),
-                      ],
-                    ),
+                        onEdit: () => {
+                          print("Editing: ${companies[index]['id']}"),
+                          _handleEdit(companies[index]['id'])
+                        },
+                        onDelete: () => _handleDelete(companies[index]['id']),
+                      );
+
+                      // return Card(
+                      //   shape: RoundedRectangleBorder(
+                      //     borderRadius: BorderRadius.circular(20.0),
+                      //     side: BorderSide(width: 1, color: Colors.black),
+                      //   ),
+                      //   elevation: 2,
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.all(16.0),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //       children: [
+                      //         Column(
+                      //           crossAxisAlignment: CrossAxisAlignment.start,
+                      //           children: [
+                      //             Text(
+                      //               '${companies[index]['name']!}',
+                      //               style: const TextStyle(
+                      //                 fontWeight: FontWeight.bold,
+                      //                 fontSize: 18,
+                      //               ),
+                      //             ),
+                      //             const SizedBox(height: 10),
+                      //             Text(
+                      //               'Contact Person: ${companies[index]['contact_person']!}',
+                      //               style: const TextStyle(
+                      //                 fontWeight: FontWeight.bold,
+                      //                 fontSize: 14,
+                      //               ),
+                      //             ),
+                      //             const SizedBox(height: 5),
+                      //             Text(
+                      //               'Contact No.: +91 ${companies[index]['phone']!}',
+                      //               style: const TextStyle(
+                      //                 fontWeight: FontWeight.bold,
+                      //                 fontSize: 14,
+                      //               ),
+                      //             ),
+                      //             const SizedBox(height: 5),
+                      //           ],
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -170,8 +265,8 @@ class CompaniesScreenState extends State<CompaniesScreen> {
             fetchCompanies(); // Refresh company list
           }
         },
-        child: const Icon(Icons.add),
         backgroundColor: Colors.black,
+        child: const Icon(Icons.add),
       ),
     );
   }

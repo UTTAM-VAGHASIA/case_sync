@@ -506,7 +506,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                               padding: const EdgeInsets.only(bottom: 5),
                               child: Text(fileName),
                             ))
-                        .toList(),
+                        ,
                   SizedBox(height: screenHeight * 0.05),
                   Center(
                     child: SizedBox(

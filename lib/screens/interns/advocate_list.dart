@@ -1,5 +1,6 @@
 import 'dart:convert'; // For JSON decoding
 
+import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
@@ -47,6 +48,46 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
       });
       print("Error fetching advocates: $e");
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _deleteAdvocate(String advocateId) async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_advocate');
+      final response = await http.post(url, body: {'advocate_id': advocateId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            advocates.removeWhere((intern) => intern['id'] == advocateId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Advocate deleted successfully.")),
+          );
+        } else {
+          _showError(data['response']);
+        }
+      } else {
+        _showError("Failed to delete Advocate.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    }
+  }
+
+  void _handleEdit(String advocateId) {
+    print("Edit Advocate: $advocateId");
+  }
+
+  void _handleDelete(String advocateId) {
+    print("Delete Intern: $advocateId");
+    _deleteAdvocate(advocateId);
   }
 
   @override
@@ -103,11 +144,16 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(),
-                        child: AdvocateCard(
-                          id: advocate['id'].toString(),
-                          name: advocate['name'],
-                          contact: advocate['contact'],
-                          email: advocate['email'],
+                        child: DismissibleCard(
+                          child: AdvocateCard(
+                            id: advocate['id'].toString(),
+                            name: advocate['name'],
+                            contact: advocate['contact'],
+                            email: advocate['email'],
+                          ),
+                          onEdit: () => _handleEdit(advocate['id'].toString()),
+                          onDelete: () =>
+                              _handleDelete(advocate['id'].toString()),
                         ),
                       );
                     },
@@ -145,7 +191,7 @@ class AdvocateCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               name,

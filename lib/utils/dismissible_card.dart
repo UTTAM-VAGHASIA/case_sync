@@ -55,7 +55,7 @@ class DismissibleCard extends StatelessWidget {
                 onConfirm: onDelete!,
               ),
             );
-            return confirm == true;
+            return false;
           }
           return false;
         },

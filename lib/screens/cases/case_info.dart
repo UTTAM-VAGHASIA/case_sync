@@ -10,8 +10,7 @@ class CaseInfoPage extends StatefulWidget {
   final String caseId;
   final String caseNo;
 
-  const CaseInfoPage({Key? key, required this.caseId, required this.caseNo})
-      : super(key: key);
+  const CaseInfoPage({super.key, required this.caseId, required this.caseNo});
 
   @override
   _CaseInfoPageState createState() => _CaseInfoPageState();
@@ -162,8 +161,8 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
             ),
           );
         },
-        child: const Icon(Icons.visibility),
         backgroundColor: Colors.black,
+        child: const Icon(Icons.visibility),
       ),
     );
   }

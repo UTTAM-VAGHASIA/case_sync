@@ -1,13 +1,10 @@
 import 'dart:convert'; // For JSON decoding
 
+import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
 import 'package:intl/intl.dart'; // For date formatting
-
-// CaseCard dependencies
-import '../../components/case_card.dart';
-import '../../models/case_list.dart';
 
 class InternListScreen extends StatefulWidget {
   const InternListScreen({super.key});
@@ -66,6 +63,46 @@ class _InternListScreenState extends State<InternListScreen> {
     }
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _deleteIntern(String internId) async {
+    try {
+      final url = Uri.parse(
+          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_intern');
+      final response = await http.post(url, body: {'intern_id': internId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            interns.removeWhere((intern) => intern['id'] == internId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Intern deleted successfully.")),
+          );
+        } else {
+          _showError(data['response']);
+        }
+      } else {
+        _showError("Failed to delete Intern.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    }
+  }
+
+  void _handleEdit(String internId) {
+    print("Edit Intern: $internId");
+  }
+
+  void _handleDelete(String internId) {
+    print("Delete Intern: $internId");
+    _deleteIntern(internId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,37 +154,19 @@ class _InternListScreenState extends State<InternListScreen> {
                     itemBuilder: (context, index) {
                       final intern = interns[index];
 
-                      // Show CaseCard for interns with case details
-                      if (intern['has_case'] == true) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: CaseCard(
-                            caseItem: CaseListData(
-                              id: intern['case_id'] ?? '',
-                              caseNo: intern['case_no'] ?? '',
-                              applicant: intern['name'] ?? '',
-                              opponent: intern['opponent'] ?? 'N/A',
-                              srDate:
-                                  DateTime.tryParse(intern['sr_date'] ?? '') ??
-                                      DateTime.now(),
-                              courtName: intern['court_name'] ?? 'N/A',
-                              cityName: intern['city_name'] ?? 'N/A',
-                              handleBy: intern['handle_by'] ?? 'N/A',
-                            ),
-                            isHighlighted: false, // Modify if needed
-                          ),
-                        );
-                      }
-
-                      // Default to InternCard for interns without case details
                       return Padding(
                         padding: const EdgeInsets.symmetric(),
-                        child: InternCard(
-                          id: intern['id'].toString(),
-                          name: intern['name'],
-                          contact: intern['contact'],
-                          email: intern['email'],
-                          dateTime: formatDate(intern['date_time']),
+                        child: DismissibleCard(
+                          child: InternCard(
+                            id: intern['id'].toString(),
+                            name: intern['name'],
+                            contact: intern['contact'],
+                            email: intern['email'],
+                            dateTime: formatDate(intern['date_time']),
+                          ),
+                          onEdit: () => _handleEdit(intern['id'].toString()),
+                          onDelete: () =>
+                              _handleDelete(intern['id'].toString()),
                         ),
                       );
                     },
@@ -196,10 +215,11 @@ class InternCard extends StatelessWidget {
                 Text(
                   name,
                   style: const TextStyle(
-                    fontSize: 14.0,
+                    color: Colors.black,
+                    fontSize: 20.0,
                   ),
                 ),
-                const SizedBox(height: 10.0),
+                const SizedBox(height: 5.0),
                 Text(
                   'Contact No.: +91 $contact',
                   style: const TextStyle(

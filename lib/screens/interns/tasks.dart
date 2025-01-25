@@ -188,58 +188,6 @@ class _TasksPageState extends State<TasksPage> {
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(color: Colors.black),
                           ),
-                          // child: ClipRRect(
-                          //   borderRadius: BorderRadius.circular(14),
-                          //   child: Dismissible(
-                          //     key: UniqueKey(),
-                          //     background: Container(
-                          //       decoration: BoxDecoration(
-                          //         color: Colors.indigoAccent,
-                          //         borderRadius: BorderRadius.circular(14),
-                          //       ),
-                          //       alignment: Alignment.centerLeft,
-                          //       padding:
-                          //           const EdgeInsets.symmetric(horizontal: 40),
-                          //       child:
-                          //           const Icon(Icons.edit, color: Colors.white),
-                          //     ),
-                          //     secondaryBackground: Container(
-                          //       decoration: BoxDecoration(
-                          //         color: Colors.red,
-                          //         borderRadius: BorderRadius.circular(14),
-                          //       ),
-                          //       alignment: Alignment.centerRight,
-                          //       padding:
-                          //           const EdgeInsets.symmetric(horizontal: 40),
-                          //       child: const Icon(CupertinoIcons.trash,
-                          //           color: Colors.white),
-                          //     ),
-                          //     confirmDismiss: (direction) async {
-                          //       if (direction == DismissDirection.startToEnd) {
-                          //         _handleEdit(task);
-                          //         return false;
-                          //       } else if (direction ==
-                          //           DismissDirection.endToStart) {
-                          //         final confirm =
-                          //             await showCupertinoDialog<bool>(
-                          //           context: context,
-                          //           builder: (context) => IOSAlertDialog(
-                          //             title: "Delete Task",
-                          //             message:
-                          //                 "Are you sure you want to delete this task?",
-                          //             cancelButtonText: "Cancel",
-                          //             confirmButtonText: "Delete",
-                          //             onConfirm: () {
-                          //               _handleDelete(
-                          //                   task); // Call the delete function
-                          //             },
-                          //           ),
-                          //         );
-                          //         return false; // Prevent the swipe from dismissing
-                          //       }
-                          //       return false;
-                          //     },
-                          // ),
                           child: DismissibleCard(
                             child: Container(
                               color: Colors.white,

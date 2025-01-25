@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class TaskInfoPage extends StatelessWidget {
   final Map<String, dynamic> task;
 
-  const TaskInfoPage({required this.task, Key? key}) : super(key: key);
+  const TaskInfoPage({required this.task, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +104,7 @@ class TaskInfoPage extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

@@ -8,7 +8,7 @@ import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart'; // Import CaseListData model
 
 class UnassignedCases extends StatefulWidget {
-  const UnassignedCases({Key? key}) : super(key: key);
+  const UnassignedCases({super.key});
 
   @override
   State<UnassignedCases> createState() => _UnassignedCasesState();
