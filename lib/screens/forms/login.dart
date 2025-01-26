@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (data is List && data.isNotEmpty) {
             // Cast the first item in the list to Map<String, dynamic>
             Map<String, dynamic> userJson =
-            (data[0] as Map).cast<String, dynamic>();
+                (data[0] as Map).cast<String, dynamic>();
             Advocate advocate = Advocate.fromJson(userJson);
             await SharedPrefService.saveUser(advocate);
           } else if (data is Map) {
@@ -145,20 +145,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Login Button
                 SizedBox(
                   width: screenWidth * 0.5,
+                  height: 70,
                   child: ElevatedButton(
                     onPressed: _login,
                     style: AppTheme.elevatedButtonStyle,
                     child: _isLoading
                         ? const CircularProgressIndicator(
-                      color: Colors.white,
-                    )
+                            color: Colors.white,
+                          )
                         : const Text(
-                      'Log in',
-                      style: TextStyle(
-                        fontSize: 22,
-                        color: Colors.white,
-                      ),
-                    ),
+                            'Log in',
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 10),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class TaskInfoPage extends StatelessWidget {
   final Map<String, dynamic> task;
@@ -12,7 +13,7 @@ class TaskInfoPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -33,11 +34,13 @@ class TaskInfoPage extends StatelessWidget {
             _buildDetailsCard(
               title: 'Task Details',
               details: {
-                'Alloted By': task['alloted_by'] ?? 'N/A',
-                'Alloted To': task['alloted_to'] ?? 'N/A',
-                'Action By': task['action_by'] ?? 'N/A',
-                'Status': task['status'] ?? 'N/A',
-                'Remark': task['remark'] ?? 'No remarks available.',
+                'Case No.': task['case_num'] ?? '-',
+                'Alloted By': task['alloted_by'] ?? '-',
+                'Alloted To': task['alloted_to'] ?? '-',
+                'Action By': task['action_by'] ?? '-',
+                'Status': task['status'] ?? '-',
+                'Remark': task['remark'] ?? '-',
+                'Instruction': task['instruction'] ?? '-',
               },
             ),
             const SizedBox(height: 16),

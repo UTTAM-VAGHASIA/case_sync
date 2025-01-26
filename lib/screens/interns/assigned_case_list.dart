@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
 import '../../components/case_card.dart';
@@ -100,6 +101,12 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: const Text("Select Case",
             style: TextStyle(
                 color: Colors.black,

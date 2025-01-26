@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
+import 'package:case_sync/screens/interns/editing%20forms/edit_task.dart';
 import 'package:case_sync/screens/interns/task_info.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
 import '../../components/basicUIcomponent.dart';
@@ -96,6 +98,7 @@ class _TasksPageState extends State<TasksPage> {
         if (data['success'] == true) {
           setState(() {
             _tasks = List<Map<String, dynamic>>.from(data['data']);
+            print(_tasks[0]);
           });
         } else {
           _showError(data['message'] ?? "No tasks found.");
@@ -143,8 +146,17 @@ class _TasksPageState extends State<TasksPage> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _handleEdit(Map<String, dynamic> task) {
+  Future<void> _handleEdit(Map<String, dynamic> task) async {
     print("Edit task: ${task['instruction']}");
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditTaskScreen(taskDetails: task),
+      ),
+    );
+    if (result) {
+      _fetchTasks();
+    }
   }
 
   void _handleDelete(Map<String, dynamic> task) {
@@ -160,7 +172,7 @@ class _TasksPageState extends State<TasksPage> {
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -226,8 +238,8 @@ class _TasksPageState extends State<TasksPage> {
                                 },
                               ),
                             ),
-                            onEdit: () => _handleEdit,
-                            onDelete: () => _handleDelete,
+                            onEdit: () => _handleEdit(task),
+                            onDelete: () => _handleDelete(task),
                           ),
                         ),
                       );

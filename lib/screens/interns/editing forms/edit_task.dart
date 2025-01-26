@@ -2,28 +2,25 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
 import '../../../utils/validator.dart';
 
-class AddTaskScreen extends StatefulWidget {
-  final String caseNumber;
-  final String caseType;
-  final String caseId;
+class EditTaskScreen extends StatefulWidget {
+  final Map<String, dynamic> taskDetails;
 
-  const AddTaskScreen({
+  const EditTaskScreen({
     super.key,
-    required this.caseNumber,
-    required this.caseType,
-    required this.caseId,
+    required this.taskDetails,
   });
 
   @override
-  State<AddTaskScreen> createState() => _AddTaskScreenState();
+  State<EditTaskScreen> createState() => _EditTaskScreenState();
 }
 
-class _AddTaskScreenState extends State<AddTaskScreen> {
+class _EditTaskScreenState extends State<EditTaskScreen> {
   String? _advocateName;
   String? _advocateId;
   String? _assignedTo;
@@ -31,8 +28,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _expectedEndDateDisplay;
   String? _assignDateApi;
   String? _expectedEndDateApi;
+  String? _selectedStatus;
   final _taskInstructionController = TextEditingController();
-  bool isLoading = false;
 
   List<Map<String, String>> _internList = [];
 
@@ -40,7 +37,21 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void initState() {
     super.initState();
     _fetchInternList();
+    _populateTaskDetails();
     getUsername();
+  }
+
+  void _populateTaskDetails() {
+    final task = widget.taskDetails;
+    _assignedTo = task['alloted_to_id'];
+    _taskInstructionController.text = task['instruction'] ?? '';
+    _assignDateDisplay =
+        DateFormat('dd/MM/yyyy').format(DateTime.parse(task['alloted_date']));
+    _expectedEndDateDisplay = DateFormat('dd/MM/yyyy')
+        .format(DateTime.parse(task['expected_end_date']));
+    _assignDateApi = task['alloted_date'];
+    _expectedEndDateApi = task['expected_end_date'];
+    _selectedStatus = widget.taskDetails['status'];
   }
 
   Future<void> getUsername() async {
@@ -111,18 +122,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         if (isEndDate) {
           _expectedEndDateDisplay = date;
           _expectedEndDateApi = apiDate;
+          print(_expectedEndDateApi);
+          print(_expectedEndDateDisplay);
         } else {
           _assignDateDisplay = date;
           _assignDateApi = apiDate;
+          print(_assignDateApi);
+          print(_assignDateDisplay);
         }
       });
     }
   }
 
-  Future<void> _confirmTask() async {
-    setState(() {
-      isLoading = true;
-    });
+  Future<void> _updateTask() async {
     if (_advocateName == null ||
         _assignedTo == null ||
         validateTaskInstruction(_taskInstructionController.text) != null ||
@@ -134,62 +146,51 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           backgroundColor: Colors.red,
         ),
       );
-
-      setState(() {
-        isLoading = false;
-      });
       return;
     }
 
     const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_task';
+        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/edit_task';
 
     try {
       final request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['data'] = jsonEncode({
-        "case_id": widget.caseId,
+        "task_id": widget.taskDetails['id'],
+        "case_id": widget.taskDetails['case_id'],
         "alloted_to": _assignedTo,
-        "instructions": _taskInstructionController.text
-            .trim(), // Trim here before submitting
+        "instructions": _taskInstructionController.text.trim(),
         "alloted_by": _advocateId,
         "alloted_date": _assignDateApi,
         "expected_end_date": _expectedEndDateApi,
-        "status": "pending",
-        "remark": "Some remark",
+        "status": _selectedStatus,
+        "remark": "Updated task",
       });
 
-      // Debugging logs
-      print("Request Payload: ${request.fields['data']}");
+      print(request.fields);
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
       final decodedResponse = jsonDecode(responseBody);
 
-      print("API Response: $decodedResponse");
-
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Task added successfully!"),
+            content: Text("Task updated successfully!"),
             backgroundColor: Colors.green,
           ),
         );
         Navigator.pop(context, true);
       } else {
         _showErrorSnackBar(
-            "Failed to add task: ${decodedResponse['message'] ?? response.statusCode}");
+            "Failed to update task: ${decodedResponse['message'] ?? response.statusCode}");
       }
     } catch (error) {
-      _showErrorSnackBar("Error adding task: $error");
+      _showErrorSnackBar("Error updating task: $error");
     }
-    setState(() {
-      isLoading = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    print(widget.caseNumber);
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -212,7 +213,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             children: [
               const Center(
                 child: Text(
-                  'Add Task',
+                  'Edit Task',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -223,24 +224,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               ),
               const SizedBox(height: 30),
               _buildTextField(
-                label: 'Case Number',
-                hint: widget.caseNumber,
-                controller: TextEditingController(text: widget.caseNumber),
-                readOnly: true,
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                label: 'Case Type',
-                hint: widget.caseType,
-                controller: TextEditingController(text: widget.caseType),
-                readOnly: true,
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                label: 'Assigned by',
-                hint: _advocateId ?? '',
-                controller: TextEditingController(text: _advocateName ?? ''),
-                readOnly: true,
+                label: 'Task Instructions',
+                hint: 'Enter instructions',
+                controller: _taskInstructionController,
               ),
               const SizedBox(height: 20),
               _buildDropdownField(
@@ -249,12 +235,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 value: _assignedTo,
                 items: _internList,
                 onChanged: (value) => setState(() => _assignedTo = value),
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                label: 'Task Instruction',
-                hint: 'Instructions',
-                controller: _taskInstructionController,
               ),
               const SizedBox(height: 20),
               _buildDateField(
@@ -268,30 +248,61 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 hint: _expectedEndDateDisplay ?? 'Select Date',
                 onTap: () => _selectDate(context, true),
               ),
+              const SizedBox(height: 20),
+              Text('Status', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: InputDecoration(
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                items: [
+                  'pending',
+                  'completed',
+                  'reassign',
+                  're-alloted',
+                  'allotted'
+                ]
+                    .map((status) => DropdownMenuItem(
+                          value: status,
+                          child: Text(status),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedStatus = value!;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a status';
+                  }
+                  return null;
+                },
+              ),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _confirmTask,
+                  onPressed: _updateTask,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: isLoading
-                      ? CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        )
-                      : Text(
-                          'Confirm',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
-                        ),
+                  child: const Text(
+                    'Update Task',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 60),
@@ -305,7 +316,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   Widget _buildDropdownField({
     required String label,
     required String hint,
-    required String? value,
+    required String? value, // Should be the intern's id
     required List<Map<String, String>> items,
     required ValueChanged<String?> onChanged,
   }) {
@@ -321,7 +332,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             color: Colors.white,
           ),
           child: DropdownButtonFormField<String>(
-            value: value,
+            value: items.any((item) => item['id'] == value) ? value : null,
             decoration: InputDecoration(
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
@@ -333,8 +344,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             hint: Text(hint, style: const TextStyle(color: Colors.grey)),
             items: items
                 .map((item) => DropdownMenuItem<String>(
-                      value: item['id'],
-                      child: Text(item['name']!),
+                      value: item['id'], // Use the unique id as the value
+                      child:
+                          Text(item['name']!), // Display the name to the user
                     ))
                 .toList(),
             onChanged: onChanged,
@@ -348,7 +360,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     required String label,
     required String hint,
     required TextEditingController controller,
-    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +368,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         const SizedBox(height: 10),
         TextField(
           controller: controller,
-          readOnly: readOnly,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
