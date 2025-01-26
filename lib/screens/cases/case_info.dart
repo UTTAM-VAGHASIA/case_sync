@@ -59,16 +59,21 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
             _caseDetails = {
               'case_no': caseData['case_no'],
               'year': caseData['year'],
-              'type': caseData['case_type'],
-              'Current Stage': caseData['stage_name'],
-              'Next Stage': caseData['next_stage'],
+              'case_type': caseData['case_type'],
+              'stage_name': caseData['stage_name'],
+              'Company Name': caseData['company_name'],
+              'advocate_name': caseData['advocate_name'],
               'applicant': caseData['applicant'],
-              'opponent': caseData['opp_name'],
-              'court': caseData['court_name'],
-              'location': caseData['city_name'],
-              'summonDate': parseDate(caseData['sr_date']),
-              'nextDate': parseDate(caseData['next_date']),
-              'remark': 'No remarks available.', // Placeholder
+              'opp_name': caseData['opp_name'],
+              'court_name': caseData['court_name'],
+              'city_name': caseData['city_name'],
+              'next_date': parseDate(caseData['next_date']),
+              'next_stage': caseData['next_stage'],
+              'sr_date': parseDate(caseData['sr_date']),
+              'complainant_advocate': caseData['complainant_advocate'],
+              'respondent_advocate': caseData['respondent_advocate'],
+              'date_of_filing': parseDate(caseData['date_of_filing']),
+              'case_counter': caseData['case_counter'],
             };
           });
         } else {
@@ -131,22 +136,34 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
                       _buildDetailsCard(
                         title: 'Case Details',
                         details: {
-                          'Case Year': _caseDetails['year']!,
-                          'Case Type': _caseDetails['type']!,
-                          'Current Stage': _caseDetails['Current Stage']!,
-                          'Next Stage': _caseDetails['Next Stage']!,
-                          'Plaintiff Name': _caseDetails['applicant']!,
-                          'Opponent Name': _caseDetails['opponent']!,
-                          'Court': _caseDetails['court']!,
-                          'City': _caseDetails['location']!,
-                          'Summon Date': _caseDetails['summonDate'] is DateTime
+                          'Case Year': _caseDetails['year'],
+                          'Case Type': _caseDetails['case_type'],
+                          'Current Stage': _caseDetails['stage_name'],
+                          'Next Stage': _caseDetails['next_stage'],
+                          'Company Name': _caseDetails['company_name'],
+                          'Plaintiff Name': _caseDetails['applicant'],
+                          'Opponent Name': _caseDetails['opp_name'],
+                          'Complainant Advocate':
+                              _caseDetails['complainant_advocate'],
+                          'Respondent Advocate':
+                              _caseDetails['respondent_advocate'],
+                          'Court': _caseDetails['court_name'],
+                          'City': _caseDetails['city_name'],
+                          'Summon Date': _caseDetails['sr_date'] is DateTime
                               ? DateFormat('dd-MM-yyyy')
-                                  .format(_caseDetails['summonDate'])
-                              : _caseDetails['summonDate'],
+                                  .format(_caseDetails['sr_date'])
+                              : _caseDetails['sr_date'],
                           'Next Date': _caseDetails['nextDate'] is DateTime
                               ? DateFormat('dd-MM-yyyy')
                                   .format(_caseDetails['nextDate'])
                               : _caseDetails['nextDate'],
+                          'Date Of Filing':
+                              _caseDetails['date_of_filing'] is DateTime
+                                  ? DateFormat('dd-MM-yyyy')
+                                      .format(_caseDetails['date_of_filing'])
+                                  : _caseDetails['date_of_filing'],
+                          'Case Counter': _caseDetails['case_counter'],
+                          'Handled By': _caseDetails['handle_by'],
                         },
                       ),
                     ],
