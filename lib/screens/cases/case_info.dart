@@ -157,7 +157,10 @@ class _CaseInfoPageState extends State<CaseInfoPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ViewDocs(caseId: widget.caseId),
+              builder: (context) => ViewDocs(
+                caseId: widget.caseId,
+                caseNo: widget.caseNo,
+              ),
             ),
           );
         },
