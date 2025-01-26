@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -61,8 +62,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   Future<void> _fetchInternList() async {
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list';
+    final url = '$baseUrl/get_interns_list';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -141,8 +141,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       return;
     }
 
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_task';
+    final url = '$baseUrl/add_task';
 
     try {
       final request = http.MultipartRequest('POST', Uri.parse(url));

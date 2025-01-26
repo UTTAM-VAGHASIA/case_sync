@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/advocate.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/constants.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -44,9 +45,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   bool _isSubmitting = false;
   bool _isLoading = true;
-
-  final String baseUrl =
-      "https://pragmanxt.com/case_sync/services/admin/v1/index.php";
 
   @override
   void dispose() {
@@ -406,6 +404,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
             child: Form(
               key: _formKey,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Center(
@@ -593,30 +592,37 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       children: [
         Text(label, style: const TextStyle(fontSize: 16)),
         const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          decoration: InputDecoration(
-            hintText: hintText,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
+        Container(
+          width: double.infinity,
+          child: DropdownButtonFormField<String>(
+            isExpanded: true,
+            decoration: InputDecoration(
+              hintText: hintText,
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
+            value: value,
+            items: items.map((item) {
+              return DropdownMenuItem<String>(
+                value: item['id'], // Use the ID as the unique value
+                child: Text(
+                  item['name'] ?? 'Contact Developer',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select $label';
+              }
+              return null;
+            },
           ),
-          value: value,
-          items: items.map((item) {
-            return DropdownMenuItem<String>(
-              value: item['id'], // Use the ID as the unique value
-              child:
-                  Text(item['name'] ?? 'Contact Developer'), // Display the name
-            );
-          }).toList(),
-          onChanged: onChanged,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select $label';
-            }
-            return null;
-          },
         ),
         const SizedBox(height: 20),
       ],

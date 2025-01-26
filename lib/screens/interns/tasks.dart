@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
 import 'package:case_sync/screens/interns/editing%20forms/edit_task.dart';
 import 'package:case_sync/screens/interns/task_info.dart';
+import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +29,7 @@ class _TasksPageState extends State<TasksPage> {
 
   Future<void> fetchCaseInfo() async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
+      final url = Uri.parse('$baseUrl/get_case_info');
       final response = await http.post(url, body: {'case_id': widget.caseId});
 
       if (response.statusCode == 200) {
@@ -81,8 +81,7 @@ class _TasksPageState extends State<TasksPage> {
 
   Future<void> _fetchTasks() async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_task');
+      final url = Uri.parse('$baseUrl/get_case_task');
       final request = http.MultipartRequest('POST', url);
 
       // Add the multipart data
@@ -117,8 +116,7 @@ class _TasksPageState extends State<TasksPage> {
 
   Future<void> _deleteTask(String taskId) async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_task');
+      final url = Uri.parse('$baseUrl/delete_task');
       final response = await http.post(url, body: {'task_id': taskId});
 
       if (response.statusCode == 200) {

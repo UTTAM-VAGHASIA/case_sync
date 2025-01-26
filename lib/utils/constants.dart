@@ -1,4 +1,4 @@
-final List<String> months = [
+const List<String> months = [
   'January',
   'February',
   'March',
@@ -13,5 +13,10 @@ final List<String> months = [
   'December'
 ];
 
-final String baseUrl =
-    "https://pragmanxt.com/case_sync/services/admin/v1/index.php";
+// For testing APIs:
+// const baseUrl =
+//     "https://pragmanxt.com/case_sync/services/admin/v1/index.php";
+
+// For Production APIs:
+const baseUrl =
+    "https://pragmanxt.com/case_sync_pro/services/admin/v1/index.php";

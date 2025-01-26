@@ -3,10 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/case_list.dart';
+import '../utils/constants.dart';
 
 class ApiService {
-  static const String baseUrl =
-      'https://pragmanxt.com/case_sync/services/admin/v1/index.php/';
   static const Map<String, String> headers = {
     'User-Agent': 'Apidog/1.0.0 (https://apidog.com)',
   };
@@ -60,7 +59,7 @@ class ApiService {
   static Future<Map<String, dynamic>> loginUser(
       String email, String password) async {
     return _sendRequest(
-      'login_advocate',
+      '/login_advocate',
       {
         'user_id': email,
         'password': password,
@@ -72,7 +71,7 @@ class ApiService {
   static Future<Map<String, dynamic>> registerAdvocate(
       String name, String contact, String email, String password) async {
     return _sendRequest(
-      'advocate_registration',
+      '/advocate_registration',
       {
         'name': name,
         'contact': contact,
@@ -87,7 +86,7 @@ class ApiService {
       Map<String, dynamic> caseData, List<String> filePaths) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('${baseUrl}add_case'),
+      Uri.parse('${baseUrl}/add_case'),
     );
 
     // Add case data as JSON in the 'data' field
@@ -138,9 +137,6 @@ class ApiService {
 }
 
 class CaseApiService {
-  static const String baseUrl =
-      'https://pragmanxt.com/case_sync/services/admin/v1/index.php';
-
   static Future<List<CaseListData>> fetchCaseList() async {
     final response = await http.get(Uri.parse('$baseUrl/get_case_history'));
 

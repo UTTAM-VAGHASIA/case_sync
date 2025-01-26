@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
@@ -66,8 +67,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
     String startDate = _joiningDateController.text.trim();
 
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/intern_registration');
+      final url = Uri.parse('$baseUrl/intern_registration');
 
       var request = http.MultipartRequest('POST', url);
       request.fields['data'] = jsonEncode({

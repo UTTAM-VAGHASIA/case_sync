@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -53,8 +54,7 @@ class _EditInternScreenState extends State<EditInternScreen> {
     String email = _emailController.text.trim();
 
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/edit_intern');
+      final url = Uri.parse('$baseUrl/edit_intern');
 
       var request = http.MultipartRequest('POST', url);
       request.fields['data'] = jsonEncode({

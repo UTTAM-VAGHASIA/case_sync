@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
+import '../../../utils/constants.dart';
 import '../../../utils/validator.dart';
 
 class EditTaskScreen extends StatefulWidget {
@@ -72,8 +73,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _fetchInternList() async {
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list';
+    final url = '$baseUrl/get_interns_list';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -149,8 +149,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       return;
     }
 
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/edit_task';
+    final url = '$baseUrl/edit_task';
 
     try {
       final request = http.MultipartRequest('POST', Uri.parse(url));

@@ -1,6 +1,9 @@
 import 'dart:convert';
+
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../../utils/validator.dart';
 
 class AddCompanyScreen extends StatefulWidget {
@@ -38,8 +41,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
     }
 
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_company');
+      final url = Uri.parse('$baseUrl/add_company');
       var request = http.MultipartRequest('POST', url);
 
       request.fields['data'] = jsonEncode({
@@ -177,12 +179,12 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
   }
 
   Widget _buildTextField(
-      String label,
-      String hintText,
-      TextEditingController controller, {
-        TextInputType keyboardType = TextInputType.text,
-        String? Function(String?)? validator,
-      }) {
+    String label,
+    String hintText,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -194,7 +196,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
           decoration: InputDecoration(
             hintText: hintText,
             contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
             ),

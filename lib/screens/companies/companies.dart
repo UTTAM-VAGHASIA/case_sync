@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -19,8 +20,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
   List<Map<String, dynamic>> companies = [];
   bool isLoading = true;
 
-  final String apiUrl =
-      "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_company_list";
+  final String apiUrl = "$baseUrl/get_company_list";
 
   @override
   void initState() {
@@ -72,8 +72,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
 
   Future<void> _deleteCompany(String companyId) async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_company');
+      final url = Uri.parse('$baseUrl/delete_company');
       final response = await http.post(url, body: {'company_id': companyId});
 
       if (response.statusCode == 200) {
@@ -201,34 +200,38 @@ class CompaniesScreenState extends State<CompaniesScreen> {
                                   width: 15,
                                   height: 100,
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${companies[index]['name']!}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${companies[index]['name']!}',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'Contact Person: ${companies[index]['contact_person']!}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Contact Person: ${companies[index]['contact_person']!}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      'Contact No.: +91 ${companies[index]['phone']!}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        'Contact No.: +91 ${companies[index]['phone']!}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                  ],
+                                      const SizedBox(height: 5),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

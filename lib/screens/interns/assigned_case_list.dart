@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -31,8 +32,7 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
 
   Future<void> _fetchCases() async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_assigned_case_list');
+      final url = Uri.parse('$baseUrl/get_assigned_case_list');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {

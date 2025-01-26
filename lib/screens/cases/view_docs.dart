@@ -25,7 +25,7 @@ class ViewDocs extends StatefulWidget {
 
 class ViewDocsState extends State<ViewDocs> {
   final List<Map<String, dynamic>> _documents = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
   String _errorMessage = '';
 
   @override
@@ -35,6 +35,7 @@ class ViewDocsState extends State<ViewDocs> {
   }
 
   Future<void> _fetchDocuments() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -49,17 +50,21 @@ class ViewDocsState extends State<ViewDocs> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['data'].isNotEmpty) {
+          if (!mounted) return;
           setState(() {
             _documents.addAll(List<Map<String, dynamic>>.from(data['data']));
           });
         } else {
+          if (!mounted) return;
           setState(() => _errorMessage = 'No documents available.');
         }
       } else {
+        if (!mounted) return;
         setState(() => _errorMessage =
             'Failed to fetch documents. Status code: ${response.statusCode}');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'An error occurred: $e');
     } finally {
       setState(() => _isLoading = false);

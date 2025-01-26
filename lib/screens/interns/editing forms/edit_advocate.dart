@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
@@ -59,8 +60,7 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
     String email = _emailController.text.trim();
 
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/edit_advocate');
+      final url = Uri.parse('$baseUrl/edit_advocate');
 
       var request = http.MultipartRequest('POST', url);
       request.fields['data'] = jsonEncode({

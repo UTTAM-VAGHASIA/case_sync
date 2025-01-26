@@ -1,6 +1,7 @@
 import 'dart:convert'; // For JSON decoding
 
 import 'package:case_sync/screens/interns/adding%20forms/new_advocate.dart';
+import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -27,8 +28,8 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
 
   // Function to fetch data from the API
   Future<void> fetchAdvocates() async {
-    const String apiUrl =
-        "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_advocate_list"; // Corrected API endpoint
+    final String apiUrl =
+        "$baseUrl/get_advocate_list"; // Corrected API endpoint
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -61,8 +62,7 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
 
   Future<void> _deleteAdvocate(String advocateId) async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_advocate');
+      final url = Uri.parse('$baseUrl/delete_advocate');
       final response = await http.post(url, body: {'advocate_id': advocateId});
 
       if (response.statusCode == 200) {

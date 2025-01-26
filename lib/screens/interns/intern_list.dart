@@ -1,5 +1,6 @@
 import 'dart:convert'; // For JSON decoding
 
+import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -28,8 +29,7 @@ class _InternListScreenState extends State<InternListScreen> {
 
   // Function to fetch data from the API
   Future<void> fetchInterns() async {
-    const String apiUrl =
-        "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list";
+    final String apiUrl = "$baseUrl/get_interns_list";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -73,8 +73,7 @@ class _InternListScreenState extends State<InternListScreen> {
 
   Future<void> _deleteIntern(String internId) async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/delete_intern');
+      final url = Uri.parse('$baseUrl/delete_intern');
       final response = await http.post(url, body: {'intern_id': internId});
 
       if (response.statusCode == 200) {
