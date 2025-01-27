@@ -1,9 +1,9 @@
-import 'package:case_sync/screens/interns/TaskInfoPage.dart';
 import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../models/case_list.dart';
-import '../screens/cases/caseinfo.dart';
+import '../screens/cases/case_info.dart';
 
 class CaseCard extends StatelessWidget {
   final CaseListData caseItem;
@@ -27,14 +27,19 @@ class CaseCard extends StatelessWidget {
             builder: (context) => isTask
                 ? TasksPage(
                     caseId: caseItem.id,
-                    caseNumber: '',
+                    caseNumber: caseItem.caseNo,
                   )
-                : CaseInfoPage(caseId: caseItem.id),
+                : CaseInfoPage(
+                    caseId: caseItem.id,
+                    caseNo: caseItem.caseNo,
+                  ),
           ),
         );
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+        margin: const EdgeInsets.symmetric(
+          vertical: 8.0,
+        ),
         color: isHighlighted ? Colors.black : Colors.white,
         elevation: 3,
         shape: RoundedRectangleBorder(
@@ -48,14 +53,16 @@ class CaseCard extends StatelessWidget {
               Text(
                 'Case No: ${caseItem.caseNo}',
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
                   color: isHighlighted ? Colors.white : Colors.black,
                 ),
               ),
-              const SizedBox(height: 5),
+              Divider(
+                color: isHighlighted ? Colors.white : Colors.black,
+              ),
               Text(
-                '${caseItem.applicant} vs ${caseItem.opponent}',
+                '${caseItem.applicant.capitalize} vs ${caseItem.opponent.capitalize}',
                 style: TextStyle(
                   fontSize: 14,
                   color: isHighlighted ? Colors.white : Colors.black,
@@ -73,7 +80,15 @@ class CaseCard extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                'Court Name: ${caseItem.courtName}, ${caseItem.cityName}',
+                'Court: ${caseItem.courtName}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isHighlighted ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                'City: ${caseItem.cityName}',
                 style: TextStyle(
                   fontSize: 14,
                   color: isHighlighted ? Colors.white : Colors.black,

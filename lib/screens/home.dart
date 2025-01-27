@@ -3,7 +3,6 @@ import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get.dart';
 
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
@@ -13,11 +12,8 @@ import 'cases/new_case.dart';
 import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
 import 'interns/advocate_list.dart';
-import 'interns/assigned_case_taskInfo.dart';
+import 'interns/assigned_case_list.dart';
 import 'interns/intern_list.dart';
-import 'interns/tasks.dart';
-import 'officials/new_advocate.dart';
-import 'officials/new_intern.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -106,7 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 future: SharedPrefService.getUser(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const CircularProgressIndicator(
+                      color: Colors.black,
+                    );
                   } else if (snapshot.hasError) {
                     return const Text('Error loading user data');
                   } else if (snapshot.hasData && snapshot.data != null) {
@@ -230,57 +228,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               cardTextPositionY,
                               AdvocateListScreen(),
                             ),
-                            _buildCard(
-                              'Tasks',
-                              'assets/icons/tasks.svg',
-                              cardWidth,
-                              cardHeight,
-                              cardIconPositionX,
-                              cardIconPositionY,
-                              cardTextPositionY,
-                              AssignedCaseTaskinfo(),
-                            ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Add an Official',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 2,
-                          mainAxisSpacing: 2,
-                          childAspectRatio: cardWidth / cardHeight,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            _buildCard(
-                              'New Advocate',
-                              'assets/icons/new_advocate.svg',
-                              cardWidth,
-                              cardHeight,
-                              cardIconPositionX,
-                              cardIconPositionY,
-                              cardTextPositionY,
-                              NewAdvocateScreen(),
-                            ),
-                            _buildCard(
-                              'New Intern',
-                              'assets/icons/new_intern.svg',
-                              cardWidth,
-                              cardHeight,
-                              cardIconPositionX,
-                              cardIconPositionY,
-                              cardTextPositionY,
-                              NewInternScreen(),
-                            ),
-                          ],
+                        _buildCard(
+                          'Tasks',
+                          'assets/icons/tasks.svg',
+                          fullCardWidth,
+                          cardHeight,
+                          cardIconPositionX,
+                          cardIconPositionY,
+                          cardTextPositionY,
+                          AssignedCaseList(),
                         ),
                         const SizedBox(height: 20),
                         const Text(
@@ -338,8 +296,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            // Using Get.to for navigation
-            Get.to(() => destinationScreen);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => destinationScreen));
           },
           splashColor: Colors.grey.withOpacity(0.2),
           child: SizedBox(

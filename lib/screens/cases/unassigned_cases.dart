@@ -1,13 +1,15 @@
 import 'dart:convert';
-import 'package:case_sync/screens/cases/caseinfo.dart';
+
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+import '../../components/case_card.dart'; // Import CaseCard widget
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart'; // Import CaseListData model
-import '../../components/case_card.dart'; // Import CaseCard widget
 
 class UnassignedCases extends StatefulWidget {
-  const UnassignedCases({Key? key}) : super(key: key);
+  const UnassignedCases({super.key});
 
   @override
   State<UnassignedCases> createState() => _UnassignedCasesState();
@@ -46,8 +48,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
 
   Future<void> _fetchCases() async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_unassigned_case_list');
+      final url = Uri.parse('$baseUrl/get_unassigned_case_list');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -60,7 +61,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                       id: caseItem['id']?.toString() ?? '',
                       caseNo: caseItem['case_no']?.toString() ?? '',
                       applicant: caseItem['applicant']?.toString() ?? 'N/A',
-                      opponent: caseItem['opponent']?.toString() ?? 'N/A',
+                      opponent: caseItem['opp_name']?.toString() ?? 'N/A',
                       courtName: caseItem['court_name']?.toString() ?? 'N/A',
                       cityName: caseItem['city_name']?.toString() ?? 'N/A',
                       srDate: DateTime.parse(caseItem['sr_date']),
@@ -141,7 +142,8 @@ class _UnassignedCasesState extends State<UnassignedCases> {
         controller: _searchController,
         decoration: InputDecoration(
           labelText: 'Search',
-          hintText: 'Search by case number, applicant, court, or city',
+          hintText: 'Search by case number, applicant, court or city',
+          hintStyle: TextStyle(fontSize: 12),
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -175,6 +177,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
         },
         onFilterPressed: () {
           showModalBottomSheet(
+            backgroundColor: Colors.white,
             context: context,
             builder: (context) => _buildFilterOptions(),
           );
@@ -186,7 +189,10 @@ class _UnassignedCasesState extends State<UnassignedCases> {
           if (_isSearching) _buildSearchBar(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : _filteredCases.isEmpty
                     ? const Center(child: Text('No cases found.'))
                     : ListView.builder(
@@ -274,7 +280,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text("Apply"),
+                child: const Text("Done"),
               ),
             ],
           ),

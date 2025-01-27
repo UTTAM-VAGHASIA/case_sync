@@ -1,13 +1,15 @@
 import 'dart:convert';
+
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+import '../../components/case_card.dart'; // Import your CaseCard component
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart'; // Import your CaseListData model
-import '../../components/case_card.dart'; // Import your CaseCard component
-import 'caseinfo.dart';
 
 class AssignedCases extends StatefulWidget {
-  const AssignedCases({Key? key}) : super(key: key);
+  const AssignedCases({super.key});
 
   @override
   State<AssignedCases> createState() => _AssignedCasesState();
@@ -46,8 +48,7 @@ class _AssignedCasesState extends State<AssignedCases> {
 
   Future<void> _fetchCases() async {
     try {
-      final url = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_assigned_case_list');
+      final url = Uri.parse('$baseUrl/get_assigned_case_list');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -59,7 +60,7 @@ class _AssignedCasesState extends State<AssignedCases> {
                       id: caseItem['id']?.toString() ?? '',
                       caseNo: caseItem['case_no']?.toString() ?? '',
                       applicant: caseItem['applicant']?.toString() ?? 'N/A',
-                      opponent: caseItem['opponent']?.toString() ?? 'N/A',
+                      opponent: caseItem['opp_name']?.toString() ?? 'N/A',
                       courtName: caseItem['court_name']?.toString() ?? 'N/A',
                       cityName: caseItem['city_name']?.toString() ?? 'N/A',
                       srDate: DateTime.parse(caseItem['sr_date']),
@@ -169,7 +170,10 @@ class _AssignedCasesState extends State<AssignedCases> {
           if (_isSearching) _buildSearchBar(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : _filteredCases.isEmpty
                     ? const Center(child: Text('No cases found.'))
                     : ListView.builder(

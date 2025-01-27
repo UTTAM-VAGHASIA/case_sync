@@ -1,8 +1,12 @@
 import 'dart:convert';
+
+import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../../models/advocate.dart';
-import '../../services/shared_pref.dart';
+
+import '../../../models/advocate.dart';
+import '../../../services/shared_pref.dart';
+import '../../../utils/validator.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final String caseNumber;
@@ -22,11 +26,15 @@ class AddTaskScreen extends StatefulWidget {
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _advocateName;
-  String? _advocateid;
+  String? _advocateId;
   String? _assignedTo;
-  String? _assignDate;
-  String? _expectedEndDate;
+  String? _assignDateDisplay;
+  String? _expectedEndDateDisplay;
+  String? _assignDateApi;
+  String? _expectedEndDateApi;
   final _taskInstructionController = TextEditingController();
+  bool isLoading = false;
+
   List<Map<String, String>> _internList = [];
 
   @override
@@ -43,7 +51,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
     setState(() {
       _advocateName = user.name;
-      _advocateid = user.id;
+      _advocateId = user.id;
     });
   }
 
@@ -54,8 +62,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   Future<void> _fetchInternList() async {
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_interns_list';
+    final url = '$baseUrl/get_interns_list';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -64,9 +71,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           setState(() {
             _internList = (data['data'] as List)
                 .map((intern) => {
-              'id': intern['id'].toString(),
-              'name': intern['name'].toString(),
-            })
+                      'id': intern['id'].toString(),
+                      'name': intern['name'].toString(),
+                    })
                 .toList();
           });
         } else {
@@ -98,50 +105,66 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.year}/${picked.month}/${picked.day}";
+        final date = "${picked.day}/${picked.month}/${picked.year}";
+        final apiDate =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
         if (isEndDate) {
-          _expectedEndDate = date;
+          _expectedEndDateDisplay = date;
+          _expectedEndDateApi = apiDate;
         } else {
-          _assignDate = date;
+          _assignDateDisplay = date;
+          _assignDateApi = apiDate;
         }
       });
     }
   }
 
   Future<void> _confirmTask() async {
+    setState(() {
+      isLoading = true;
+    });
     if (_advocateName == null ||
         _assignedTo == null ||
-        _taskInstructionController.text.isEmpty ||
-        _assignDate == null ||
-        _expectedEndDate == null) {
+        validateTaskInstruction(_taskInstructionController.text) != null ||
+        _assignDateDisplay == null ||
+        _expectedEndDateDisplay == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill out all fields"),
           backgroundColor: Colors.red,
         ),
       );
+
+      setState(() {
+        isLoading = false;
+      });
       return;
     }
 
-    const url =
-        'https://pragmanxt.com/case_sync/services/admin/v1/index.php/add_task';
+    final url = '$baseUrl/add_task';
 
     try {
       final request = http.MultipartRequest('POST', Uri.parse(url));
       request.fields['data'] = jsonEncode({
         "case_id": widget.caseId,
         "alloted_to": _assignedTo,
-        "instructions": _taskInstructionController.text,
-        "alloted_by": _advocateid,
-        "alloted_date": _assignDate,
-        "expected_end_date": _expectedEndDate,
+        "instructions": _taskInstructionController.text
+            .trim(), // Trim here before submitting
+        "alloted_by": _advocateId,
+        "alloted_date": _assignDateApi,
+        "expected_end_date": _expectedEndDateApi,
         "status": "pending",
         "remark": "Some remark",
       });
 
+      // Debugging logs
+      print("Request Payload: ${request.fields['data']}");
+
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
       final decodedResponse = jsonDecode(responseBody);
+
+      print("API Response: $decodedResponse");
 
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +173,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context, true);  // Return true to indicate a successful task addition
+        Navigator.pop(context, true);
       } else {
         _showErrorSnackBar(
             "Failed to add task: ${decodedResponse['message'] ?? response.statusCode}");
@@ -158,107 +181,121 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     } catch (error) {
       _showErrorSnackBar("Error adding task: $error");
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
-      appBar: AppBar(
+    print(widget.caseNumber);
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
         backgroundColor: const Color(0xFFF3F3F3),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        appBar: AppBar(
+          surfaceTintColor: Colors.transparent,
+          backgroundColor: const Color(0xFFF3F3F3),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Center(
-              child: Text(
-                'Add\nTask',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 30),
-            _buildTextField(
-              label: 'Case Number',
-              hint: widget.caseNumber,
-              controller: TextEditingController(text: widget.caseNumber),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Case Type',
-              hint: widget.caseType,
-              controller: TextEditingController(text: widget.caseType),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Assigned by',
-              hint: _advocateid ?? '',
-              controller: TextEditingController(text: _advocateName ?? ''),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            _buildDropdownField(
-              label: 'Assign to',
-              hint: 'Select Intern',
-              value: _assignedTo,
-              items: _internList,
-              onChanged: (value) => setState(() => _assignedTo = value),
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              label: 'Task Instruction',
-              hint: 'Instructions',
-              controller: _taskInstructionController,
-            ),
-            const SizedBox(height: 20),
-            _buildDateField(
-              label: 'Assign Date',
-              hint: _assignDate ?? 'Select Date',
-              onTap: () => _selectDate(context, false),
-            ),
-            const SizedBox(height: 20),
-            _buildDateField(
-              label: 'Expected End Date',
-              hint: _expectedEndDate ?? 'Select Date',
-              onTap: () => _selectDate(context, true),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: _confirmTask,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text(
-                  'Confirm',
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text(
+                  'Add Task',
                   style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 30),
+              _buildTextField(
+                label: 'Case Number',
+                hint: widget.caseNumber,
+                controller: TextEditingController(text: widget.caseNumber),
+                readOnly: true,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Case Type',
+                hint: widget.caseType,
+                controller: TextEditingController(text: widget.caseType),
+                readOnly: true,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Assigned by',
+                hint: _advocateId ?? '',
+                controller: TextEditingController(text: _advocateName ?? ''),
+                readOnly: true,
+              ),
+              const SizedBox(height: 20),
+              _buildDropdownField(
+                label: 'Assign to',
+                hint: 'Select Intern',
+                value: _assignedTo,
+                items: _internList,
+                onChanged: (value) => setState(() => _assignedTo = value),
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                label: 'Task Instruction',
+                hint: 'Instructions',
+                controller: _taskInstructionController,
+              ),
+              const SizedBox(height: 20),
+              _buildDateField(
+                label: 'Assign Date',
+                hint: _assignDateDisplay ?? 'Select Date',
+                onTap: () => _selectDate(context, false),
+              ),
+              const SizedBox(height: 20),
+              _buildDateField(
+                label: 'Expected End Date',
+                hint: _expectedEndDateDisplay ?? 'Select Date',
+                onTap: () => _selectDate(context, true),
+              ),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _confirmTask,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: isLoading
+                      ? CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        )
+                      : Text(
+                          'Confirm',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 60),
+            ],
+          ),
         ),
       ),
     );
@@ -295,9 +332,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             hint: Text(hint, style: const TextStyle(color: Colors.grey)),
             items: items
                 .map((item) => DropdownMenuItem<String>(
-              value: item['id'],
-              child: Text(item['name']!),
-            ))
+                      value: item['id'],
+                      child: Text(item['name']!),
+                    ))
                 .toList(),
             onChanged: onChanged,
           ),
@@ -321,18 +358,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           controller: controller,
           readOnly: readOnly,
           decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: Colors.grey),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 20,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
             filled: true,
             fillColor: Colors.white,
+            hintText: hint,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ],
@@ -352,17 +384,17 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Colors.black),
               borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(hint, style: const TextStyle(color: Colors.grey)),
-                const Icon(Icons.calendar_today, color: Colors.grey),
+                const Spacer(),
+                const Icon(Icons.calendar_today, color: Colors.black),
               ],
             ),
           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import '../../services/api_service.dart';
+
+import '../../../services/api_service.dart';
+import '../../../utils/validator.dart';
 
 class NewAdvocateScreen extends StatefulWidget {
   const NewAdvocateScreen({super.key});
@@ -38,24 +40,25 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
       _errorMessage = '';
     });
 
-    String name = _nameController.text;
-    String contact = _contactController.text;
-    String email = _emailController.text;
-    String password = _passwordController.text;
+    // Trim the input values
+    String name = _nameController.text.trim();
+    String contact = _contactController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
 
     try {
       Map<String, dynamic> response =
           await ApiService.registerAdvocate(name, contact, email, password);
+      print("$response");
 
       if (response['success'] == true) {
-        // Navigate or show a success message
-        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Advocate registered successfully!')),
         );
+        Navigator.pop(context, true);
       } else {
         setState(() {
-          _errorMessage = response['message'] ?? 'Registration failed';
+          _errorMessage = '${response['message']}\n${response['error']}';
         });
       }
     } catch (error) {
@@ -113,29 +116,20 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.06),
-                _buildTextField('Advocate Name', 'Name', _nameController,
-                    validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Name is required';
-                  }
-                  return null;
-                }),
+                _buildTextField('Advocate Name', 'Name', _nameController),
                 _buildTextField(
                     'Advocate Contact', '+91 XXXXXXXXXX', _contactController,
-                    keyboardType: TextInputType.phone, validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Contact is required';
-                  } else if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                    keyboardType: TextInputType.phone,
+                    additionalValidator: (value) {
+                  if (!RegExp(r'^[0-9]{10}$').hasMatch(value!.trim())) {
                     return 'Enter a valid 10-digit phone number';
                   }
                   return null;
                 }),
                 _buildTextField('Email', 'example@gmail.com', _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Email is required';
-                  } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    additionalValidator: (value) {
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!.trim())) {
                     return 'Enter a valid email address';
                   }
                   return null;
@@ -171,7 +165,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                 SizedBox(height: screenHeight * 0.05),
                 if (_errorMessage.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.only(),
                     child: Text(
                       _errorMessage,
                       style: const TextStyle(color: Colors.red),
@@ -188,7 +182,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
   Widget _buildTextField(
       String label, String hintText, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text,
-      String? Function(String?)? validator}) {
+      String? Function(String?)? additionalValidator}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -205,7 +199,12 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          validator: validator, // Add validator here
+          validator: (value) {
+            String? result = validateAndTrimField(value, label);
+            if (result != null) return result;
+            if (additionalValidator != null) return additionalValidator(value);
+            return null;
+          },
         ),
         const SizedBox(height: 20),
       ],
@@ -240,6 +239,9 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
+          validator: (value) {
+            return validateAndTrimField(value, 'Password');
+          },
         ),
         const SizedBox(height: 20),
       ],

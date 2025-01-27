@@ -49,6 +49,7 @@ Future<void> populateCaseData() async {
     years.sort();
 
     print('Case data populated successfully.');
+    print(caseData);
   } catch (e) {
     print('Error populating case data: $e');
   }

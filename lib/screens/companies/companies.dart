@@ -1,10 +1,13 @@
 import 'dart:convert';
+
+import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
-import '../appbar/settings_drawer.dart';
 import 'add_companies.dart';
+import 'edit_company.dart';
 
 class CompaniesScreen extends StatefulWidget {
   const CompaniesScreen({super.key});
@@ -17,9 +20,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
   List<Map<String, dynamic>> companies = [];
   bool isLoading = true;
 
-  // API URL
-  final String apiUrl =
-      "https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_company_list";
+  final String apiUrl = "$baseUrl/get_company_list";
 
   @override
   void initState() {
@@ -34,15 +35,16 @@ class CompaniesScreenState extends State<CompaniesScreen> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData['success'] == true) {
-          // Transform API data into a usable list format
           final List<dynamic> data = responseData['data'];
           setState(() {
             companies = data
                 .map((company) => {
+                      'id': company['id'],
                       'company': '#${company['id']}',
                       'name': company['name'],
                       'contact_person': company['contact_person'],
                       'phone': company['contact_no'],
+                      'status': company['status'],
                     })
                 .toList();
             isLoading = false;
@@ -63,6 +65,60 @@ class CompaniesScreenState extends State<CompaniesScreen> {
     }
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _deleteCompany(String companyId) async {
+    try {
+      final url = Uri.parse('$baseUrl/delete_company');
+      final response = await http.post(url, body: {'company_id': companyId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            companies.removeWhere((company) => company['id'] == companyId);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Company deleted successfully.")),
+          );
+        } else {
+          _showError(data['response']);
+        }
+      } else {
+        _showError("Failed to delete Company.");
+      }
+    } catch (e) {
+      _showError("An error occurred: $e");
+    }
+  }
+
+  Future<void> _handleEdit(Map<String, dynamic> company) async {
+    print("Edit Company: ${company['id']}");
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCompanyScreen(
+          companyId: company['id'],
+          companyName: company['name'],
+          contactPerson: company['contact_person'],
+          contactNo: company['phone'],
+          status: company['status'],
+        ),
+      ),
+    );
+    if (result) {
+      fetchCompanies();
+    }
+  }
+
+  void _handleDelete(String companyId) {
+    print("Delete Company: $companyId");
+    _deleteCompany(companyId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,29 +137,9 @@ class CompaniesScreenState extends State<CompaniesScreen> {
             Navigator.pop(context);
           },
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20),
-            child: IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/settings.svg',
-                width: 35,
-                height: 35,
-              ),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
-                  builder: (context) => const SettingsDrawer(),
-                );
-              },
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // Title below the AppBar
           Container(
             color: const Color(0xFFF3F3F3),
             padding:
@@ -122,61 +158,112 @@ class CompaniesScreenState extends State<CompaniesScreen> {
               ],
             ),
           ),
-
-          // Body
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16.0),
                     itemCount: companies.length,
                     itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      return DismissibleCard(
                         child: Card(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+                            borderRadius: BorderRadius.circular(20.0),
+                            side: BorderSide(
+                              width: 1,
+                              color: Colors.black,
+                            ),
                           ),
                           elevation: 2,
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      companies[index]['name']!,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
+                                SizedBox(
+                                  width: 10,
+                                  height: 100,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          companies[index]['status'] == 'enable'
+                                              ? Colors.black
+                                              : Colors.red,
+                                      borderRadius: BorderRadius.circular(5),
                                     ),
-                                    const SizedBox(height: 5),
-                                    Text(companies[index]['contact_person']!),
-                                    Text(companies[index]['phone']!),
-                                  ],
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                  height: 100,
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${companies[index]['name']!}',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Contact Person: ${companies[index]['contact_person']!}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        'Contact No.: +91 ${companies[index]['phone']!}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                         ),
+                        onEdit: () => {
+                          print("Editing: ${companies[index]['id']}"),
+                          _handleEdit(companies[index])
+                        },
+                        onDelete: () => _handleDelete(companies[index]['id']),
                       );
                     },
                   ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddCompanyScreen()),
+            MaterialPageRoute(
+              builder: (context) => AddCompanyScreen(),
+            ),
           );
+
+          // Refresh the task list if a new task was added
+          if (result == true) {
+            fetchCompanies();
+          }
         },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.black,
+        label: const Text('Add'),
+        icon: const Icon(Icons.add),
       ),
     );
   }

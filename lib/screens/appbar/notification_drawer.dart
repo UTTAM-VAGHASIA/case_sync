@@ -15,24 +15,7 @@ class NotificationDrawer extends StatelessWidget {
           top: Radius.circular(20),
         ),
       ),
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.notifications),
-            title: const Text('Notification 1'),
-            onTap: () {
-              // Handle tap
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.notifications_active),
-            title: const Text('Notification 2'),
-            onTap: () {
-              // Handle tap
-            },
-          ),
-        ],
-      ),
+      child: Column(),
     );
   }
 }

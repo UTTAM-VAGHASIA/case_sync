@@ -1,21 +1,31 @@
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:case_sync/utils/constants.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file_plus/open_file_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../utils/file_already_exists_dialog.dart';
 
 class ViewDocs extends StatefulWidget {
+  final String caseNo;
   final String caseId;
 
-  const ViewDocs({Key? key, required this.caseId}) : super(key: key);
+  const ViewDocs({super.key, required this.caseId, required this.caseNo});
 
   @override
-  State<ViewDocs> createState() => _ViewDocsState();
+  State<ViewDocs> createState() => ViewDocsState();
 }
 
-class _ViewDocsState extends State<ViewDocs> {
+class ViewDocsState extends State<ViewDocs> {
   final List<Map<String, dynamic>> _documents = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
   String _errorMessage = '';
 
   @override
@@ -25,204 +35,345 @@ class _ViewDocsState extends State<ViewDocs> {
   }
 
   Future<void> _fetchDocuments() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
-      // First API call
-      final caseInfoUrl = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_info');
-      final caseInfoResponse = await http.post(
-        caseInfoUrl,
-        body: {'case_id': widget.caseId},
-      );
-
-      if (caseInfoResponse.statusCode == 200) {
-        final caseInfoData = jsonDecode(caseInfoResponse.body);
-        if (caseInfoData['success'] == true &&
-            caseInfoData['data'].isNotEmpty) {
-          final documentUrl = caseInfoData['data'][0]['docs'] ?? '';
-          _documents.add({
-            'id': 'N/A',
-            'docs': documentUrl,
-            'added_by': 'N/A',
-            'user_type': 'N/A',
-            'date_time': 'N/A',
-          });
-        }
-      } else {
-        setState(() {
-          _errorMessage =
-              'Failed to fetch case info. Status code: ${caseInfoResponse.statusCode}';
-        });
-        return;
-      }
-
-      // Second API call
-      final caseDocumentsUrl = Uri.parse(
-          'https://pragmanxt.com/case_sync/services/admin/v1/index.php/get_case_documents');
-      final caseDocumentsResponse = await http.post(
-        caseDocumentsUrl,
+      final response = await http.post(
+        Uri.parse('$baseUrl/get_case_documents'),
         body: {'case_no': widget.caseId},
       );
 
-      if (caseDocumentsResponse.statusCode == 200) {
-        final caseDocumentsData = jsonDecode(caseDocumentsResponse.body);
-        if (caseDocumentsData['success'] == true &&
-            caseDocumentsData['data'].isNotEmpty) {
-          final documents = caseDocumentsData['data'] as List<dynamic>;
-          _documents.addAll(documents.cast<Map<String, dynamic>>());
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'].isNotEmpty) {
+          if (!mounted) return;
+          setState(() {
+            _documents.addAll(List<Map<String, dynamic>>.from(data['data']));
+          });
+        } else {
+          if (!mounted) return;
+          setState(() => _errorMessage = 'No documents available.');
         }
       } else {
-        setState(() {
-          _errorMessage =
-              'Failed to fetch additional documents. Status code: ${caseDocumentsResponse.statusCode}';
-        });
-        return;
+        if (!mounted) return;
+        setState(() => _errorMessage =
+            'Failed to fetch documents. Status code: ${response.statusCode}');
       }
-
-      setState(() {
-        _isLoading = false;
-      });
     } catch (e) {
-      setState(() {
-        _errorMessage = 'An error occurred: $e';
-        _isLoading = false;
-      });
+      if (!mounted) return;
+      setState(() => _errorMessage = 'An error occurred: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
-  }
-
-  void _openDocument(String url) async {
-    final encodedUrl = Uri.encodeFull(url);
-    if (await canLaunch(encodedUrl)) {
-      await launch(encodedUrl);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-              'Could not open the document. Please check if you have the required viewer installed.'),
-          action: SnackBarAction(
-            label: 'Copy Link',
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: url));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Link copied to clipboard')),
-              );
-            },
-          ),
-        ),
-      );
-    }
-  }
-
-  bool _isImageUrl(String url) {
-    final lowerUrl = url.toLowerCase();
-    return lowerUrl.endsWith('.png') ||
-        lowerUrl.endsWith('.jpg') ||
-        lowerUrl.endsWith('.jpeg') ||
-        lowerUrl.endsWith('.gif');
-  }
-
-  bool _isDocumentUrl(String url) {
-    final lowerUrl = url.toLowerCase();
-    return lowerUrl.endsWith('.docx') || lowerUrl.endsWith('.pdf');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('View Documents'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text('Documents for ${widget.caseNo}',
+            style: TextStyle(color: Colors.black)),
+        actions: [
+          IconButton(
+              icon: const Icon(Icons.refresh), onPressed: _fetchDocuments),
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  itemCount: _documents.length,
-                  itemBuilder: (context, index) {
-                    final doc = _documents[index];
-                    final docUrl = doc['docs'];
-                    return Card(
-                      elevation: 4.0,
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Document ID: ${doc['id']}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8.0),
-                            Text('Added By: ${doc['added_by']}'),
-                            const SizedBox(height: 8.0),
-                            Text('User Type: ${doc['user_type']}'),
-                            const SizedBox(height: 8.0),
-                            Text('Date Time: ${doc['date_time']}'),
-                            const SizedBox(height: 8.0),
-                            _isImageUrl(docUrl)
-                                ? GestureDetector(
-                                    onTap: () => _openDocument(docUrl),
-                                    child: Image.network(
-                                      docUrl,
-                                      height: 150,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder:
-                                          (context, child, loadingProgress) {
-                                        if (loadingProgress == null) {
-                                          return child;
-                                        }
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress
-                                                        .expectedTotalBytes !=
-                                                    null
-                                                ? loadingProgress
-                                                        .cumulativeBytesLoaded /
-                                                    (loadingProgress
-                                                            .expectedTotalBytes ??
-                                                        1)
-                                                : null,
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return const Text(
-                                          'Error loading image',
-                                          style: TextStyle(color: Colors.red),
-                                        );
-                                      },
-                                    ),
-                                  )
-                                : _isDocumentUrl(docUrl)
-                                    ? ElevatedButton(
-                                        onPressed: () => _openDocument(docUrl),
-                                        child: const Text('Open Document'),
-                                      )
-                                    : GestureDetector(
-                                        onTap: () => _openDocument(docUrl),
-                                        child: Text(
-                                          docUrl,
-                                          style: const TextStyle(
-                                            color: Colors.blue,
-                                            decoration:
-                                                TextDecoration.underline,
-                                          ),
-                                        ),
-                                      ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+      body: Stack(
+        children: [
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator(color: Colors.black))
+          else if (_errorMessage.isNotEmpty)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_errorMessage, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                      onPressed: _fetchDocuments, child: const Text('Retry')),
+                ],
+              ),
+            )
+          else
+            ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: _documents.length,
+              itemBuilder: (context, index) =>
+                  DocumentCard(doc: _documents[index], caseNo: widget.caseNo),
+            )
+        ],
+      ),
     );
+  }
+}
+
+class DocumentCard extends StatefulWidget {
+  final Map<String, dynamic> doc;
+  final String caseNo;
+
+  const DocumentCard({super.key, required this.doc, required this.caseNo});
+
+  @override
+  DocumentCardState createState() => DocumentCardState();
+}
+
+class DocumentCardState extends State<DocumentCard> {
+  double _progress = 0.0;
+
+  Future<String?> _downloadFile(
+      String url, String directoryPath, String fileName, bool isSharing,
+      [bool isPersistent = false]) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    try {
+      final directory = Directory(directoryPath);
+      if (!directory.existsSync()) {
+        directory.createSync(recursive: true);
+      }
+
+      final filePath = '${directory.path}/$fileName';
+      final file = File(filePath);
+
+      if (file.existsSync()) {
+        if (isPersistent) {
+          final result = await showCupertinoDialog<bool>(
+            context: context,
+            builder: (context) => FileAlreadyExistsDialog(
+              title: 'File Already Exists',
+              message:
+                  'The file "$fileName" already exists. Do you want to open it or download again?',
+              cancelButtonText: 'Open',
+              confirmButtonText: 'Rewrite',
+              onConfirm: () async {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          );
+
+          if (result == true) {
+            // User chose to rewrite (download again)
+            final response = await HttpClient()
+                .getUrl(Uri.parse(url))
+                .then((req) => req.close());
+            final totalBytes = response.contentLength;
+            int bytesDownloaded = 0;
+
+            final sink = file.openWrite();
+            await for (var chunk in response) {
+              bytesDownloaded += chunk.length;
+              sink.add(chunk);
+              setState(() {
+                _progress = bytesDownloaded / totalBytes;
+              });
+            }
+            await sink.close();
+          } else {
+            // User chose to open the existing file
+            await OpenFile.open(filePath);
+            return filePath;
+          }
+        } else {
+          await OpenFile.open(filePath);
+          return filePath;
+        }
+      } else {
+        // File does not exist, proceed with download
+        final response = await HttpClient()
+            .getUrl(Uri.parse(url))
+            .then((req) => req.close());
+        final totalBytes = response.contentLength;
+        int bytesDownloaded = 0;
+
+        final sink = file.openWrite();
+        await for (var chunk in response) {
+          bytesDownloaded += chunk.length;
+          sink.add(chunk);
+          setState(() {
+            _progress = bytesDownloaded / totalBytes;
+          });
+        }
+        await sink.close();
+      }
+
+      setState(() {
+        _progress = 1.0;
+      });
+
+      if (!isSharing) {
+        await OpenFile.open(filePath);
+      }
+      return filePath;
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Failed to save document.')),
+      );
+    }
+
+    return null;
+  }
+
+  void _showOptions(String url) async {
+    final fileName = url.split('/').last;
+    final tempDir = (await getTemporaryDirectory()).path;
+
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+      ),
+      builder: (context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.open_in_new),
+              title: const Text('Open With'),
+              onTap: () async {
+                Navigator.pop(context);
+                final filePath =
+                    await _downloadFile(url, tempDir, fileName, false);
+                if (filePath != null) await OpenFile.open(filePath);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.save_alt),
+              title: const Text('Save Document'),
+              onTap: () async {
+                Navigator.pop(context);
+                final manageStorageStatus =
+                    await Permission.manageExternalStorage.request();
+                final storageStatus = await Permission.storage.request();
+                if (manageStorageStatus.isGranted || storageStatus.isGranted) {
+                  final saveDir = Platform.isAndroid
+                      ? '/storage/emulated/0/Download/Case Sync/${widget.caseNo}'
+                      : (await getApplicationDocumentsDirectory()).path;
+                  final _ =
+                      await _downloadFile(url, saveDir, fileName, false, true);
+                } else {
+                  await openAppSettings();
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.share),
+              title: const Text('Share'),
+              onTap: () async {
+                Navigator.pop(context);
+                final filePath =
+                    await _downloadFile(url, tempDir, fileName, true);
+                if (filePath != null) {
+                  await Share.shareXFiles([XFile(filePath)],
+                      text: 'Here is the document!');
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.copy),
+              title: const Text('Copy Link'),
+              onTap: () async {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                Navigator.pop(context);
+                await Clipboard.setData(ClipboardData(text: url));
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(content: Text('Link copied to clipboard.')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final docUrl = widget.doc['docs'];
+    final fileName = docUrl.split('/').last;
+    final extension = fileName.split('.').last.toLowerCase();
+
+    return GestureDetector(
+      onTap: () => _showOptions(docUrl),
+      child: Card(
+        elevation: 4.0,
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFileThumbnail(docUrl, extension),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fileName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.0,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Added By: ${widget.doc['handled_by']}',
+                          style: const TextStyle(fontSize: 14.0),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Date: ${widget.doc['date_time']}',
+                          style: const TextStyle(fontSize: 14.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (_progress > 0.0 &&
+                  _progress < 1.0) // ✅ Show only if downloading
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: LinearProgressIndicator(
+                    value: _progress,
+                    backgroundColor: Colors.grey[300],
+                    color: Colors.black,
+                    minHeight: 4.0,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFileThumbnail(String url, String extension) {
+    if (extension == 'pdf') {
+      return const Icon(Icons.picture_as_pdf, size: 50, color: Colors.red);
+    } else if (['jpg', 'jpeg', 'png'].contains(extension)) {
+      return Image.network(url, height: 50, width: 50, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) {
+        return const Icon(Icons.image, size: 50, color: Colors.grey);
+      });
+    } else {
+      return const Icon(Icons.insert_drive_file, size: 50, color: Colors.blue);
+    }
   }
 }

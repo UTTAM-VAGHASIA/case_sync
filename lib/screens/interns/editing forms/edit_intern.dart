@@ -4,50 +4,65 @@ import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../../utils/validator.dart';
+import '../../../utils/validator.dart';
 
-class AddCompanyScreen extends StatefulWidget {
-  const AddCompanyScreen({super.key});
+class EditInternScreen extends StatefulWidget {
+  final Map<String, dynamic> intern;
+  const EditInternScreen({super.key, required this.intern});
 
   @override
-  _AddCompanyScreenState createState() => _AddCompanyScreenState();
+  _EditInternScreenState createState() => _EditInternScreenState();
 }
 
-class _AddCompanyScreenState extends State<AddCompanyScreen> {
+class _EditInternScreenState extends State<EditInternScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _companyNameController = TextEditingController();
-  final _contactPersonController = TextEditingController();
-  final _contactController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _contactNumberController = TextEditingController();
+  final _emailController = TextEditingController();
+
+  late String _selectedStatus;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.intern['name'] ?? '';
+    _contactNumberController.text = widget.intern['contact'] ?? '';
+    _emailController.text = widget.intern['email'] ?? '';
+    _selectedStatus = widget.intern['status'];
+  }
 
   @override
   void dispose() {
-    _companyNameController.dispose();
-    _contactPersonController.dispose();
-    _contactController.dispose();
+    _nameController.dispose();
+    _contactNumberController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  Future<void> _registerCompany() async {
-    String companyName = _companyNameController.text.trim();
-    String contactPerson = _contactPersonController.text.trim();
-    String contact = _contactController.text.trim();
-
-    _companyNameController.text = companyName;
-    _contactPersonController.text = contactPerson;
-    _contactController.text = contact;
-
+  Future<void> _editIntern() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    try {
-      final url = Uri.parse('$baseUrl/add_company');
-      var request = http.MultipartRequest('POST', url);
+    setState(() {
+      _isLoading = true;
+    });
 
+    String name = _nameController.text.trim();
+    String contact = _contactNumberController.text.trim();
+    String email = _emailController.text.trim();
+
+    try {
+      final url = Uri.parse('$baseUrl/edit_intern');
+
+      var request = http.MultipartRequest('POST', url);
       request.fields['data'] = jsonEncode({
-        "name": companyName,
-        "contact_person": contactPerson,
-        "contact_no": contact,
+        "intern_id": widget.intern['id'],
+        "name": name.isNotEmpty ? name : widget.intern['name'],
+        "contact": contact.isNotEmpty ? contact : widget.intern['contact'],
+        "email": email.isNotEmpty ? email : widget.intern['email'],
+        "status": _selectedStatus,
       });
 
       final response = await request.send();
@@ -57,18 +72,12 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
         final responseData = jsonDecode(responseBody);
         if (responseData['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['message'])),
+            SnackBar(content: Text(responseData['response'])),
           );
-
-          _companyNameController.clear();
-          _contactPersonController.clear();
-          _contactController.clear();
-
-          // Pass true back to the previous screen
           Navigator.pop(context, true);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: ${responseData['message']}')),
+            SnackBar(content: Text('Failed: ${responseData['response']}')),
           );
         }
       } else {
@@ -80,6 +89,10 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $error')),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -111,7 +124,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
               children: <Widget>[
                 Center(
                   child: Text(
-                    'Add\nCompany',
+                    'Edit\nIntern',
                     style: const TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
@@ -123,28 +136,58 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.06),
                 _buildTextField(
-                  'Company Name',
-                  'Company Name',
-                  _companyNameController,
+                  'Name',
+                  'Intern Name',
+                  _nameController,
                   validator: (value) {
-                    return validateTrimmedField(value, 'Company Name');
+                    return validateTrimmedField(value, 'Name');
                   },
                 ),
                 _buildTextField(
-                  'Contact Person',
-                  'Contact Person',
-                  _contactPersonController,
-                  validator: (value) {
-                    return validateTrimmedField(value, 'Contact Person');
-                  },
-                ),
-                _buildTextField(
-                  'Contact No.',
+                  'Contact Number',
                   '+91 XXXXXXXXXX',
-                  _contactController,
+                  _contactNumberController,
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     return validateAndTrimPhoneNumber(value);
+                  },
+                ),
+                _buildTextField(
+                  'Email',
+                  'example@gmail.com',
+                  _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    return validateEmail(value);
+                  },
+                ),
+                Text('Status', style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: _selectedStatus,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  items: ['enable', 'disable']
+                      .map((status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedStatus = value!;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a status';
+                    }
+                    return null;
                   },
                 ),
                 SizedBox(height: screenHeight * 0.05),
@@ -153,20 +196,24 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                     width: screenWidth * 0.5,
                     height: 70,
                     child: ElevatedButton(
-                      onPressed: _registerCompany,
+                      onPressed: _isLoading ? null : _editIntern,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(50),
                         ),
                       ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
-                          fontSize: 22,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              'Save',
+                              style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),

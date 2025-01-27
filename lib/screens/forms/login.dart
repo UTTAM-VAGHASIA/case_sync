@@ -6,6 +6,7 @@ import '../../components/basicUIcomponent.dart';
 import '../../models/advocate.dart';
 import '../../services/api_service.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/validator.dart'; // Import your validators
 import '../home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
   String _errorMessage = '';
-  bool _isLoading = false; // To handle loading state
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -30,17 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your email';
-    }
-    final RegExp emailRegExp = RegExp(
-      r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
-    );
-    if (!emailRegExp.hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
+  /// Validation for the User ID (email field)
+  String? _validateUserID(String? value) {
+    return validateAndTrimField(value, 'User ID');
+  }
+
+  /// Validation for the password
+  String? _validatePassword(String? value) {
+    return validateAndTrimField(value, 'Password');
   }
 
   Future<void> _login() async {
@@ -50,8 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = '';
       });
 
-      String email = _emailController.text;
-      String password = _passwordController.text;
+      // Trim the text values to ensure no leading/trailing spaces are included
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
 
       try {
         // Call the login API
@@ -83,6 +82,10 @@ class _LoginScreenState extends State<LoginScreen> {
       } catch (e) {
         print('An error occurred: $e');
         Get.snackbar('Error', 'Login failed, please try again.');
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -106,15 +109,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 // App Icon (Logo)
                 SvgPicture.asset('assets/icons/casesync_text.svg'),
                 const SizedBox(height: 50),
+                // User ID Field
                 TextFormField(
                   controller: _emailController,
                   decoration: AppTheme.textFieldDecoration(
                     labelText: 'User ID',
                     hintText: 'Your email',
                   ),
-                  validator: _validateEmail,
+                  validator: _validateUserID,
                 ),
                 const SizedBox(height: 20),
+                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscureText,
@@ -133,10 +138,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ),
+                  validator: _validatePassword,
                 ),
                 const SizedBox(height: 100),
+                // Login Button
                 SizedBox(
                   width: screenWidth * 0.5,
+                  height: 70,
                   child: ElevatedButton(
                     onPressed: _login,
                     style: AppTheme.elevatedButtonStyle,
@@ -154,6 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // Error Message
                 if (_errorMessage.isNotEmpty)
                   Text(
                     _errorMessage,
