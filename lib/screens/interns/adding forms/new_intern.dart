@@ -21,9 +21,11 @@ class _NewInternScreenState extends State<NewInternScreen> {
   final _contactNumberController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _joiningDateController = TextEditingController();
+  String _joiningDateDisplay = DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String _joiningDateApi = DateFormat('dd/MM/yyyy').format(DateTime.now());
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  bool _isSelected = false;
 
   @override
   void dispose() {
@@ -31,22 +33,26 @@ class _NewInternScreenState extends State<NewInternScreen> {
     _contactNumberController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _joiningDateController.dispose();
     super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    DateTime? selectedDate = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
-
-    if (selectedDate != null) {
-      String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate);
+    if (picked != null) {
       setState(() {
-        _joiningDateController.text = formattedDate;
+        _isSelected = true;
+        final date = "${picked.day}/${picked.month}/${picked.year}";
+        final apiDate =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+
+        _joiningDateDisplay = date;
+        _joiningDateApi = apiDate;
+        print(_joiningDateApi);
       });
     }
   }
@@ -64,7 +70,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
     String contact = _contactNumberController.text.trim();
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
-    String startDate = _joiningDateController.text.trim();
+    String startDate = _joiningDateApi;
 
     try {
       final url = Uri.parse('$baseUrl/intern_registration');
@@ -93,7 +99,6 @@ class _NewInternScreenState extends State<NewInternScreen> {
           _contactNumberController.clear();
           _emailController.clear();
           _passwordController.clear();
-          _joiningDateController.clear();
 
           Navigator.pop(context, true);
         } else {
@@ -161,7 +166,17 @@ class _NewInternScreenState extends State<NewInternScreen> {
                 additionalValidator: validateEmail,
               ),
               _buildPasswordField(),
-              _buildDateField('Joining Date', 'DD/MM/YYYY'),
+              _buildDateField(
+                  label: 'Joining Date',
+                  onTap: () {
+                    _selectDate(context);
+                  },
+                  child: Text(
+                    _joiningDateDisplay,
+                    style: TextStyle(
+                        color: _isSelected ? Colors.black : Colors.grey,
+                        fontSize: 16),
+                  )),
               const SizedBox(height: 30),
               Center(
                 child: SizedBox(
@@ -178,7 +193,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                            'Register',
+                            'Save',
                             style: TextStyle(fontSize: 22, color: Colors.white),
                           ),
                   ),
@@ -257,35 +272,34 @@ class _NewInternScreenState extends State<NewInternScreen> {
     );
   }
 
-  Widget _buildDateField(String label, String hintText) {
+  Widget _buildDateField({
+    required String label,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontSize: 16)),
         const SizedBox(height: 10),
-        TextFormField(
-          controller: _joiningDateController,
-          readOnly: true,
-          onTap: () {
-            _selectDate(context);
-          },
-          decoration: InputDecoration(
-            hintText: hintText,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            suffixIcon: const Icon(Icons.calendar_today),
-            border: OutlineInputBorder(
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black),
               borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                child,
+                const Spacer(),
+                const Icon(Icons.calendar_today, color: Colors.black),
+              ],
             ),
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Please enter a joining date';
-            }
-            return null;
-          },
         ),
-        const SizedBox(height: 20),
       ],
     );
   }

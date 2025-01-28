@@ -24,8 +24,11 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
   String _searchQuery = '';
   List<CaseListData> _filteredCases = [];
 
+  late String _errorMessage;
+
   @override
   void initState() {
+    _errorMessage = '';
     super.initState();
     _fetchCases();
   }
@@ -41,15 +44,7 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
         if (data['success'] == true) {
           setState(() {
             _assignedCases = (data['data'] as List)
-                .map((caseItem) => CaseListData(
-                    id: caseItem['id']?.toString() ?? '',
-                    caseNo: caseItem['case_no']?.toString() ?? '',
-                    applicant: caseItem['applicant']?.toString() ?? 'N/A',
-                    courtName: caseItem['court_name']?.toString() ?? 'N/A',
-                    cityName: caseItem['city_name']?.toString() ?? 'N/A',
-                    handleBy: '',
-                    opponent: '',
-                    srDate: DateTime(2025)))
+                .map((item) => CaseListData.fromJson(item))
                 .toList();
             _filteredCases = List.from(_assignedCases);
             if (kDebugMode) {
@@ -58,12 +53,22 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
           });
         } else {
           _showError("No cases found.");
+          setState(() {
+            _errorMessage = 'No cases found';
+          });
         }
       } else {
         _showError("Failed to fetch cases.");
+        setState(() {
+          _errorMessage =
+              'Failed to fetch cases due to ${response.statusCode}: ${response.body}';
+        });
       }
     } catch (e) {
       _showError("An error occurred: $e");
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+      });
     } finally {
       setState(() {
         _isLoading = false;
@@ -140,49 +145,70 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
               child: CircularProgressIndicator(
               color: Colors.black,
             ))
-          : Column(
-              children: [
-                if (_isSearching)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                                _updateFilteredCases();
-                              });
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Search cases...',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
+          : (_errorMessage.isNotEmpty)
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(_errorMessage, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                          onPressed: () async {
+                            setState(() {
+                              _fetchCases();
+                            });
+                          },
+                          child: const Text('Retry')),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    if (_isSearching)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value;
+                                    _updateFilteredCases();
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'Search cases...',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        color: Colors.black,
+                        onRefresh: _fetchCases,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: _filteredCases.length,
+                          itemBuilder: (context, index) {
+                            final caseItem = _filteredCases[index];
+                            return CaseCard(
+                              caseItem: caseItem,
+                              isHighlighted: false,
+                              isTask: true,
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: _filteredCases.length,
-                    itemBuilder: (context, index) {
-                      final caseItem = _filteredCases[index];
-                      return CaseCard(
-                        caseItem: caseItem,
-                        isHighlighted: false,
-                        isTask: true,
-                      );
-                    },
-                  ),
+                  ],
                 ),
-              ],
-            ),
     );
   }
 }

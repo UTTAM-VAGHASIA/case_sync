@@ -27,7 +27,7 @@ class _TasksPageState extends State<TasksPage> {
   List<Map<String, dynamic>> _tasks = [];
   late Map<String, String> caseDetails = {};
 
-  Future<void> fetchCaseInfo() async {
+  Future<void> _fetchCaseInfo() async {
     try {
       final url = Uri.parse('$baseUrl/get_case_info');
       final response = await http.post(url, body: {'case_id': widget.caseId});
@@ -75,11 +75,11 @@ class _TasksPageState extends State<TasksPage> {
   @override
   void initState() {
     super.initState();
-    _fetchTasks();
-    fetchCaseInfo();
+    fetchTasks();
+    _fetchCaseInfo();
   }
 
-  Future<void> _fetchTasks() async {
+  Future<void> fetchTasks() async {
     try {
       final url = Uri.parse('$baseUrl/get_case_task');
       final request = http.MultipartRequest('POST', url);
@@ -97,7 +97,7 @@ class _TasksPageState extends State<TasksPage> {
         if (data['success'] == true) {
           setState(() {
             _tasks = List<Map<String, dynamic>>.from(data['data']);
-            print(_tasks[0]);
+            print('Task Details: ${_tasks[0]}');
           });
         } else {
           _showError(data['message'] ?? "No tasks found.");
@@ -153,7 +153,7 @@ class _TasksPageState extends State<TasksPage> {
       ),
     );
     if (result) {
-      _fetchTasks();
+      fetchTasks();
     }
   }
 
@@ -173,8 +173,8 @@ class _TasksPageState extends State<TasksPage> {
           icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Tasks",
+        title: Text(
+          "Tasks for Case: ${widget.caseNumber}",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
@@ -187,61 +187,70 @@ class _TasksPageState extends State<TasksPage> {
               ? const Center(child: Text("No tasks found for this case."))
               : Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: ListView.builder(
-                    itemCount: _tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = _tasks[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.black),
-                          ),
-                          child: DismissibleCard(
-                            child: Container(
-                              color: Colors.white,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                title: Text(
-                                  "Instruction: ${task['instruction']}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 5),
-                                    Text("Alloted By: ${task['alloted_by']}"),
-                                    Text(
-                                      "Alloted Date: ${_formatDate(task['alloted_date'])}",
-                                    ),
-                                    Text(
-                                      "Expected End Date: ${_formatDate(task['expected_end_date'])}",
-                                    ),
-                                    Text("Status: ${task['status']}"),
-                                  ],
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          TaskInfoPage(task: task),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            onEdit: () => _handleEdit(task),
-                            onDelete: () => _handleDelete(task),
-                          ),
-                        ),
-                      );
+                  child: RefreshIndicator(
+                    color: Colors.black,
+                    onRefresh: () async {
+                      _fetchCaseInfo();
+                      fetchTasks();
                     },
+                    child: ListView.builder(
+                      itemCount: _tasks.length,
+                      itemBuilder: (context, index) {
+                        final task = _tasks[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(color: Colors.black),
+                            ),
+                            child: DismissibleCard(
+                              name: 'this task',
+                              child: Container(
+                                color: Colors.white,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  title: Text(
+                                    "Instruction: ${task['instruction']}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 5),
+                                      Text("Alloted By: ${task['alloted_by']}"),
+                                      Text(
+                                        "Alloted Date: ${_formatDate(task['alloted_date'])}",
+                                      ),
+                                      Text(
+                                        "Expected End Date: ${_formatDate(task['expected_end_date'])}",
+                                      ),
+                                      Text("Status: ${task['status']}"),
+                                    ],
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            TaskInfoPage(task: task),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              onEdit: () => _handleEdit(task),
+                              onDelete: () => _handleDelete(task),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
       floatingActionButton: ElevatedButton(
@@ -260,7 +269,7 @@ class _TasksPageState extends State<TasksPage> {
 
           // Refresh the task list if a new task was added
           if (result == true) {
-            _fetchTasks();
+            fetchTasks();
           }
         },
         child: Row(

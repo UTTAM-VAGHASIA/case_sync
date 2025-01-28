@@ -27,10 +27,12 @@ class _AssignedCasesState extends State<AssignedCases> {
   String? _selectedCourt;
   final List<String> _cities = [];
   final List<String> _courts = [];
+  late String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
+    _errorMessage = '';
     _fetchCases();
     _searchController.addListener(() {
       setState(() {
@@ -56,16 +58,7 @@ class _AssignedCasesState extends State<AssignedCases> {
         if (data['success'] == true) {
           setState(() {
             _assignedCases = (data['data'] as List)
-                .map((caseItem) => CaseListData(
-                      id: caseItem['id']?.toString() ?? '',
-                      caseNo: caseItem['case_no']?.toString() ?? '',
-                      applicant: caseItem['applicant']?.toString() ?? 'N/A',
-                      opponent: caseItem['opp_name']?.toString() ?? 'N/A',
-                      courtName: caseItem['court_name']?.toString() ?? 'N/A',
-                      cityName: caseItem['city_name']?.toString() ?? 'N/A',
-                      srDate: DateTime.parse(caseItem['sr_date']),
-                      handleBy: '',
-                    ))
+                .map((item) => CaseListData.fromJson(item))
                 .toList();
             _filteredCases = List.from(_assignedCases);
 
@@ -78,12 +71,22 @@ class _AssignedCasesState extends State<AssignedCases> {
           });
         } else {
           _showError("No cases found.");
+          setState(() {
+            _errorMessage = 'No cases found';
+          });
         }
       } else {
         _showError("Failed to fetch cases.");
+        setState(() {
+          _errorMessage =
+              'Failed to fetch cases due to ${response.statusCode}: ${response.body}';
+        });
       }
     } catch (e) {
       _showError("An error occurred: $e");
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+      });
     } finally {
       setState(() {
         _isLoading = false;
@@ -174,16 +177,41 @@ class _AssignedCasesState extends State<AssignedCases> {
                     child: CircularProgressIndicator(
                     color: Colors.black,
                   ))
-                : _filteredCases.isEmpty
-                    ? const Center(child: Text('No cases found.'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: _filteredCases.length,
-                        itemBuilder: (context, index) {
-                          final caseItem = _filteredCases[index];
-                          return CaseCard(caseItem: caseItem);
-                        },
-                      ),
+                : (_errorMessage.isNotEmpty)
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(_errorMessage, textAlign: TextAlign.center),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                                onPressed: () async {
+                                  setState(() {
+                                    _fetchCases();
+                                  });
+                                },
+                                child: const Text('Retry')),
+                          ],
+                        ),
+                      )
+                    : _filteredCases.isEmpty
+                        ? const Center(child: Text('No cases found.'))
+                        : RefreshIndicator(
+                            color: Colors.black,
+                            onRefresh: () async {
+                              setState(() {
+                                _fetchCases();
+                              });
+                            },
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16.0),
+                              itemCount: _filteredCases.length,
+                              itemBuilder: (context, index) {
+                                final caseItem = _filteredCases[index];
+                                return CaseCard(caseItem: caseItem);
+                              },
+                            ),
+                          ),
           ),
         ],
       ),

@@ -7,6 +7,12 @@ class CaseListData {
   final String courtName;
   final DateTime srDate;
   final String cityName;
+  final String caseType;
+  final String caseCounter;
+  final String complainantAdvocate;
+  final String respondentAdvocate;
+  final DateTime dateOfFiling;
+  final DateTime nextDate;
 
   CaseListData({
     required this.id,
@@ -17,6 +23,12 @@ class CaseListData {
     required this.courtName,
     required this.srDate,
     required this.cityName,
+    required this.caseType,
+    required this.complainantAdvocate,
+    required this.respondentAdvocate,
+    required this.dateOfFiling,
+    required this.nextDate,
+    required this.caseCounter,
   });
 
   factory CaseListData.fromJson(Map<String, dynamic> json) {
@@ -27,21 +39,21 @@ class CaseListData {
       applicant: json['applicant'] ?? '',
       opponent: json['opp_name'] ?? '',
       courtName: json['court_name'] ?? '',
-      srDate: DateTime.parse(json['sr_date']),
+      srDate: json['sr_date'] != '' && json['sr_date'].isNotEmpty
+          ? DateTime.parse(json['sr_date'])
+          : DateTime.parse('0001-01-01'),
       cityName: json['city_name'] ?? '',
+      caseType: json['case_type'] ?? '',
+      complainantAdvocate: json['complainant_advocate'] ?? '',
+      respondentAdvocate: json['respondent_advocate'] ?? '',
+      dateOfFiling:
+          json['date_of_filing'] != '' && json['date_of_filing'].isNotEmpty
+              ? DateTime.parse(json['date_of_filing'])
+              : DateTime.parse('0001-01-01'),
+      nextDate: json['next_date'] != '' && json['next_date'].isNotEmpty
+          ? DateTime.parse(json['next_date'])
+          : DateTime.parse('0001-01-01'),
+      caseCounter: json['case_counter'] ?? '',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'case_no': caseNo,
-      'handle_by': handleBy,
-      'applicant': applicant,
-      'opp_name': opponent,
-      'court_name': courtName,
-      'sr_date': srDate.toIso8601String(),
-      'city_name': cityName,
-    };
   }
 }

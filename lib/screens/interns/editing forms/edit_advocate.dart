@@ -19,14 +19,14 @@ class EditAdvocateScreen extends StatefulWidget {
 }
 
 class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
-  bool _isPasswordVisible = false;
+  final bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _contactController = TextEditingController();
   final _emailController = TextEditingController();
   late String _selectedStatus;
   bool _isLoading = false;
-  String _errorMessage = '';
+  final String _errorMessage = '';
 
   @override
   void initState() {
@@ -68,6 +68,7 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
         "name": name.isNotEmpty ? name : widget.advocate['name'],
         "contact": contact.isNotEmpty ? contact : widget.advocate['contact'],
         "email": email.isNotEmpty ? email : widget.advocate['email'],
+        "password": widget.advocate['password'],
         "status": _selectedStatus,
       });
 

@@ -124,9 +124,19 @@ class CompaniesScreenState extends State<CompaniesScreen> {
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
+        title: Text(
+          'Companies',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        titleSpacing: -10,
+        toolbarHeight: 70,
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
-        leadingWidth: 56 + 30,
+        leadingWidth: 56 + 10,
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/back_arrow.svg',
@@ -140,110 +150,97 @@ class CompaniesScreenState extends State<CompaniesScreen> {
       ),
       body: Column(
         children: [
-          Container(
-            color: const Color(0xFFF3F3F3),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'Companies',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-          ),
           Expanded(
             child: isLoading
                 ? const Center(
                     child: CircularProgressIndicator(
                     color: Colors.black,
                   ))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: companies.length,
-                    itemBuilder: (context, index) {
-                      return DismissibleCard(
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                            side: BorderSide(
-                              width: 1,
-                              color: Colors.black,
+                : RefreshIndicator(
+                    color: Colors.black,
+                    onRefresh: fetchCompanies,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      itemCount: companies.length,
+                      itemBuilder: (context, index) {
+                        return DismissibleCard(
+                          name: '${companies[index]['name']}',
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.0),
+                              side: BorderSide(
+                                width: 1,
+                                color: Colors.black,
+                              ),
                             ),
-                          ),
-                          elevation: 2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                SizedBox(
-                                  width: 10,
-                                  height: 100,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          companies[index]['status'] == 'enable'
-                                              ? Colors.black
-                                              : Colors.red,
-                                      borderRadius: BorderRadius.circular(5),
+                            elevation: 2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 10,
+                                    height: 100,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: companies[index]['status'] ==
+                                                'enable'
+                                            ? Colors.black
+                                            : Colors.red,
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  width: 15,
-                                  height: 100,
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${companies[index]['name']!}',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'Contact Person: ${companies[index]['contact_person']!}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        'Contact No.: +91 ${companies[index]['phone']!}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5),
-                                    ],
+                                  const SizedBox(
+                                    width: 15,
+                                    height: 100,
                                   ),
-                                ),
-                              ],
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${companies[index]['name']!}',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'Contact Person: ${companies[index]['contact_person']!}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          'Contact No.: +91 ${companies[index]['phone']!}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        onEdit: () => {
-                          print("Editing: ${companies[index]['id']}"),
-                          _handleEdit(companies[index])
-                        },
-                        onDelete: () => _handleDelete(companies[index]['id']),
-                      );
-                    },
+                          onEdit: () => {
+                            print("Editing: ${companies[index]['id']}"),
+                            _handleEdit(companies[index])
+                          },
+                          onDelete: () => _handleDelete(companies[index]['id']),
+                        );
+                      },
+                    ),
                   ),
           ),
         ],

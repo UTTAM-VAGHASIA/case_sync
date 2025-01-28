@@ -5,6 +5,7 @@ import 'ios_alert_dialog.dart';
 
 class DismissibleCard extends StatelessWidget {
   final Widget child;
+  final String name;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -13,6 +14,7 @@ class DismissibleCard extends StatelessWidget {
     required this.child,
     this.onEdit,
     this.onDelete,
+    required this.name,
   });
 
   @override
@@ -49,7 +51,8 @@ class DismissibleCard extends StatelessWidget {
               context: context,
               builder: (context) => IOSAlertDialog(
                 title: "Delete Item",
-                message: "Are you sure you want to delete this item?",
+                message:
+                    "Are you sure you want to delete $name's data from the list?",
                 cancelButtonText: "Cancel",
                 confirmButtonText: "Delete",
                 onConfirm: onDelete!,

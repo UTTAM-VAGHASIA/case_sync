@@ -50,8 +50,10 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         DateFormat('dd/MM/yyyy').format(DateTime.parse(task['alloted_date']));
     _expectedEndDateDisplay = DateFormat('dd/MM/yyyy')
         .format(DateTime.parse(task['expected_end_date']));
-    _assignDateApi = task['alloted_date'];
-    _expectedEndDateApi = task['expected_end_date'];
+    _assignDateApi =
+        DateFormat('yyyy/MM/dd').format(DateTime.parse(task['alloted_date']));
+    _expectedEndDateApi = DateFormat('yyyy/MM/dd')
+        .format(DateTime.parse(task['expected_end_date']));
     _selectedStatus = widget.taskDetails['status'];
   }
 

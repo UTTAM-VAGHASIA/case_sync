@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
@@ -28,11 +29,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _advocateName;
   String? _advocateId;
   String? _assignedTo;
-  String? _assignDateDisplay;
-  String? _expectedEndDateDisplay;
+  String? _assignDateDisplay = DateFormat('dd/MM/yyyy').format(DateTime.now());
+  late String? _expectedEndDateDisplay;
   String? _assignDateApi;
   String? _expectedEndDateApi;
   final _taskInstructionController = TextEditingController();
+  bool isAssigned = false;
+  bool isExpected = false;
+  bool isSelected = false;
   bool isLoading = false;
 
   List<Map<String, String>> _internList = [];
@@ -40,6 +44,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   void initState() {
     super.initState();
+    _expectedEndDateDisplay = _assignDateDisplay;
     _fetchInternList();
     getUsername();
   }
@@ -109,9 +114,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         final apiDate =
             "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
         if (isEndDate) {
+          isExpected = true;
           _expectedEndDateDisplay = date;
           _expectedEndDateApi = apiDate;
         } else {
+          isAssigned = true;
           _assignDateDisplay = date;
           _assignDateApi = apiDate;
         }
@@ -125,9 +132,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
     if (_advocateName == null ||
         _assignedTo == null ||
-        validateTaskInstruction(_taskInstructionController.text) != null ||
-        _assignDateDisplay == null ||
-        _expectedEndDateDisplay == null) {
+        validateTaskInstruction(_taskInstructionController.text) != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill out all fields"),
@@ -258,13 +263,25 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Assign Date',
-                hint: _assignDateDisplay ?? 'Select Date',
+                child: Text(
+                  _assignDateDisplay ?? 'Select Date',
+                  style: TextStyle(
+                    color: isAssigned ? Colors.black : Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
                 onTap: () => _selectDate(context, false),
               ),
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Expected End Date',
-                hint: _expectedEndDateDisplay ?? 'Select Date',
+                child: Text(
+                  _expectedEndDateDisplay ?? 'Select Date',
+                  style: TextStyle(
+                    color: isExpected ? Colors.black : Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
                 onTap: () => _selectDate(context, true),
               ),
               const SizedBox(height: 30),
@@ -373,8 +390,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   Widget _buildDateField({
     required String label,
-    required String hint,
     required VoidCallback onTap,
+    required Widget child,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +409,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ),
             child: Row(
               children: [
-                Text(hint, style: const TextStyle(color: Colors.grey)),
+                child,
                 const Spacer(),
                 const Icon(Icons.calendar_today, color: Colors.black),
               ],

@@ -28,6 +28,8 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
   late Future<void> _caseDataFuture;
   final ScrollController _scrollController = ScrollController();
 
+  FocusNode fn = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -42,7 +44,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
 
     if (years.isNotEmpty) {
       setState(() {
-        selectedYear = years.last; // Safely initialize
+        selectedYear = years.last;
         monthsWithCases = _getMonthsForYear(selectedYear);
 
         if (monthsWithCases.isNotEmpty) {
@@ -217,7 +219,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                color: Colors.black,
+              ),
             ),
           );
         }
@@ -254,19 +258,21 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           );
         }
 
+        void disposalFunc() {
+          _searchController.clear();
+          _searchQuery = '';
+          _filteredCases = [];
+          _resultTabs = [];
+        }
+
         return Scaffold(
           backgroundColor: const Color(0xFFF3F3F3),
           appBar: ListAppBar(
-            title: "",
+            title: "Case History",
             onSearchPressed: () {
               setState(() {
                 _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  _searchQuery = '';
-                  _filteredCases = [];
-                  _resultTabs = [];
-                }
+                (_isSearching) ? fn.requestFocus() : disposalFunc();
               });
             },
             isSearching: _isSearching,
@@ -279,6 +285,18 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
   }
 
   Widget _buildBodyContent() {
+    var screenWidth = MediaQuery.sizeOf(context).width;
+
+    // Check if monthsWithCases is empty and handle the scenario
+    if (monthsWithCases.isEmpty) {
+      return Center(
+        child: Text(
+          'No months available for the selected year.',
+          style: TextStyle(fontSize: 16, color: Colors.black54),
+        ),
+      );
+    }
+
     return Column(
       children: [
         if (_isSearching)
@@ -288,6 +306,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
               children: [
                 Expanded(
                   child: TextField(
+                    focusNode: fn,
                     controller: _searchController,
                     onChanged: (value) {
                       setState(() {
@@ -307,7 +326,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: _currentResultIndex >= 0
+                      onPressed: _currentResultIndex > 0
                           ? _navigateToPreviousResult
                           : null,
                     ),
@@ -315,10 +334,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                         '${_filteredCases.isEmpty ? 0 : _currentResultIndex + 1} / ${_filteredCases.length}'),
                     IconButton(
                       icon: const Icon(Icons.arrow_forward),
-                      onPressed:
-                          _currentResultIndex <= _filteredCases.length - 1
-                              ? _navigateToNextResult
-                              : null,
+                      onPressed: _currentResultIndex < _filteredCases.length - 1
+                          ? _navigateToNextResult
+                          : null,
                     ),
                   ],
                 ),
@@ -329,16 +347,24 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           color: const Color(0xFFF3F3F3),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Text(
-                'Case History',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              Container(
+                color: const Color(0xFFF3F3F3),
+                width: screenWidth * 0.7,
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.black,
+                  indicatorWeight: 2.0,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  tabs:
+                      monthsWithCases.map((month) => Tab(text: month)).toList(),
                 ),
               ),
+              SizedBox(width: screenWidth * 0.05),
               DropdownButton<String>(
                 value: selectedYear,
                 icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
@@ -372,19 +398,6 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
             ],
           ),
         ),
-        Container(
-          color: const Color(0xFFF3F3F3),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: Colors.black,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.black,
-            indicatorWeight: 2.0,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 20.0),
-            tabs: monthsWithCases.map((month) => Tab(text: month)).toList(),
-          ),
-        ),
         Expanded(
           child: TabBarView(
             controller: _tabController,
@@ -411,32 +424,64 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
               });
 
               return Container(
-                margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                margin:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 child: RefreshIndicator(
+                  color: Colors.black,
                   onRefresh: () async {
                     setState(() {
                       populateCaseData();
                       allCases = getCaseDataForMonth(selectedYear, month);
                     });
                   },
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    itemCount: allCases.length,
-                    itemBuilder: (context, index) {
-                      var caseItem = allCases[index];
+                  child: allCases.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Center(
+                                child: Text(
+                                  'No cases available for this month.',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.black54),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: MediaQuery.of(context).size.height -
+                                  (AppBar().preferredSize.height +
+                                      kToolbarHeight), // Adjust based on the layout
+                            ),
+                            child: ListView.builder(
+                              controller: _scrollController,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: allCases.length,
+                              itemBuilder: (context, index) {
+                                var caseItem = allCases[index];
 
-                      bool isHighlighted = _isSearching &&
-                          _filteredCases.isNotEmpty &&
-                          _resultTabs[_currentResultIndex].endsWith(month) &&
-                          _filteredCases[_currentResultIndex].caseNo ==
-                              caseItem.caseNo;
+                                bool isHighlighted = _isSearching &&
+                                    _filteredCases.isNotEmpty &&
+                                    _resultTabs[_currentResultIndex]
+                                        .endsWith(month) &&
+                                    _filteredCases[_currentResultIndex]
+                                            .caseNo ==
+                                        caseItem.caseNo;
 
-                      return CaseCard(
-                        caseItem: caseItem,
-                        isHighlighted: isHighlighted,
-                      );
-                    },
-                  ),
+                                return CaseCard(
+                                  caseItem: caseItem,
+                                  isHighlighted: isHighlighted,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                 ),
               );
             }).toList(),

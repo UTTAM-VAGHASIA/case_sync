@@ -52,7 +52,20 @@ class ViewDocsState extends State<ViewDocs> {
         if (data['success'] == true && data['data'].isNotEmpty) {
           if (!mounted) return;
           setState(() {
-            _documents.addAll(List<Map<String, dynamic>>.from(data['data']));
+            // Parse the fetched data
+            final fetchedDocuments =
+                List<Map<String, dynamic>>.from(data['data']);
+
+            // Remove duplicates by ensuring unique `file_id`
+            final existingFileIds =
+                _documents.map((doc) => doc['file_id']).toSet();
+            final filteredDocuments = fetchedDocuments.where((doc) {
+              return !existingFileIds.contains(doc['file_id']);
+            }).toList();
+
+            // Add only unique documents
+            _documents.addAll(filteredDocuments);
+            print("Filtered unique documents: $_documents");
           });
         } else {
           if (!mounted) return;
@@ -105,11 +118,19 @@ class ViewDocsState extends State<ViewDocs> {
               ),
             )
           else
-            ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: _documents.length,
-              itemBuilder: (context, index) =>
-                  DocumentCard(doc: _documents[index], caseNo: widget.caseNo),
+            RefreshIndicator(
+              color: Colors.black,
+              onRefresh: () async {
+                setState(() {
+                  _fetchDocuments();
+                });
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8.0),
+                itemCount: _documents.length,
+                itemBuilder: (context, index) =>
+                    DocumentCard(doc: _documents[index], caseNo: widget.caseNo),
+              ),
             )
         ],
       ),

@@ -61,9 +61,12 @@ class _EditInternScreenState extends State<EditInternScreen> {
         "intern_id": widget.intern['id'],
         "name": name.isNotEmpty ? name : widget.intern['name'],
         "contact": contact.isNotEmpty ? contact : widget.intern['contact'],
+        "password": widget.intern['password'],
         "email": email.isNotEmpty ? email : widget.intern['email'],
         "status": _selectedStatus,
       });
+
+      print('data: ${request.fields['data']}');
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
@@ -82,7 +85,9 @@ class _EditInternScreenState extends State<EditInternScreen> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Server error: ${response.statusCode}')),
+          SnackBar(
+              content: Text(
+                  'Server error: ${response.statusCode}, ${response.reasonPhrase}')),
         );
       }
     } catch (error) {

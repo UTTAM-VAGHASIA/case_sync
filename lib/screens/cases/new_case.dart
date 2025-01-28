@@ -25,8 +25,22 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   final TextEditingController _caseYearController = TextEditingController();
   final TextEditingController _applicantController = TextEditingController();
   final TextEditingController _opponentController = TextEditingController();
-  final TextEditingController _summonDateController = TextEditingController();
+  final TextEditingController _complainantAdvocateController =
+      TextEditingController();
+  final TextEditingController _respondentAdvocateController =
+      TextEditingController();
 
+  String _selectedSummonDateDisplay =
+      DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String _selectedSummonDateApi =
+      DateFormat('yyyy/MM/dd').format(DateTime.now());
+  String _selectedFilingDateDisplay =
+      DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String _selectedFilingDateApi =
+      DateFormat('yyyy/MM/dd').format(DateTime.now());
+  String _selectedNextDateDisplay =
+      DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String _selectedNextDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
   String? _selectedCaseType;
   String? _selectedHandler;
   String? _selectedCompany;
@@ -45,6 +59,9 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
   bool _isSubmitting = false;
   bool _isLoading = true;
+  bool _isSummoned = false;
+  bool _isFiled = false;
+  bool _isNextDateGiven = false;
 
   @override
   void dispose() {
@@ -52,7 +69,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     _caseYearController.dispose();
     _applicantController.dispose();
     _opponentController.dispose();
-    _summonDateController.dispose();
+    _respondentAdvocateController.dispose();
+    _complainantAdvocateController.dispose();
     super.dispose();
   }
 
@@ -202,32 +220,68 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
+  Future<void> _selectSummonDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: Colors.black, // Header background color
-            colorScheme: ColorScheme.light(
-              primary: Colors.black, // Selection color
-              onPrimary: Colors.white, // Text color on the selection
-              surface: Colors.white, // Dialog background color
-              onSurface: Colors.black, // Text color
-            ),
-            dialogBackgroundColor: Colors.white, // Dialog background color
-          ),
-          child: child!,
-        );
-      },
+      lastDate: DateTime(2100),
     );
-    if (pickedDate != null) {
+    if (picked != null) {
       setState(() {
-        _summonDateController.text =
-            DateFormat('dd/MM/yyyy').format(pickedDate);
+        final date = "${picked.day}/${picked.month}/${picked.year}";
+        final apiDate =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+
+        if (_isSummoned) {
+          _selectedSummonDateDisplay = date;
+          _selectedSummonDateApi = apiDate;
+          print('Summon Date Api: $_selectedSummonDateApi');
+        }
+      });
+    }
+  }
+
+  Future<void> _selectFilingDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        final date = "${picked.day}/${picked.month}/${picked.year}";
+        final apiDate =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+
+        if (_isFiled) {
+          _selectedFilingDateDisplay = date;
+          _selectedFilingDateApi = apiDate;
+          print('Filing Date Api: $_selectedFilingDateApi');
+        }
+      });
+    }
+  }
+
+  Future<void> _selectNextDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        final date = "${picked.day}/${picked.month}/${picked.year}";
+        final apiDate =
+            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+
+        if (_isNextDateGiven) {
+          _selectedNextDateDisplay = date;
+          _selectedNextDateApi = apiDate;
+          print('Next Date Api: $_selectedNextDateApi');
+        }
       });
     }
   }
@@ -239,26 +293,37 @@ class NewCaseScreenState extends State<NewCaseScreen> {
 
     if (result != null) {
       setState(() {
-        _fileNames = result.files.map((file) => file.name).toList();
-        _filePaths = result.files.map((file) => file.path!).toList();
-      });
-    } else {
-      setState(() {
-        _fileNames = [];
-        _filePaths = [];
+        // Append newly selected files to the existing list.
+        _fileNames.addAll(
+          result.files
+              .map((file) => file.name)
+              .where((fileName) => !_fileNames.contains(fileName)),
+        );
+        _filePaths.addAll(
+          result.files
+              .map((file) => file.path!)
+              .where((filePath) => !_filePaths.contains(filePath)),
+        );
       });
     }
   }
 
+  void _removeFile(int index) {
+    setState(() {
+      _fileNames.removeAt(index);
+      _filePaths.removeAt(index);
+    });
+  }
+
+  void _clearAllFiles() {
+    setState(() {
+      _fileNames.clear();
+      _filePaths.clear();
+    });
+  }
+
   Future<void> _submitCase() async {
     if (!_formKey.currentState!.validate()) return;
-
-    // Ensure files are selected
-    if (_filePaths.isEmpty) {
-      Get.snackbar('Error', 'Please select at least one document!',
-          snackPosition: SnackPosition.BOTTOM);
-      return;
-    }
 
     setState(() {
       _isSubmitting = true;
@@ -270,11 +335,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       if (user == null) {
         throw Exception('User not found. Please log in again.');
       }
-
-      // Split files: first file as case_image, rest as case_docs[]
-      String caseImage = _filePaths.first;
-      List<String> caseDocs =
-          _filePaths.length > 1 ? _filePaths.sublist(1) : [];
 
       // Prepare data for API
       var request = http.MultipartRequest(
@@ -313,25 +373,35 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         "court_name": _selectedCourtName!,
         "city_id": _cityList.firstWhere(
           (element) => element['id'] == _selectedCityName,
-          orElse: () =>
-              {'id': ''}, // Default to an empty string or handle appropriately
+          orElse: () => {'id': ''},
         )['id'],
-        "sr_date": _summonDateController.text,
+        "sr_date": _selectedSummonDateApi,
+        "date_of_filing": _selectedFilingDateApi,
+        "next_date": _selectedNextDateApi,
+        "complainant_advocate": _complainantAdvocateController.text,
+        "respondent_advocate": _respondentAdvocateController.text,
       });
-
-      // Add case_image file
-      request.files
-          .add(await http.MultipartFile.fromPath('case_image', caseImage));
-
-      // Add case_docs[] files
-      for (String docPath in caseDocs) {
-        request.files
-            .add(await http.MultipartFile.fromPath('case_docs[]', docPath));
-      }
 
       print("##########################################");
       print(request.fields);
       print("##########################################");
+
+      // Add case_image file
+      if (_filePaths.isNotEmpty) {
+        String caseImage = _filePaths.first;
+        request.files
+            .add(await http.MultipartFile.fromPath('case_image', caseImage));
+      }
+      // Add case_docs[] files
+      if (_filePaths.length > 1) {
+        List<String> caseDocs =
+            _filePaths.sublist(1); // Remaining files as case_docs[]
+        for (String docPath in caseDocs) {
+          request.files
+              .add(await http.MultipartFile.fromPath('case_docs[]', docPath));
+        }
+      }
+
       // Send the request
       var response = await request.send();
       print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
@@ -398,154 +468,253 @@ class NewCaseScreenState extends State<NewCaseScreen> {
             },
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Center(
-                    child: Text(
-                      'New Case',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        height: 1.2,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.06),
-                  _buildTextField(
-                      'Case Number', 'Case Number', _caseNumberController,
-                      validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the Case Number';
-                    }
-                    return null;
-                  }),
-                  _buildTextField('Case Year', 'Case Year', _caseYearController,
-                      validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the Case Year';
-                    }
-                    return null;
-                  }),
-                  _buildDropdownField(
-                    'Case Type',
-                    'Select Case Type',
-                    _caseTypeList,
-                    _selectedCaseType,
-                    (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedCaseType = value;
-                          _selectedCaseStage = null;
-                          _caseStageList = [];
-                          _getCaseStageList(value);
-                        });
-                      }
-                    },
-                  ),
-                  _buildDropdownField('Case Stage', 'Select Case Stage',
-                      _caseStageList, _selectedCaseStage, (value) {
-                    setState(() {
-                      _selectedCaseStage = value;
-                    });
-                  }),
-                  _buildDropdownField(
-                    'Handled By',
-                    'Select Advocate',
-                    _advocateList,
-                    _selectedHandler,
-                    (value) {
-                      setState(() {
-                        _selectedHandler = value;
-                      });
-                    },
-                  ),
-                  _buildDropdownField('Company Name', 'Select Company',
-                      _companyList, _selectedCompany, (value) {
-                    setState(() {
-                      _selectedCompany = value;
-                    });
-                  }),
-                  _buildTextField('Applicant / Appellant / Complainant',
-                      'Enter Name', _applicantController, validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the name';
-                    }
-                    return null;
-                  }),
-                  _buildTextField('Opponent / Respondent / Accused',
-                      'Enter Name', _opponentController, validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the name';
-                    }
-                    return null;
-                  }),
-                  _buildDropdownField('Court Name', 'Select Court Name',
-                      _courtList, _selectedCourtName, (value) {
-                    setState(() {
-                      _selectedCourtName = value;
-                    });
-                  }),
-                  _buildDropdownField(
-                      'City Name', 'Select City', _cityList, _selectedCityName,
-                      (value) {
-                    setState(() {
-                      _selectedCityName = value;
-                    });
-                  }),
-                  _buildDateField(
-                      'Summon Date',
-                      'Select Summon Date',
-                      _summonDateController,
-                      () => _selectDate(context), validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select Summon Date';
-                    }
-                    return null;
-                  }),
-                  _buildFilePickerField(
-                      'Attach Documents', 'Attach Documents', _pickDocuments),
-                  const SizedBox(height: 10),
-                  if (_fileNames.isNotEmpty)
-                    ..._fileNames.map((fileName) => Padding(
-                          padding: const EdgeInsets.only(bottom: 5),
-                          child: Text(fileName),
-                        )),
-                  SizedBox(height: screenHeight * 0.05),
-                  Center(
-                    child: SizedBox(
-                      width: screenWidth * 0.5,
-                      height: 70,
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitCase,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
+        body: RefreshIndicator(
+          color: Colors.black,
+          onRefresh: () async {
+            setState(() {
+              _fetchDropdownData();
+            });
+          },
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Center(
+                      child: Text(
+                        'New Case',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          height: 1.2,
                         ),
-                        child: _isSubmitting
-                            ? CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                'Register',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  color: Colors.white,
-                                ),
-                              ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 80),
-                ],
+                    SizedBox(height: screenHeight * 0.06),
+                    _buildTextField(
+                        'Case Number', 'Case Number', _caseNumberController,
+                        validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the Case Number';
+                      }
+                      return null;
+                    }),
+                    _buildTextField(
+                        'Case Year', 'Case Year', _caseYearController,
+                        validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the Case Year';
+                      }
+                      return null;
+                    }),
+                    _buildDropdownField(
+                      'Case Type',
+                      'Select Case Type',
+                      _caseTypeList,
+                      _selectedCaseType,
+                      (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedCaseType = value;
+                            _selectedCaseStage = null;
+                            _caseStageList = [];
+                            _getCaseStageList(value);
+                          });
+                        }
+                      },
+                    ),
+                    _buildDropdownField('Case Stage', 'Select Case Stage',
+                        _caseStageList, _selectedCaseStage, (value) {
+                      setState(() {
+                        _selectedCaseStage = value;
+                      });
+                    }),
+                    _buildDropdownField(
+                      'Handled By',
+                      'Select Advocate',
+                      _advocateList,
+                      _selectedHandler,
+                      (value) {
+                        setState(() {
+                          _selectedHandler = value;
+                        });
+                      },
+                    ),
+                    _buildDropdownField('Company Name', 'Select Company',
+                        _companyList, _selectedCompany, (value) {
+                      setState(() {
+                        _selectedCompany = value;
+                      });
+                    }),
+                    _buildTextField('Applicant / Appellant / Complainant',
+                        'Enter Name', _applicantController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the name';
+                      }
+                      return null;
+                    }),
+                    _buildTextField('Complainant Advocate', 'Enter Name',
+                        _complainantAdvocateController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the name';
+                      }
+                      return null;
+                    }),
+                    _buildTextField('Opponent / Respondent / Accused',
+                        'Enter Name', _opponentController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the name';
+                      }
+                      return null;
+                    }),
+                    _buildTextField('Respondent Advocate', 'Enter Name',
+                        _respondentAdvocateController, validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the name';
+                      }
+                      return null;
+                    }),
+                    _buildDropdownField('Court Name', 'Select Court Name',
+                        _courtList, _selectedCourtName, (value) {
+                      setState(() {
+                        _selectedCourtName = value;
+                      });
+                    }),
+                    _buildDropdownField('City Name', 'Select City', _cityList,
+                        _selectedCityName, (value) {
+                      setState(() {
+                        _selectedCityName = value;
+                      });
+                    }),
+                    _buildDateField(
+                      label: 'Summon Date',
+                      child: Text(
+                        _selectedSummonDateDisplay,
+                        style: TextStyle(
+                          color: _isSummoned ? Colors.black : Colors.black54,
+                          fontSize: 16,
+                        ),
+                      ),
+                      onTap: () => {
+                        setState(() {
+                          _isSummoned = true;
+                          _selectSummonDate(context);
+                        }),
+                      },
+                    ),
+                    _buildDateField(
+                      label: 'Date of Filing',
+                      child: Text(
+                        _selectedFilingDateDisplay,
+                        style: TextStyle(
+                          color: _isFiled ? Colors.black : Colors.black54,
+                          fontSize: 16,
+                        ),
+                      ),
+                      onTap: () => {
+                        setState(() {
+                          _isFiled = true;
+                          _selectFilingDate(context);
+                        }),
+                      },
+                    ),
+                    _buildDateField(
+                      label: 'Next Date',
+                      child: Text(
+                        _selectedNextDateDisplay,
+                        style: TextStyle(
+                          color:
+                              _isNextDateGiven ? Colors.black : Colors.black54,
+                          fontSize: 16,
+                        ),
+                      ),
+                      onTap: () => {
+                        setState(() {
+                          _isNextDateGiven = true;
+                          _selectNextDate(context);
+                        }),
+                      },
+                    ),
+                    _buildFilePickerField(
+                        'Attach Documents', 'Attach Documents', _pickDocuments),
+                    const SizedBox(height: 10),
+                    if (_fileNames.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Selected Files:',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          ...List.generate(_fileNames.length, (index) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _fileNames[index],
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  onPressed: () => _removeFile(index),
+                                ),
+                              ],
+                            );
+                          }),
+                          const SizedBox(height: 10),
+                          ElevatedButton.icon(
+                            onPressed: _clearAllFiles,
+                            icon: const Icon(
+                              Icons.delete_sweep,
+                              color: Colors.white,
+                            ),
+                            label: const Text('Remove All Files'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              padding: EdgeInsets.all(8.0),
+                            ),
+                          ),
+                        ],
+                      ),
+                    SizedBox(height: screenHeight * 0.05),
+                    Center(
+                      child: SizedBox(
+                        width: screenWidth * 0.5,
+                        height: 70,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submitCase,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                          ),
+                          child: _isSubmitting
+                              ? CircularProgressIndicator(color: Colors.white)
+                              : Text(
+                                  'Save',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 80),
+                  ],
+                ),
               ),
             ),
           ),
@@ -568,6 +737,9 @@ class NewCaseScreenState extends State<NewCaseScreen> {
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hintText,
+            hintStyle: TextStyle(
+              color: Colors.black54,
+            ),
             contentPadding:
                 const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             border: OutlineInputBorder(
@@ -592,7 +764,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       children: [
         Text(label, style: const TextStyle(fontSize: 16)),
         const SizedBox(height: 10),
-        Container(
+        SizedBox(
           width: double.infinity,
           child: DropdownButtonFormField<String>(
             isExpanded: true,
@@ -629,34 +801,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     );
   }
 
-  Widget _buildDateField(String label, String hintText,
-      TextEditingController controller, Function()? onTap,
-      {String? Function(String?)? validator}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(label, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 10),
-        TextFormField(
-          controller: controller,
-          readOnly: true,
-          onTap: onTap,
-          decoration: InputDecoration(
-            hintText: hintText,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            suffixIcon: Icon(Icons.calendar_today),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          validator: validator,
-        ),
-        const SizedBox(height: 20),
-      ],
-    );
-  }
-
   Widget _buildFilePickerField(
       String label, String hintText, Function()? onTap) {
     return Column(
@@ -673,9 +817,42 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                 : '${_fileNames.length} file(s) selected',
             contentPadding:
                 const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            suffixIcon: Icon(Icons.attach_file),
+            suffixIcon: const Icon(Icons.attach_file),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 16)),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black),
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                child,
+                const Spacer(),
+                const Icon(Icons.calendar_today, color: Colors.black),
+              ],
             ),
           ),
         ),

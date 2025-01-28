@@ -153,7 +153,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                               color: Colors.white,
                             )
                           : const Text(
-                              'Register',
+                              'Save',
                               style: TextStyle(
                                 fontSize: 22,
                                 color: Colors.white,

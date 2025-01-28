@@ -294,44 +294,52 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                     style: TextStyle(fontSize: 18, color: Colors.black54),
                   ),
                 )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 5.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDetailsCard(
-                        details: {
-                          'Case Year': _caseDetails['year'],
-                          'Case Type': _caseDetails['case_type'],
-                          'Current Stage': _caseDetails['stage_name'],
-                          'Next Stage': _caseDetails['next_stage'],
-                          'Company Name': _caseDetails['company_name'],
-                          'Plaintiff Name': _caseDetails['applicant'],
-                          'Opponent Name': _caseDetails['opp_name'],
-                          'Complainant Advocate':
-                              _caseDetails['complainant_advocate'],
-                          'Respondent Advocate':
-                              _caseDetails['respondent_advocate'],
-                          'Court': _caseDetails['court_name'],
-                          'City': _caseDetails['city_name'],
-                          'Summon Date': _caseDetails['sr_date'] is DateTime
-                              ? DateFormat('dd-MM-yyyy')
-                                  .format(_caseDetails['sr_date'])
-                              : _caseDetails['sr_date'],
-                          'Next Date': _caseDetails['next_date'] is DateTime
-                              ? DateFormat('dd-MM-yyyy')
-                                  .format(_caseDetails['next_date'])
-                              : _caseDetails['next_date'],
-                          'Date Of Filing':
-                              _caseDetails['date_of_filing'] is DateTime
-                                  ? DateFormat('dd-MM-yyyy')
-                                      .format(_caseDetails['date_of_filing'])
-                                  : _caseDetails['date_of_filing'],
-                          'Case Counter': _caseDetails['case_counter'],
-                        },
-                      ),
-                    ],
+              : RefreshIndicator(
+                  color: Colors.black,
+                  onRefresh: () async {
+                    setState(() {
+                      _fetchCaseInfo();
+                    });
+                  },
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10.0, horizontal: 5.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDetailsCard(
+                          details: {
+                            'Case Year': _caseDetails['year'],
+                            'Case Type': _caseDetails['case_type'],
+                            'Current Stage': _caseDetails['stage_name'],
+                            'Next Stage': _caseDetails['next_stage'],
+                            'Company Name': _caseDetails['company_name'],
+                            'Plaintiff Name': _caseDetails['applicant'],
+                            'Opponent Name': _caseDetails['opp_name'],
+                            'Complainant Advocate':
+                                _caseDetails['complainant_advocate'],
+                            'Respondent Advocate':
+                                _caseDetails['respondent_advocate'],
+                            'Court': _caseDetails['court_name'],
+                            'City': _caseDetails['city_name'],
+                            'Summon Date': _caseDetails['sr_date'] is DateTime
+                                ? DateFormat('dd-MM-yyyy')
+                                    .format(_caseDetails['sr_date'])
+                                : _caseDetails['sr_date'],
+                            'Next Date': _caseDetails['next_date'] is DateTime
+                                ? DateFormat('dd-MM-yyyy')
+                                    .format(_caseDetails['next_date'])
+                                : _caseDetails['next_date'],
+                            'Date Of Filing':
+                                _caseDetails['date_of_filing'] is DateTime
+                                    ? DateFormat('dd-MM-yyyy')
+                                        .format(_caseDetails['date_of_filing'])
+                                    : _caseDetails['date_of_filing'],
+                            'Case Counter': _caseDetails['case_counter'],
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
     );

@@ -86,7 +86,7 @@ class ApiService {
       Map<String, dynamic> caseData, List<String> filePaths) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('${baseUrl}/add_case'),
+      Uri.parse('$baseUrl/add_case'),
     );
 
     // Add case data as JSON in the 'data' field

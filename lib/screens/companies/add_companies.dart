@@ -161,7 +161,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                         ),
                       ),
                       child: const Text(
-                        'Register',
+                        'Save',
                         style: TextStyle(
                           fontSize: 22,
                           color: Colors.white,

@@ -112,6 +112,16 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
         leadingWidth: 56 + 30,
+        titleSpacing: -10,
+        toolbarHeight: 70,
+        title: Text(
+          'Advocate List',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/back_arrow.svg',
@@ -123,112 +133,95 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
           },
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            color: const Color(0xFFF3F3F3),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'Advocate List',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                )
-              ],
-            ),
-          ),
-          Expanded(
-            child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                    color: Colors.black,
-                  ))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: advocates.length,
-                    itemBuilder: (context, index) {
-                      final advocate = advocates[index];
+      body: Container(
+        child: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                color: Colors.black,
+              ))
+            : RefreshIndicator(
+                color: Colors.black,
+                onRefresh: fetchAdvocates,
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(
+                      left: 16.0, right: 16.0, bottom: 16.0),
+                  itemCount: advocates.length,
+                  itemBuilder: (context, index) {
+                    final advocate = advocates[index];
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(),
-                        child: Card(
-                          color: Colors.white, // Set card background to white
-                          shape: RoundedRectangleBorder(
-                            side:
-                                const BorderSide(color: Colors.black, width: 1),
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 3, // Adds shadow effect
-                          child: DismissibleCard(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12.0, horizontal: 16.0),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 10,
-                                    height: 100,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: advocate['status'] == 'enable'
-                                            ? Colors.black
-                                            : Colors.red,
-                                        borderRadius: BorderRadius.circular(5),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(),
+                      child: Card(
+                        color: Colors.white, // Set card background to white
+                        shape: RoundedRectangleBorder(
+                          side: const BorderSide(color: Colors.black, width: 1),
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        elevation: 3, // Adds shadow effect
+                        child: DismissibleCard(
+                          name: "${advocate['name']}",
+                          onEdit: () => _handleEdit(advocate),
+                          onDelete: () =>
+                              _handleDelete(advocate['id'].toString()),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12.0, horizontal: 16.0),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 10,
+                                  height: 100,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: advocate['status'] == 'enable'
+                                          ? Colors.black
+                                          : Colors.red,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                  height: 100,
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        advocate['name'],
+                                        style: const TextStyle(
+                                          fontSize: 20.0,
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 15,
-                                    height: 100,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Text(
-                                          advocate['name'],
-                                          style: const TextStyle(
-                                            fontSize: 20.0,
-                                          ),
+                                      const SizedBox(height: 5.0),
+                                      Text(
+                                        'Contact No.: +91 ${advocate['contact']}',
+                                        style: const TextStyle(
+                                          fontSize: 14.0,
                                         ),
-                                        const SizedBox(height: 5.0),
-                                        Text(
-                                          'Contact No.: +91 ${advocate['contact']}',
-                                          style: const TextStyle(
-                                            fontSize: 14.0,
-                                          ),
+                                      ),
+                                      const SizedBox(height: 5.0),
+                                      Text(
+                                        'Email: ${advocate['email']}',
+                                        style: const TextStyle(
+                                          fontSize: 14.0,
                                         ),
-                                        const SizedBox(height: 5.0),
-                                        Text(
-                                          'Email: ${advocate['email']}',
-                                          style: const TextStyle(
-                                            fontSize: 14.0,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 5.0),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(height: 5.0),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            onEdit: () => _handleEdit(advocate),
-                            onDelete: () =>
-                                _handleDelete(advocate['id'].toString()),
                           ),
                         ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {

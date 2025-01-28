@@ -60,7 +60,7 @@ class _InternListScreenState extends State<InternListScreen> {
     }
     try {
       DateTime parsedDate = DateTime.parse(dateTime);
-      return DateFormat('dd/MM/yyyy').format(parsedDate);
+      return DateFormat("EEE, dd MMM, yyyy").format(parsedDate);
     } catch (e) {
       return "Invalid Date";
     }
@@ -123,6 +123,16 @@ class _InternListScreenState extends State<InternListScreen> {
         backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
         elevation: 0,
         leadingWidth: 56 + 30,
+        titleSpacing: -10,
+        toolbarHeight: 70,
+        title: Text(
+          'Intern List',
+          style: TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/icons/back_arrow.svg',
@@ -134,120 +144,108 @@ class _InternListScreenState extends State<InternListScreen> {
           },
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            color: const Color(0xFFF3F3F3),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'Intern List',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+      body: Container(
+        child: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                color: Colors.black,
+              ))
+            : RefreshIndicator(
+                color: Colors.black,
+                onRefresh: fetchInterns,
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(
+                    left: 16.0,
+                    right: 16.0,
+                    bottom: 16.0,
                   ),
-                )
-              ],
-            ),
-          ),
-          Expanded(
-            child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                    color: Colors.black,
-                  ))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: interns.length,
-                    itemBuilder: (context, index) {
-                      final intern = interns[index];
+                  itemCount: interns.length,
+                  itemBuilder: (context, index) {
+                    final intern = interns[index];
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(),
-                        child: Card(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            side:
-                                const BorderSide(color: Colors.black, width: 1),
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          elevation: 3,
-                          child: DismissibleCard(
-                            onEdit: () => _handleEdit(intern),
-                            onDelete: () =>
-                                _handleDelete(intern['id'].toString()),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12.0, horizontal: 16.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    width: 10,
-                                    height: 100,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color:
-                                            interns[index]['status'] == 'enable'
-                                                ? Colors.black
-                                                : Colors.red,
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(),
+                      child: Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          side: const BorderSide(color: Colors.black, width: 1),
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        elevation: 3,
+                        child: DismissibleCard(
+                          name: '${intern['name']}',
+                          onEdit: () => _handleEdit(intern),
+                          onDelete: () =>
+                              _handleDelete(intern['id'].toString()),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12.0, horizontal: 16.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 10,
+                                  height: 100,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          interns[index]['status'] == 'enable'
+                                              ? Colors.black
+                                              : Colors.red,
+                                      borderRadius: BorderRadius.circular(5),
                                     ),
                                   ),
-                                  const SizedBox(
-                                    width: 15,
-                                    height: 100,
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        intern['name'],
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 20.0,
-                                        ),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                  height: 100,
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      intern['name'],
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20.0,
                                       ),
-                                      const SizedBox(height: 5.0),
-                                      Text(
-                                        'Contact No.: +91 ${intern['contact']}',
-                                        style: const TextStyle(
-                                          fontSize: 14.0,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5.0),
-                                      Text(
-                                        'Email: ${intern['email']}', // Displaying email dynamically
-                                        style: const TextStyle(
-                                          fontSize: 14.0,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5.0),
-                                    ],
-                                  ),
-                                  // Right section: date_time
-                                  Text(
-                                    formatDate(intern['date_time']),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14.0,
                                     ),
-                                  ),
-                                ],
-                              ),
+                                    const SizedBox(height: 5.0),
+                                    Text(
+                                      'Contact No.: +91 ${intern['contact']}',
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5.0),
+                                    Text(
+                                      'Email: ${intern['email']}', // Displaying email dynamically
+                                      style: const TextStyle(
+                                        fontSize: 14.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5.0),
+                                    Text(
+                                      'Joining Date: ${formatDate(intern['date_time'])}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14.0,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      height: 5.0,
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
