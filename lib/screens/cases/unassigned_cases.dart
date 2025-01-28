@@ -12,10 +12,10 @@ class UnassignedCases extends StatefulWidget {
   const UnassignedCases({super.key});
 
   @override
-  State<UnassignedCases> createState() => _UnassignedCasesState();
+  State<UnassignedCases> createState() => UnassignedCasesState();
 }
 
-class _UnassignedCasesState extends State<UnassignedCases> {
+class UnassignedCasesState extends State<UnassignedCases> {
   bool _isLoading = true;
   List<CaseListData> _unassignedCases = [];
   List<CaseListData> _filteredCases = [];
@@ -33,7 +33,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
   void initState() {
     super.initState();
     _errorMessage = '';
-    _fetchCases();
+    if (_unassignedCases.isEmpty) fetchCases();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -48,7 +48,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
     super.dispose();
   }
 
-  Future<void> _fetchCases() async {
+  Future<int> fetchCases([bool isOnPage = true]) async {
     try {
       final url = Uri.parse('$baseUrl/get_unassigned_case_list');
       final response = await http.get(url);
@@ -57,42 +57,54 @@ class _UnassignedCasesState extends State<UnassignedCases> {
         final data = jsonDecode(response.body);
 
         if (data['success'] == true) {
-          setState(() {
-            _unassignedCases = (data['data'] as List)
-                .map((item) => CaseListData.fromJson(item))
-                .toList();
-            _filteredCases = List.from(_unassignedCases);
+          _unassignedCases = (data['data'] as List)
+              .map((item) => CaseListData.fromJson(item))
+              .toList();
+          if (isOnPage) {
+            setState(() {
+              _filteredCases = List.from(_unassignedCases);
 
-            _cities.addAll(
-              _unassignedCases.map((caseItem) => caseItem.cityName).toSet(),
-            );
-            _courts.addAll(
-              _unassignedCases.map((caseItem) => caseItem.courtName).toSet(),
-            );
-          });
+              _cities.addAll(
+                _unassignedCases.map((caseItem) => caseItem.cityName).toSet(),
+              );
+              _courts.addAll(
+                _unassignedCases.map((caseItem) => caseItem.courtName).toSet(),
+              );
+            });
+          }
+          return _unassignedCases.length;
         } else {
           _showError("No cases found.");
-          setState(() {
-            _errorMessage = 'No cases found';
-          });
+          if (isOnPage) {
+            setState(() {
+              _errorMessage = 'No cases found';
+            });
+          }
         }
       } else {
         _showError("Failed to fetch cases.");
-        setState(() {
-          _errorMessage =
-              'Failed to fetch cases due to ${response.statusCode}: ${response.body}';
-        });
+        if (isOnPage) {
+          setState(() {
+            _errorMessage =
+                'Failed to fetch cases due to ${response.statusCode}: ${response.body}';
+          });
+        }
       }
     } catch (e) {
       _showError("An error occurred: $e");
-      setState(() {
-        _errorMessage = 'An error occurred: $e';
-      });
+      if (isOnPage) {
+        setState(() {
+          _errorMessage = 'An error occurred: $e';
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (isOnPage) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+    return 0;
   }
 
   void _showError(String message) {
@@ -207,7 +219,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                             ElevatedButton(
                                 onPressed: () async {
                                   setState(() {
-                                    _fetchCases();
+                                    fetchCases();
                                   });
                                 },
                                 child: const Text('Retry')),
@@ -218,7 +230,7 @@ class _UnassignedCasesState extends State<UnassignedCases> {
                         color: Colors.black,
                         onRefresh: () async {
                           setState(() {
-                            _fetchCases();
+                            fetchCases();
                           });
                         },
                         child: _filteredCases.isEmpty

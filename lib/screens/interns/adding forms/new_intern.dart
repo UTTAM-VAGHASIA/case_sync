@@ -54,6 +54,8 @@ class _NewInternScreenState extends State<NewInternScreen> {
         _joiningDateApi = apiDate;
         print(_joiningDateApi);
       });
+
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 

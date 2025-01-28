@@ -14,10 +14,10 @@ class InternListScreen extends StatefulWidget {
   const InternListScreen({super.key});
 
   @override
-  _InternListScreenState createState() => _InternListScreenState();
+  InternListScreenState createState() => InternListScreenState();
 }
 
-class _InternListScreenState extends State<InternListScreen> {
+class InternListScreenState extends State<InternListScreen> {
   List<dynamic> interns = []; // To store fetched interns
   bool isLoading = true; // To show loading indicator
 
@@ -28,17 +28,20 @@ class _InternListScreenState extends State<InternListScreen> {
   }
 
   // Function to fetch data from the API
-  Future<void> fetchInterns() async {
+  Future<int> fetchInterns([bool isOnPage = true]) async {
     final String apiUrl = "$baseUrl/get_interns_list";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         if (responseBody['success'] == true) {
-          setState(() {
-            interns = responseBody['data']; // Access the "data" key
-            isLoading = false;
-          });
+          interns = responseBody['data']; // Access the "data" key
+          if (isOnPage) {
+            setState(() {
+              isLoading = false;
+            });
+          }
+          return interns.length;
         } else {
           throw Exception(responseBody['message'] ?? 'Failed to load interns');
         }
@@ -46,11 +49,14 @@ class _InternListScreenState extends State<InternListScreen> {
         throw Exception('Failed to load interns');
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      if (isOnPage) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       print("Error fetching interns: $e");
     }
+    return 0;
   }
 
   // Helper function to format date

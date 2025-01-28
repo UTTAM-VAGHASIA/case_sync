@@ -13,10 +13,10 @@ class AdvocateListScreen extends StatefulWidget {
   const AdvocateListScreen({super.key});
 
   @override
-  _AdvocateListScreenState createState() => _AdvocateListScreenState();
+  AdvocateListScreenState createState() => AdvocateListScreenState();
 }
 
-class _AdvocateListScreenState extends State<AdvocateListScreen> {
+class AdvocateListScreenState extends State<AdvocateListScreen> {
   List<dynamic> advocates = []; // To store fetched advocates
   bool isLoading = true; // To show loading indicator
 
@@ -27,7 +27,7 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
   }
 
   // Function to fetch data from the API
-  Future<void> fetchAdvocates() async {
+  Future<int> fetchAdvocates([bool isOnPage = true]) async {
     final String apiUrl =
         "$baseUrl/get_advocate_list"; // Corrected API endpoint
     try {
@@ -35,11 +35,14 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         if (responseBody['success'] == true) {
-          setState(() {
-            advocates = responseBody['data'];
-            isLoading = false;
-          });
-          print('Advocate List: $advocates');
+          advocates = responseBody['data'];
+          if (isOnPage) {
+            setState(() {
+              isLoading = false;
+            });
+          }
+          print('Advocate List Length: ${advocates.length}');
+          return advocates.length;
         } else {
           throw Exception(
               responseBody['message'] ?? 'Failed to load advocates');
@@ -48,11 +51,14 @@ class _AdvocateListScreenState extends State<AdvocateListScreen> {
         throw Exception('Failed to load advocates');
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      if (isOnPage) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       print("Error fetching advocates: $e");
     }
+    return 0;
   }
 
   void _showError(String message) {

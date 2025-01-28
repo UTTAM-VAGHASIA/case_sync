@@ -123,6 +123,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           _assignDateApi = apiDate;
         }
       });
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 

@@ -28,7 +28,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
     fetchCompanies();
   }
 
-  Future<void> fetchCompanies() async {
+  Future<int> fetchCompanies([bool isOnPage = true]) async {
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
@@ -36,19 +36,22 @@ class CompaniesScreenState extends State<CompaniesScreen> {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData['success'] == true) {
           final List<dynamic> data = responseData['data'];
-          setState(() {
-            companies = data
-                .map((company) => {
-                      'id': company['id'],
-                      'company': '#${company['id']}',
-                      'name': company['name'],
-                      'contact_person': company['contact_person'],
-                      'phone': company['contact_no'],
-                      'status': company['status'],
-                    })
-                .toList();
-            isLoading = false;
-          });
+          companies = data
+              .map((company) => {
+                    'id': company['id'],
+                    'company': '#${company['id']}',
+                    'name': company['name'],
+                    'contact_person': company['contact_person'],
+                    'phone': company['contact_no'],
+                    'status': company['status'],
+                  })
+              .toList();
+          if (isOnPage) {
+            setState(() {
+              isLoading = false;
+            });
+          }
+          return companies.length;
         } else {
           throw Exception(responseData['message']);
         }
@@ -56,13 +59,16 @@ class CompaniesScreenState extends State<CompaniesScreen> {
         throw Exception('Failed to load companies.');
       }
     } catch (error) {
-      setState(() {
-        isLoading = false;
-      });
+      if (isOnPage) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${error.toString()}')),
       );
     }
+    return 0;
   }
 
   void _showError(String message) {

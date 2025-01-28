@@ -239,6 +239,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
           print('Summon Date Api: $_selectedSummonDateApi');
         }
       });
+
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 
@@ -261,6 +263,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
           print('Filing Date Api: $_selectedFilingDateApi');
         }
       });
+
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 
@@ -283,6 +287,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
           print('Next Date Api: $_selectedNextDateApi');
         }
       });
+
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 

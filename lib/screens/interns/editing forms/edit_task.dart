@@ -18,21 +18,24 @@ class EditTaskScreen extends StatefulWidget {
   });
 
   @override
-  State<EditTaskScreen> createState() => _EditTaskScreenState();
+  State<EditTaskScreen> createState() => EditTaskScreenState();
 }
 
-class _EditTaskScreenState extends State<EditTaskScreen> {
+class EditTaskScreenState extends State<EditTaskScreen> {
   String? _advocateName;
   String? _advocateId;
   String? _assignedTo;
-  String? _assignDateDisplay;
-  String? _expectedEndDateDisplay;
-  String? _assignDateApi;
-  String? _expectedEndDateApi;
+  late String _assignDateDisplay;
+  late String _expectedEndDateDisplay;
+  late String _assignDateApi;
+  late String _expectedEndDateApi;
   String? _selectedStatus;
   final _taskInstructionController = TextEditingController();
 
   List<Map<String, String>> _internList = [];
+
+  bool isAssigned = false;
+  bool isEnded = false;
 
   @override
   void initState() {
@@ -46,14 +49,25 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     final task = widget.taskDetails;
     _assignedTo = task['alloted_to_id'];
     _taskInstructionController.text = task['instruction'] ?? '';
-    _assignDateDisplay =
-        DateFormat('dd/MM/yyyy').format(DateTime.parse(task['alloted_date']));
-    _expectedEndDateDisplay = DateFormat('dd/MM/yyyy')
-        .format(DateTime.parse(task['expected_end_date']));
-    _assignDateApi =
-        DateFormat('yyyy/MM/dd').format(DateTime.parse(task['alloted_date']));
-    _expectedEndDateApi = DateFormat('yyyy/MM/dd')
-        .format(DateTime.parse(task['expected_end_date']));
+    if (task['alloted_date'] != null && task['alloted_date'].isNotEmpty) {
+      _assignDateDisplay =
+          DateFormat('dd/MM/yyyy').format(DateTime.parse(task['alloted_date']));
+      _assignDateApi =
+          DateFormat('yyyy/MM/dd').format(DateTime.parse(task['alloted_date']));
+    } else {
+      _assignDateDisplay = "Not Assigned";
+      _assignDateApi = "";
+    }
+    if (task['expected_end_date'] != null &&
+        task['expected_end_date'].isNotEmpty) {
+      _expectedEndDateDisplay = DateFormat('dd/MM/yyyy')
+          .format(DateTime.parse(task['expected_end_date']));
+      _expectedEndDateApi = DateFormat('yyyy/MM/dd')
+          .format(DateTime.parse(task['expected_end_date']));
+    } else {
+      _expectedEndDateDisplay = "No End Date";
+      _expectedEndDateApi = "";
+    }
     _selectedStatus = widget.taskDetails['status'];
   }
 
@@ -126,22 +140,23 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
           _expectedEndDateApi = apiDate;
           print(_expectedEndDateApi);
           print(_expectedEndDateDisplay);
+          isEnded = true;
         } else {
           _assignDateDisplay = date;
           _assignDateApi = apiDate;
           print(_assignDateApi);
           print(_assignDateDisplay);
+          isAssigned = true;
         }
       });
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 
   Future<void> _updateTask() async {
     if (_advocateName == null ||
         _assignedTo == null ||
-        validateTaskInstruction(_taskInstructionController.text) != null ||
-        _assignDateDisplay == null ||
-        _expectedEndDateDisplay == null) {
+        validateTaskInstruction(_taskInstructionController.text) != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please fill out all fields"),
@@ -240,14 +255,16 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Assign Date',
-                hint: _assignDateDisplay ?? 'Select Date',
+                hint: _assignDateDisplay,
                 onTap: () => _selectDate(context, false),
+                isSelected: isAssigned,
               ),
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Expected End Date',
-                hint: _expectedEndDateDisplay ?? 'Select Date',
+                hint: _expectedEndDateDisplay,
                 onTap: () => _selectDate(context, true),
+                isSelected: isEnded,
               ),
               const SizedBox(height: 20),
               Text('Status', style: const TextStyle(fontSize: 16)),
@@ -265,7 +282,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                   'pending',
                   'completed',
                   'reassign',
-                  're-alloted',
+                  're_alloted',
                   'allotted'
                 ]
                     .map((status) => DropdownMenuItem(
@@ -387,6 +404,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     required String label,
     required String hint,
     required VoidCallback onTap,
+    required bool isSelected,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +422,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
             ),
             child: Row(
               children: [
-                Text(hint, style: const TextStyle(color: Colors.grey)),
+                Text(hint,
+                    style: TextStyle(
+                        color: isSelected ? Colors.black : Colors.grey)),
                 const Spacer(),
                 const Icon(Icons.calendar_today, color: Colors.black),
               ],

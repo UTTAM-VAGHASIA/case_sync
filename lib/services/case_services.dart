@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../models/case_list.dart';
@@ -7,14 +6,10 @@ import '../services/api_service.dart'; // Ensure correct import path for your AP
 final Map<String, Map<String, List<CaseListData>>> caseData = {};
 final List<String> years = []; // New variable to store distinct years
 
-Future<void> populateCaseData() async {
+Future<int> populateCaseData() async {
   try {
     // Fetch data from API
     final List<CaseListData> cases = await CaseApiService.fetchCaseList();
-
-    if (kDebugMode) {
-      print(cases);
-    }
 
     // Clear existing data to avoid duplication
     caseData.clear();
@@ -22,11 +17,9 @@ Future<void> populateCaseData() async {
 
     for (var caseItem in cases) {
       // Extract year and month from srDate
-      print(caseItem.srDate);
-      String year = caseItem.srDate.year.toString();
-      print(year);
+      String year = caseItem.dateOfFiling.year.toString();
       String month =
-          DateFormat('MMMM').format(caseItem.srDate); // Full month name
+          DateFormat('MMMM').format(caseItem.dateOfFiling); // Full month name
 
       // Add the year to the years list if not already present
       if (!years.contains(year)) {
@@ -51,10 +44,12 @@ Future<void> populateCaseData() async {
     years.sort();
 
     print('Case data populated successfully.');
-    print(caseData);
+    print(cases.length);
+    return cases.length;
   } catch (e) {
     print('Error populating case data: $e');
   }
+  return 0;
 }
 
 List<CaseListData> getCaseDataForMonth(String year, String month) {

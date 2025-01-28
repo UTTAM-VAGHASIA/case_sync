@@ -12,10 +12,10 @@ class AssignedCases extends StatefulWidget {
   const AssignedCases({super.key});
 
   @override
-  State<AssignedCases> createState() => _AssignedCasesState();
+  State<AssignedCases> createState() => AssignedCasesState();
 }
 
-class _AssignedCasesState extends State<AssignedCases> {
+class AssignedCasesState extends State<AssignedCases> {
   bool _isLoading = true;
   List<CaseListData> _assignedCases = [];
   List<CaseListData> _filteredCases = [];
@@ -33,7 +33,7 @@ class _AssignedCasesState extends State<AssignedCases> {
   void initState() {
     super.initState();
     _errorMessage = '';
-    _fetchCases();
+    fetchCases();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -48,7 +48,7 @@ class _AssignedCasesState extends State<AssignedCases> {
     super.dispose();
   }
 
-  Future<void> _fetchCases() async {
+  Future<int> fetchCases([bool isOnPage = true]) async {
     try {
       final url = Uri.parse('$baseUrl/get_assigned_case_list');
       final response = await http.get(url);
@@ -56,42 +56,57 @@ class _AssignedCasesState extends State<AssignedCases> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
-          setState(() {
-            _assignedCases = (data['data'] as List)
-                .map((item) => CaseListData.fromJson(item))
-                .toList();
-            _filteredCases = List.from(_assignedCases);
+          print("Started");
+          _assignedCases = (data['data'] as List)
+              .map((item) => CaseListData.fromJson(item))
+              .toList();
+          if (isOnPage) {
+            setState(() {
+              _filteredCases = List.from(_assignedCases);
 
-            _cities.addAll(
-              _assignedCases.map((caseItem) => caseItem.cityName).toSet(),
-            );
-            _courts.addAll(
-              _assignedCases.map((caseItem) => caseItem.courtName).toSet(),
-            );
-          });
+              _cities.addAll(
+                _assignedCases.map((caseItem) => caseItem.cityName).toSet(),
+              );
+              _courts.addAll(
+                _assignedCases.map((caseItem) => caseItem.courtName).toSet(),
+              );
+            });
+          }
+          print('Assigned Cases Length: ${_assignedCases.length}');
+
+          return _assignedCases.length;
         } else {
           _showError("No cases found.");
-          setState(() {
-            _errorMessage = 'No cases found';
-          });
+          if (isOnPage) {
+            setState(() {
+              _errorMessage = 'No cases found';
+            });
+          }
         }
       } else {
         _showError("Failed to fetch cases.");
-        setState(() {
-          _errorMessage =
-              'Failed to fetch cases due to ${response.statusCode}: ${response.body}';
-        });
+        if (isOnPage) {
+          setState(() {
+            _errorMessage =
+                'Failed to fetch cases due to ${response.statusCode}: ${response.body}';
+          });
+        }
       }
     } catch (e) {
       _showError("An error occurred: $e");
-      setState(() {
-        _errorMessage = 'An error occurred: $e';
-      });
+      if (isOnPage) {
+        setState(() {
+          _errorMessage = 'An error occurred: $e';
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (isOnPage) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+    return 0;
   }
 
   void _showError(String message) {
@@ -187,7 +202,7 @@ class _AssignedCasesState extends State<AssignedCases> {
                             ElevatedButton(
                                 onPressed: () async {
                                   setState(() {
-                                    _fetchCases();
+                                    fetchCases();
                                   });
                                 },
                                 child: const Text('Retry')),
@@ -200,7 +215,7 @@ class _AssignedCasesState extends State<AssignedCases> {
                             color: Colors.black,
                             onRefresh: () async {
                               setState(() {
-                                _fetchCases();
+                                fetchCases();
                               });
                             },
                             child: ListView.builder(
