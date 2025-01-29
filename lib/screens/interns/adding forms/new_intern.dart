@@ -250,7 +250,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
           controller: _passwordController,
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
-            hintText: "must be 8 characters",
+            hintText: "Password",
             contentPadding:
                 const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             suffixIcon: IconButton(
@@ -267,7 +267,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          validator: validatePassword,
+          // validator: validatePassword,
         ),
         const SizedBox(height: 20),
       ],

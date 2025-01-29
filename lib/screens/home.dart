@@ -94,22 +94,22 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void initializeCounters() async {
-    assignedCasesCount = await AssignedCasesState().fetchCases(false);
-    unassignedCasesCount = await UnassignedCasesState().fetchCases(false);
+    //   assignedCasesCount = await AssignedCasesState().fetchCases(false);
+    //   unassignedCasesCount = await UnassignedCasesState().fetchCases(false);
     caseHistoryCount = await populateCaseData();
-    internCount = await InternListScreenState().fetchInterns(false);
-    advocateCount = await AdvocateListScreenState().fetchAdvocates(false);
-    companyCount = await CompaniesScreenState().fetchCompanies(false);
-    taskCount = await fetchTaskCount();
-
-    print('Assigned Cases Count: $assignedCasesCount');
-    print('Unassigned Cases Count: $unassignedCasesCount');
-    print('Case History Count: $caseHistoryCount');
-    print('Interns Count: $internCount');
-    print('Advocates Count: $advocateCount');
-    print('Companies Count: $companyCount');
-    print('Task Count: $taskCount');
-
+    //   internCount = await InternListScreenState().fetchInterns(false);
+    //   advocateCount = await AdvocateListScreenState().fetchAdvocates(false);
+    //   companyCount = await CompaniesScreenState().fetchCompanies(false);
+    //   taskCount = await fetchTaskCount();
+    //
+    //   print('Assigned Cases Count: $assignedCasesCount');
+    //   print('Unassigned Cases Count: $unassignedCasesCount');
+    //   print('Case History Count: $caseHistoryCount');
+    //   print('Interns Count: $internCount');
+    //   print('Advocates Count: $advocateCount');
+    //   print('Companies Count: $companyCount');
+    //   print('Task Count: $taskCount');
+    //
     setState(() {
       isLoaded = true;
     });
@@ -411,7 +411,7 @@ class HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (context) => destinationScreen),
             );
           },
-          splashColor: Colors.grey.withValues(alpha: 0.2),
+          splashColor: Colors.grey.withOpacity(0.2),
           child: SizedBox(
             width: cardWidth,
             height: cardHeight,
@@ -446,7 +446,7 @@ class HomeScreenState extends State<HomeScreen> {
                       ),
 
                       // Display Counter if applicable
-                      if (shouldDisplayCounter) ...[
+                      /*if (shouldDisplayCounter) ...[
                         const SizedBox(
                             width: 6), // Spacer between text and counter
                         isDataLoaded
@@ -467,7 +467,7 @@ class HomeScreenState extends State<HomeScreen> {
                                       BorderRadius.all(Radius.circular(5)),
                                 ),
                               ),
-                      ],
+                      ],*/
                     ],
                   ),
                 ),
