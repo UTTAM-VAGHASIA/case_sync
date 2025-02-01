@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_new_badger/flutter_new_badger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
@@ -90,12 +90,8 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    fetchCaseCounter();
     allowNotification();
-    AppBadgePlus.isSupported().then((value) {
-      isSupported = value;
-      setState(() {});
-    });
+    fetchCaseCounter();
     populateCaseData();
   }
 
@@ -141,9 +137,8 @@ class HomeScreenState extends State<HomeScreen> {
     double cardTextPositionY = cardHeight * 0.57;
 
     setBadgeNumber(int count) async {
-      AppBadgePlus.updateBadge(4);
-      print("${await AppBadgePlus.isSupported()}");
-      print("Badge done");
+      await FlutterNewBadger.setBadge(count);
+      print("Badge done: ${await FlutterNewBadger.getBadge()}");
     }
 
     return Scaffold(
