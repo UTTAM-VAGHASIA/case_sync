@@ -35,6 +35,7 @@ class ViewDocsState extends State<ViewDocs> {
   }
 
   Future<void> _fetchDocuments() async {
+    _documents.clear();
     if (!mounted) return;
     setState(() {
       _isLoading = true;
@@ -199,11 +200,15 @@ class DocumentCardState extends State<DocumentCard> {
             await sink.close();
           } else {
             // User chose to open the existing file
-            await OpenFile.open(filePath);
+            if (!isSharing) {
+              await OpenFile.open(filePath);
+            }
             return filePath;
           }
         } else {
-          await OpenFile.open(filePath);
+          if (!isSharing) {
+            await OpenFile.open(filePath);
+          }
           return filePath;
         }
       } else {

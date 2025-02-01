@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:case_sync/components/basicUIcomponent.dart';
 import 'package:case_sync/screens/cases/view_docs.dart';
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -218,34 +217,74 @@ class CaseInfoPageState extends State<CaseInfoPage> {
             const Divider(thickness: 1, color: Colors.black),
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ViewDocs(
-                        caseId: widget.caseId,
-                        caseNo: widget.caseNo,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ViewDocs(
+                            caseId: widget.caseId,
+                            caseNo: widget.caseNo,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 24),
+                    ),
+                    child: const Text(
+                      'View Documents',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                ),
-                child: const Text(
-                  'View Documents',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                  ElevatedButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddTaskScreen(
+                            caseType: _caseDetails['case_type'].toString(),
+                            caseNumber: widget.caseNo,
+                            caseId: widget.caseId,
+                          ),
+                        ),
+                      );
+
+                      // Refresh the task list if a new task was added
+                      if (result == true) {
+                        _fetchCaseInfo();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 24),
+                    ),
+                    child: const Text(
+                      'Add Task',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -343,38 +382,6 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                     ),
                   ),
                 ),
-      floatingActionButton: ElevatedButton(
-        style: AppTheme.elevatedButtonStyle, // Use the style from AppTheme
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddTaskScreen(
-                caseType: _caseDetails['case_type'].toString(),
-                caseNumber: widget.caseNo,
-                caseId: widget.caseId,
-              ),
-            ),
-          );
-
-          // Refresh the task list if a new task was added
-          if (result == true) {
-            _fetchCaseInfo();
-          }
-        },
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.add, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              "Add Task",
-              style: AppTheme
-                  .buttonTextStyle, // Use the button text style from AppTheme
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -86,7 +86,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         _getCaseTypeList(),
         _getCompanyList(),
         _getCityList(),
-        _getCourtList(),
         _getAdvocateList(),
       ]);
     } catch (e) {
@@ -115,28 +114,35 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     }
   }
 
-  Future<void> _getCaseStageList(String caseTypeId) async {
+  Future<void> _getCaseStageCourtList(String caseTypeId) async {
     print("case type id: $caseTypeId");
     final response = await http.post(
-      Uri.parse("$baseUrl/get_stage_list"),
-      body: {'case_stage': caseTypeId},
+      Uri.parse("$baseUrl/stage_court_list"),
+      body: {'case_type_id': caseTypeId},
     );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       print("Stage Response Data: ${data['data']}");
-      if (data['success'] && data['data'] != null) {
+      if (data['success'] &&
+          data['stage_list'] != null &&
+          data['court_list'] != null) {
         setState(() {
-          _caseStageList = List<Map<String, String>>.from(
-            data['data'].map((item) => {
-                  "id": item['id']?.toString() ?? '',
-                  "name": item['stage']?.toString() ?? '',
-                }),
-          );
+          _caseStageList =
+              List<Map<String, String>>.from(data['stage_list'].map((item) => {
+                    "id": item['id']?.toString() ?? '',
+                    "name": item['stage']?.toString() ?? '',
+                  }));
+          _courtList =
+              List<Map<String, String>>.from(data['court_list'].map((item) => {
+                    "id": item['id']?.toString() ?? '',
+                    "name": item['name']?.toString() ?? '',
+                  }));
         });
       } else {
         setState(() {
           print("Api Call Unsuccessful");
           _caseStageList = []; // No stages available
+          _courtList = []; // No courts available
         });
       }
     }
@@ -191,25 +197,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       if (data['success']) {
         setState(() {
           _cityList = List<Map<String, String>>.from(
-            data['data'].map((item) => {
-                  "id": item['id']?.toString() ?? '',
-                  "name": item['name']?.toString() ?? '',
-                }),
-          );
-        });
-      }
-    }
-  }
-
-  Future<void> _getCourtList() async {
-    final response = await http.get(Uri.parse("$baseUrl/get_court_list"));
-    if (response.statusCode == 200) {
-      print('Court');
-      final data = json.decode(response.body);
-      print("Court Response Data: ${data['data']}");
-      if (data['success']) {
-        setState(() {
-          _courtList = List<Map<String, String>>.from(
             data['data'].map((item) => {
                   "id": item['id']?.toString() ?? '',
                   "name": item['name']?.toString() ?? '',
@@ -530,7 +517,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                             _selectedCaseType = value;
                             _selectedCaseStage = null;
                             _caseStageList = [];
-                            _getCaseStageList(value);
+                            _getCaseStageCourtList(value);
                           });
                         }
                       },
@@ -539,6 +526,12 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                         _caseStageList, _selectedCaseStage, (value) {
                       setState(() {
                         _selectedCaseStage = value;
+                      });
+                    }),
+                    _buildDropdownField('Court Name', 'Select Court Name',
+                        _courtList, _selectedCourtName, (value) {
+                      setState(() {
+                        _selectedCourtName = value;
                       });
                     }),
                     _buildDropdownField(
@@ -585,12 +578,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                         return 'Please enter the name';
                       }
                       return null;
-                    }),
-                    _buildDropdownField('Court Name', 'Select Court Name',
-                        _courtList, _selectedCourtName, (value) {
-                      setState(() {
-                        _selectedCourtName = value;
-                      });
                     }),
                     _buildDropdownField('City Name', 'Select City', _cityList,
                         _selectedCityName, (value) {

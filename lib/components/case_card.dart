@@ -94,6 +94,16 @@ class CaseCard extends StatelessWidget {
                   color: isHighlighted ? Colors.white : Colors.black,
                 ),
               ),
+              const SizedBox(height: 5),
+              Text(
+                (caseItem.caseCounter.isEmpty)
+                    ? "Case Counter: Not Available"
+                    : "Case Counter: ${caseItem.caseCounter} days",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isHighlighted ? Colors.white : Colors.black,
+                ),
+              ),
             ],
           ),
         ),
