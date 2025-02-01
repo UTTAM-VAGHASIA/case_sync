@@ -351,7 +351,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
             children: [
               Container(
                 color: const Color(0xFFF3F3F3),
-                width: screenWidth * 0.7,
+                width: screenWidth * 0.68,
                 child: TabBar(
                   controller: _tabController,
                   isScrollable: true,
@@ -364,7 +364,6 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                       monthsWithCases.map((month) => Tab(text: month)).toList(),
                 ),
               ),
-              // SizedBox(width: screenWidth * 0.05),
               DropdownButton<String>(
                 value: selectedYear,
                 icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
