@@ -347,7 +347,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
           color: const Color(0xFFF3F3F3),
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 color: const Color(0xFFF3F3F3),
@@ -364,7 +364,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                       monthsWithCases.map((month) => Tab(text: month)).toList(),
                 ),
               ),
-              SizedBox(width: screenWidth * 0.05),
+              // SizedBox(width: screenWidth * 0.05),
               DropdownButton<String>(
                 value: selectedYear,
                 icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
