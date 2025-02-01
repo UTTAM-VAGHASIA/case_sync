@@ -1,6 +1,5 @@
 import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../models/case.dart';
 import '../cases/case_info.dart';
@@ -61,40 +60,6 @@ class NotificationCard extends StatelessWidget {
               Divider(
                 color: isHighlighted ? Colors.white : Colors.black,
               ),
-              Text(
-                '${caseItem.applicant.capitalize} vs ${caseItem.opponent.capitalize}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isHighlighted ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Summon Date: ${caseItem.srDate.day.toString().padLeft(2, '0')}/'
-                '${caseItem.srDate.month.toString().padLeft(2, '0')}/'
-                '${caseItem.srDate.year}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isHighlighted ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Court: ${caseItem.courtName}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isHighlighted ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'City: ${caseItem.cityName}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isHighlighted ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5),
               Text(
                 'Case Counter: ${caseItem.caseCounter} days',
                 style: TextStyle(

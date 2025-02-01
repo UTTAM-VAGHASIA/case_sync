@@ -37,6 +37,7 @@ class HomeScreenState extends State<HomeScreen> {
   ValueNotifier<int> advocateCount = ValueNotifier<int>(-1);
   ValueNotifier<int> companyCount = ValueNotifier<int>(-1);
   ValueNotifier<int> taskCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> newCaseCount = ValueNotifier<int>(-1);
   String errorMessage = '';
   ValueNotifier<List<Case>> caseList = ValueNotifier<List<Case>>([]);
   int count = 0;
@@ -66,6 +67,7 @@ class HomeScreenState extends State<HomeScreen> {
               int.parse(responseData['counters'][5]['company_count']);
           taskCount.value =
               int.parse(responseData['counters'][6]['task_count']);
+          newCaseCount.value = -2;
         }
       }
     } catch (e) {
@@ -132,9 +134,6 @@ class HomeScreenState extends State<HomeScreen> {
     double cardWidth = screenWidth * 0.40;
     double cardHeight = 72;
     double fullCardWidth = screenWidth * 0.93;
-    double cardIconPositionX = cardWidth * 0.08;
-    double cardIconPositionY = cardHeight * 0.21;
-    double cardTextPositionY = cardHeight * 0.57;
 
     setBadgeNumber(int count) async {
       await FlutterNewBadger.setBadge(count);
@@ -296,48 +295,36 @@ class HomeScreenState extends State<HomeScreen> {
                                 iconPath: 'assets/icons/assigned.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                iconPositionX: cardIconPositionX,
-                                iconPositionY: cardIconPositionY,
-                                textPositionY: cardTextPositionY,
                                 destinationScreen: AssignedCases(),
-                                shouldDisplayCounter: true,
                                 counterNotifier: assignedCasesCount,
+                                shouldDisplayCounter: true,
                               ),
                               _buildCard(
                                 title: 'Unassigned Cases',
                                 iconPath: 'assets/icons/unassigned.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                iconPositionX: cardIconPositionX,
-                                iconPositionY: cardIconPositionY,
-                                textPositionY: cardTextPositionY,
                                 destinationScreen: UnassignedCases(),
-                                shouldDisplayCounter: true,
                                 counterNotifier: unassignedCasesCount,
+                                shouldDisplayCounter: true,
                               ),
                               _buildCard(
                                 title: 'Case History',
                                 iconPath: 'assets/icons/case_history.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                iconPositionX: cardIconPositionX,
-                                iconPositionY: cardIconPositionY,
-                                textPositionY: cardTextPositionY,
                                 destinationScreen: CaseHistoryScreen(),
-                                shouldDisplayCounter: true,
                                 counterNotifier: caseHistoryCount,
+                                shouldDisplayCounter: true,
                               ),
                               _buildCard(
                                 title: 'New Case',
                                 iconPath: 'assets/icons/new_case.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                iconPositionX: cardIconPositionX,
-                                iconPositionY: cardIconPositionY,
-                                textPositionY: cardTextPositionY,
                                 destinationScreen: NewCaseScreen(),
-                                shouldDisplayCounter: false,
-                                counterNotifier: ValueNotifier<int>(0),
+                                counterNotifier: newCaseCount,
+                                shouldDisplayCounter: true,
                               ),
                             ],
                           ),
@@ -364,24 +351,18 @@ class HomeScreenState extends State<HomeScreen> {
                                 iconPath: 'assets/icons/intern_list.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                iconPositionX: cardIconPositionX,
-                                iconPositionY: cardIconPositionY,
-                                textPositionY: cardTextPositionY,
                                 destinationScreen: InternListScreen(),
-                                shouldDisplayCounter: true,
                                 counterNotifier: internCount,
+                                shouldDisplayCounter: true,
                               ),
                               _buildCard(
                                 title: 'Advocate List',
                                 iconPath: 'assets/icons/intern_list.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                iconPositionX: cardIconPositionX,
-                                iconPositionY: cardIconPositionY,
-                                textPositionY: cardTextPositionY,
                                 destinationScreen: AdvocateListScreen(),
-                                shouldDisplayCounter: true,
                                 counterNotifier: advocateCount,
+                                shouldDisplayCounter: true,
                               ),
                             ],
                           ),
@@ -390,12 +371,9 @@ class HomeScreenState extends State<HomeScreen> {
                             iconPath: 'assets/icons/tasks.svg',
                             cardWidth: fullCardWidth,
                             cardHeight: cardHeight,
-                            iconPositionX: cardIconPositionX,
-                            iconPositionY: cardIconPositionY,
-                            textPositionY: cardTextPositionY,
                             destinationScreen: AssignedCaseList(),
-                            shouldDisplayCounter: true,
                             counterNotifier: taskCount,
+                            shouldDisplayCounter: true,
                           ),
                           const SizedBox(height: 20),
                           const Text(
@@ -412,12 +390,9 @@ class HomeScreenState extends State<HomeScreen> {
                             iconPath: 'assets/icons/companies.svg',
                             cardWidth: fullCardWidth,
                             cardHeight: cardHeight,
-                            iconPositionX: cardIconPositionX,
-                            iconPositionY: cardIconPositionY,
-                            textPositionY: cardTextPositionY,
                             destinationScreen: CompaniesScreen(),
-                            shouldDisplayCounter: true,
                             counterNotifier: companyCount,
+                            shouldDisplayCounter: true,
                           ),
                           const SizedBox(height: 20),
                         ],
@@ -440,13 +415,9 @@ class HomeScreenState extends State<HomeScreen> {
     required String iconPath,
     required double cardWidth,
     required double cardHeight,
-    required double iconPositionX,
-    required double iconPositionY,
-    required double textPositionY,
     required Widget destinationScreen,
     bool shouldDisplayCounter = false,
-    required ValueNotifier<int>
-        counterNotifier, // <-- Use ValueNotifier for counter
+    required ValueNotifier<int> counterNotifier,
   }) {
     return Card(
       shape: RoundedRectangleBorder(
@@ -464,48 +435,51 @@ class HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (context) => destinationScreen),
             );
 
-            (result == true) ? null : result = false;
-
             if (result == false) {
-              fetchCaseCounter(); // Refresh counters when returning
+              fetchCaseCounter();
             }
           },
-          child: SizedBox(
-            width: cardWidth,
-            height: cardHeight,
-            child: Stack(
-              children: [
-                Positioned(
-                  left: iconPositionX,
-                  top: iconPositionY,
-                  child: SvgPicture.asset(iconPath, width: 24, height: 24),
-                ),
-                Positioned(
-                  top: textPositionY,
-                  left: iconPositionX,
-                  child: Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          color: Colors.black,
-                        ),
+          child: Stack(
+            children: [
+              // Card Content (Icon + Title)
+              SizedBox(
+                width: cardWidth,
+                height: cardHeight,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 4),
+                          SvgPicture.asset(iconPath, width: 30, height: 30),
+                          const SizedBox(height: 4),
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
                       ),
-
-                      // Display Counter if applicable
-                      if (shouldDisplayCounter) ...[
-                        const SizedBox(
-                            width: 6), // Spacer between text and counter
-                        _CounterDisplay(
-                            title: title, counterNotifier: counterNotifier)
-                      ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // Badge positioned at the top-right corner
+              if (shouldDisplayCounter)
+                Positioned(
+                  top: ((cardHeight / 2) - 19),
+                  right: 8,
+                  child: _BadgeCounter(counterNotifier: counterNotifier),
+                ),
+            ],
           ),
         ),
       ),
@@ -513,35 +487,47 @@ class HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _CounterDisplay extends StatelessWidget {
-  final String title;
+class _BadgeCounter extends StatelessWidget {
   final ValueNotifier<int> counterNotifier;
 
-  const _CounterDisplay({required this.title, required this.counterNotifier});
+  const _BadgeCounter({required this.counterNotifier});
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: counterNotifier,
       builder: (context, value, child) {
-        return value == -1 // Use -1 as a placeholder for loading state
-            ? SizedBox(
-                width: 20,
-                height: 10,
-                child: LinearProgressIndicator(
-                  backgroundColor: Colors.grey[300],
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(12),
+        return Container(
+          width: 40, // Fixed size for uniformity
+          height: 40,
+          decoration: BoxDecoration(
+            color: value == -1 ? Colors.transparent : Colors.white,
+            borderRadius: BorderRadius.circular(30), // Circular shape
+            border: Border.all(
+              color: Colors.black,
+              width: 2,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: value == -1
+              ? SizedBox(
+                  width: 18,
+                  height: 6,
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.white,
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                )
+              : Text(
+                  "${value == -2 ? "" : value}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.black,
+                  ),
                 ),
-              )
-            : Text(
-                "($value)", // Show actual value, including 0
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.black,
-                ),
-              );
+        );
       },
     );
   }
