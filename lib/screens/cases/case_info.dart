@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../../utils/update_stage_modal.dart';
 import '../interns/adding forms/add_tasks.dart';
 
 class CaseInfoPage extends StatefulWidget {
@@ -22,60 +23,62 @@ class CaseInfoPage extends StatefulWidget {
 class CaseInfoPageState extends State<CaseInfoPage> {
   bool _isLoading = true;
   Map<String, dynamic> _caseDetails = {};
+  String? selectedStage;
+  List<Map<String, dynamic>> stageList = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchCaseInfo().then((_) {
-      if (_caseDetails['case_no'] != null &&
-          _caseDetails['case_no']!.isNotEmpty) {}
-    });
+    fetchCaseInfo();
+    _fetchStageList();
   }
 
-  Future<void> _fetchCaseInfo() async {
+  Future<void> fetchCaseInfo() async {
     try {
       final url = Uri.parse('$baseUrl/get_case_info');
       final response = await http.post(url, body: {'case_id': widget.caseId});
-      print("Case Id: ${widget.caseId}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("Case Info API Response: $data");
+
         if (data['success'] == true && data['data'].isNotEmpty) {
-          setState(() {
-            final caseData = data['data'][0];
+          final caseData = data['data'][0];
 
-            DateTime? parseDate(String? date) {
-              if (date == null || date.isEmpty || date == '0000-00-00') {
-                return null;
-              }
-              try {
-                return DateTime.parse(date);
-              } catch (_) {
-                return null;
-              }
+          DateTime? parseDate(String? date) {
+            if (date == null || date.isEmpty || date == '0000-00-00') {
+              return null;
             }
+            try {
+              return DateTime.parse(date);
+            } catch (_) {
+              return null;
+            }
+          }
 
-            _caseDetails = {
-              'case_no': caseData['case_no'],
-              'year': caseData['year'],
-              'case_type': caseData['case_type'],
-              'stage_name': caseData['stage_name'],
-              'company_name': caseData['company_name'],
-              'advocate_name': caseData['advocate_name'],
-              'applicant': caseData['applicant'],
-              'opp_name': caseData['opp_name'],
-              'court_name': caseData['court_name'],
-              'city_name': caseData['city_name'],
-              'next_date': parseDate(caseData['next_date']),
-              'next_stage': caseData['next_stage'],
-              'sr_date': parseDate(caseData['sr_date']),
-              'complainant_advocate': caseData['complainant_advocate'],
-              'respondent_advocate': caseData['respondent_advocate'],
-              'date_of_filing': parseDate(caseData['date_of_filing']),
-              'case_counter': caseData['case_counter'],
-            };
-          });
+          if (mounted) {
+            setState(() {
+              _caseDetails = {
+                'case_no': caseData['case_no'],
+                'year': caseData['year'],
+                'case_type': caseData['case_type'],
+                'stage_name': caseData['stage_name'],
+                'company_name': caseData['company_name'],
+                'advocate_name': caseData['advocate_name'],
+                'applicant': caseData['applicant'],
+                'opp_name': caseData['opp_name'],
+                'court_name': caseData['court_name'],
+                'city_name': caseData['city_name'],
+                'next_date': parseDate(caseData['next_date']),
+                'next_stage': caseData['next_stage'],
+                'sr_date': parseDate(caseData['sr_date']),
+                'complainant_advocate': caseData['complainant_advocate'],
+                'respondent_advocate': caseData['respondent_advocate'],
+                'date_of_filing': parseDate(caseData['date_of_filing']),
+                'case_counter': caseData['case_counter'],
+              };
+              _isLoading = false;
+            });
+          }
         } else {
           _showError("No data found for the given case.");
         }
@@ -84,10 +87,29 @@ class CaseInfoPageState extends State<CaseInfoPage> {
       }
     } catch (e) {
       _showError("An error occurred: $e");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    }
+  }
+
+  Future<void> _fetchStageList() async {
+    try {
+      final url = Uri.parse('$baseUrl/stage_list');
+      var request = http.MultipartRequest("POST", url);
+      request.fields['case_id'] = widget.caseId;
+
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      var data = jsonDecode(responseData);
+
+      if (data['success'] == true) {
+        setState(() {
+          stageList = List<Map<String, dynamic>>.from(data['data']);
+          print(stageList);
+          selectedStage = stageList.isNotEmpty ? stageList.first['id'] : null;
+          print(selectedStage);
+        });
+      }
+    } catch (e) {
+      print("Error fetching stage list: $e");
     }
   }
 
@@ -216,21 +238,13 @@ class CaseInfoPageState extends State<CaseInfoPage> {
             // View Documents Button
             const Divider(thickness: 1, color: Colors.black),
             Padding(
-              padding: const EdgeInsets.only(top: 8.0),
+              padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ViewDocs(
-                            caseId: widget.caseId,
-                            caseNo: widget.caseNo,
-                          ),
-                        ),
-                      );
+                      _showUpdateStageModal();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
@@ -238,10 +252,10 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 24),
+                          vertical: 14, horizontal: 30),
                     ),
                     child: const Text(
-                      'View Documents',
+                      'Proceed Case',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -264,7 +278,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
 
                       // Refresh the task list if a new task was added
                       if (result == true) {
-                        _fetchCaseInfo();
+                        fetchCaseInfo();
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -273,7 +287,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 24),
+                          vertical: 14, horizontal: 30),
                     ),
                     child: const Text(
                       'Add Task',
@@ -285,6 +299,38 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            Container(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewDocs(
+                        caseId: widget.caseId,
+                        caseNo: widget.caseNo,
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 30),
+                ),
+                child: const Text(
+                  'View Documents',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],
@@ -338,7 +384,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                   color: Colors.black,
                   onRefresh: () async {
                     setState(() {
-                      _fetchCaseInfo();
+                      fetchCaseInfo();
                     });
                   },
                   child: SingleChildScrollView(
@@ -383,5 +429,21 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                   ),
                 ),
     );
+  }
+
+  Future<void> _showUpdateStageModal() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return UpdateStageModal(
+          caseId: widget.caseId,
+          initialDate: _caseDetails['next_date'] ?? DateTime.now(),
+          initialStage: selectedStage ?? '0',
+          stageList: stageList,
+        );
+      },
+    );
+    await fetchCaseInfo();
   }
 }
