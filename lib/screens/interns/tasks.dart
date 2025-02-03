@@ -7,6 +7,7 @@ import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
@@ -171,7 +172,10 @@ class _TasksPageState extends State<TasksPage> {
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            Navigator.pop(context);
+          },
         ),
         title: Text(
           "Tasks for Case: ${widget.caseNumber}",
@@ -234,6 +238,7 @@ class _TasksPageState extends State<TasksPage> {
                                     ],
                                   ),
                                   onTap: () {
+                                    HapticFeedback.mediumImpact();
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -256,6 +261,7 @@ class _TasksPageState extends State<TasksPage> {
       floatingActionButton: ElevatedButton(
         style: AppTheme.elevatedButtonStyle, // Use the style from AppTheme
         onPressed: () async {
+          HapticFeedback.mediumImpact();
           final result = await Navigator.push(
             context,
             MaterialPageRoute(

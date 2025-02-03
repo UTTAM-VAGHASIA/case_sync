@@ -4,6 +4,7 @@ import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_new_badger/flutter_new_badger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
@@ -44,7 +45,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool isSupported = false;
   bool isNotificationAllowed = false;
 
-  Future<void> fetchCaseCounter() async {
+  Future<List<Case>> fetchCaseCounter() async {
     try {
       final response = await http.post(Uri.parse('$baseUrl/get_case_counter'));
       if (response.statusCode == 200) {
@@ -68,11 +69,16 @@ class HomeScreenState extends State<HomeScreen> {
           taskCount.value =
               int.parse(responseData['counters'][6]['task_count']);
           newCaseCount.value = -2;
+
+          print("Case List Added: ${caseList.value}");
+          return caseList.value;
         }
       }
     } catch (e) {
       _showErrorSnackBar('Failed to fetch data: $e');
     }
+
+    return [];
   }
 
   void _showErrorSnackBar(String message) {
@@ -160,11 +166,13 @@ class HomeScreenState extends State<HomeScreen> {
                     height: 35,
                   ),
                   onPressed: () {
+                    HapticFeedback.mediumImpact();
                     showModalBottomSheet(
                       context: context,
                       backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
                       builder: (context) => NotificationDrawer(
                         caseList: caseList.value,
+                        onRefresh: fetchCaseCounter,
                       ),
                     );
                   },
@@ -220,9 +228,11 @@ class HomeScreenState extends State<HomeScreen> {
                 height: 35,
               ),
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 showModalBottomSheet(
+                  isScrollControlled: false,
                   context: context,
-                  backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
+                  backgroundColor: Color(0xFFF3F3F3),
                   builder: (context) => const SettingsDrawer(),
                 );
               },
@@ -234,6 +244,7 @@ class HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
         child: SingleChildScrollView(
           child: RefreshIndicator(
+            color: Colors.black,
             onRefresh: () async {
               fetchCaseCounter();
             },
@@ -430,6 +441,7 @@ class HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () async {
+            HapticFeedback.mediumImpact();
             var result = await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => destinationScreen),

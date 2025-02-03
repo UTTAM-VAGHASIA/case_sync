@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
@@ -86,6 +87,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
           const SizedBox(height: 16),
           GestureDetector(
             onTap: () async {
+              HapticFeedback.mediumImpact();
               DateTime? pickedDate = await showDatePicker(
                 context: context,
                 initialDate: DateTime.now(),
@@ -140,6 +142,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
+              HapticFeedback.mediumImpact();
               _updateNextStage(
                   selectedDate, selectedStage ?? widget.initialStage!);
               Navigator.pop(context);

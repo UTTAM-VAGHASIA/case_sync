@@ -4,6 +4,7 @@ import 'package:case_sync/screens/interns/adding%20forms/new_advocate.dart';
 import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 
@@ -135,6 +136,7 @@ class AdvocateListScreenState extends State<AdvocateListScreen> {
             height: 35,
           ),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -231,6 +233,7 @@ class AdvocateListScreenState extends State<AdvocateListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          HapticFeedback.mediumImpact();
           final result = await Navigator.push(
             context,
             MaterialPageRoute(

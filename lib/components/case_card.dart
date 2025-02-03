@@ -1,5 +1,6 @@
 import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../models/case_list.dart';
@@ -21,6 +22,7 @@ class CaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.mediumImpact();
         Navigator.push(
           context,
           MaterialPageRoute(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
@@ -109,6 +110,7 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
         leading: IconButton(
           icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -126,6 +128,7 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
             child: IconButton(
               icon: const Icon(Icons.search, size: 30, color: Colors.black),
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 setState(() {
                   _isSearching = !_isSearching;
                   if (!_isSearching) {
@@ -154,6 +157,7 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                           onPressed: () async {
+                            HapticFeedback.mediumImpact();
                             setState(() {
                               _fetchCases();
                             });

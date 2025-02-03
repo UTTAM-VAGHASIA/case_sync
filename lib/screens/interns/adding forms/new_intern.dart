@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -134,6 +135,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
         leading: IconButton(
           icon: SvgPicture.asset('assets/icons/back_arrow.svg', width: 35),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -171,6 +173,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
               _buildDateField(
                   label: 'Joining Date',
                   onTap: () {
+                    HapticFeedback.mediumImpact();
                     _selectDate(context);
                   },
                   child: Text(
@@ -185,7 +188,10 @@ class _NewInternScreenState extends State<NewInternScreen> {
                   width: MediaQuery.of(context).size.width * 0.5,
                   height: 70,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _registerIntern,
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      _isLoading ? null : _registerIntern();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
@@ -258,6 +264,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
               ),
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 setState(() {
                   _isPasswordVisible = !_isPasswordVisible;
                 });

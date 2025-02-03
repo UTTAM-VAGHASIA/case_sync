@@ -1,6 +1,7 @@
 import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../forms/login.dart';
 
@@ -108,6 +109,7 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
+                    HapticFeedback.mediumImpact();
                     await SharedPrefService.clearUser();
 
                     ScaffoldMessenger.of(context).showSnackBar(

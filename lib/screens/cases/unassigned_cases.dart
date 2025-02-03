@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../../components/case_card.dart'; // Import CaseCard widget
@@ -164,6 +165,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
               ? IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
+                    HapticFeedback.mediumImpact();
                     _searchController.clear();
                   },
                 )
@@ -218,6 +220,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
                             const SizedBox(height: 16),
                             ElevatedButton(
                                 onPressed: () async {
+                                  HapticFeedback.mediumImpact();
                                   setState(() {
                                     fetchCases();
                                   });
@@ -312,6 +315,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
             children: [
               ElevatedButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   _resetFilters();
                   Navigator.pop(context);
                 },
@@ -319,6 +323,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
               ),
               ElevatedButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   Navigator.pop(context);
                 },
                 child: const Text("Done"),

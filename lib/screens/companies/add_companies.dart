@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../../utils/validator.dart';
@@ -97,6 +98,7 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -153,7 +155,10 @@ class _AddCompanyScreenState extends State<AddCompanyScreen> {
                     width: screenWidth * 0.5,
                     height: 70,
                     child: ElevatedButton(
-                      onPressed: _registerCompany,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _registerCompany();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         shape: RoundedRectangleBorder(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class TaskInfoPage extends StatelessWidget {
@@ -15,6 +16,7 @@ class TaskInfoPage extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/screens/cases/view_docs.dart';
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -157,7 +158,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
           children: [
             ...groupedDetails.entries.map((section) {
               return Container(
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
@@ -224,10 +225,11 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                               ),
                             ],
                           ),
-                          Divider(
-                            thickness: 1,
-                            color: Colors.black38,
-                          )
+                          if (section.value.last != entry)
+                            Divider(
+                              thickness: 1,
+                              color: Colors.black38,
+                            )
                         ],
                       );
                     }),
@@ -235,7 +237,6 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                 ),
               );
             }),
-            // View Documents Button
             const Divider(thickness: 1, color: Colors.black),
             Padding(
               padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
@@ -244,6 +245,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
+                      HapticFeedback.mediumImpact();
                       _showUpdateStageModal();
                     },
                     style: ElevatedButton.styleFrom(
@@ -265,6 +267,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
+                      HapticFeedback.mediumImpact();
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -305,6 +308,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -356,6 +360,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
         leading: IconButton(
           icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),

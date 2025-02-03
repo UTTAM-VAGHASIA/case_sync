@@ -1,5 +1,6 @@
 import 'package:case_sync/models/case_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../../components/case_card.dart';
@@ -247,6 +248,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                   height: 32,
                 ),
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   Navigator.pop(context);
                 },
               ),
@@ -325,19 +327,23 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: _currentResultIndex > 0
-                          ? _navigateToPreviousResult
-                          : null,
-                    ),
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          _currentResultIndex > 0
+                              ? _navigateToPreviousResult()
+                              : null;
+                        }),
                     Text(
                         '${_filteredCases.isEmpty ? 0 : _currentResultIndex + 1} / ${_filteredCases.length}'),
                     IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: _currentResultIndex < _filteredCases.length - 1
-                          ? _navigateToNextResult
-                          : null,
-                    ),
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          _currentResultIndex < _filteredCases.length - 1
+                              ? _navigateToNextResult()
+                              : null;
+                        }),
                   ],
                 ),
               ],

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
@@ -150,6 +151,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
             height: 35,
           ),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -253,6 +255,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          HapticFeedback.mediumImpact();
           final result = await Navigator.push(
             context,
             MaterialPageRoute(

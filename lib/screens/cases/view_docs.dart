@@ -92,14 +92,21 @@ class ViewDocsState extends State<ViewDocs> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.pop(context);
+            }),
         title: Text('Documents for ${widget.caseNo}',
             style: TextStyle(color: Colors.black)),
         actions: [
           IconButton(
-              icon: const Icon(Icons.refresh), onPressed: _fetchDocuments),
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              _fetchDocuments();
+            },
+          ),
         ],
       ),
       body: Stack(
@@ -114,7 +121,12 @@ class ViewDocsState extends State<ViewDocs> {
                   Text(_errorMessage, textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                      onPressed: _fetchDocuments, child: const Text('Retry')),
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      _fetchDocuments();
+                    },
+                    child: const Text('Retry'),
+                  ),
                 ],
               ),
             )
@@ -264,6 +276,7 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.open_in_new),
               title: const Text('Open With'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context);
                 final filePath =
                     await _downloadFile(url, tempDir, fileName, false);
@@ -274,6 +287,7 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.save_alt),
               title: const Text('Save Document'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context);
                 final manageStorageStatus =
                     await Permission.manageExternalStorage.request();
@@ -293,6 +307,7 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.share),
               title: const Text('Share'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 Navigator.pop(context);
                 final filePath =
                     await _downloadFile(url, tempDir, fileName, true);
@@ -306,6 +321,7 @@ class DocumentCardState extends State<DocumentCard> {
               leading: const Icon(Icons.copy),
               title: const Text('Copy Link'),
               onTap: () async {
+                HapticFeedback.mediumImpact();
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
                 await Clipboard.setData(ClipboardData(text: url));
@@ -327,7 +343,10 @@ class DocumentCardState extends State<DocumentCard> {
     final extension = fileName.split('.').last.toLowerCase();
 
     return GestureDetector(
-      onTap: () => _showOptions(docUrl),
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        _showOptions(docUrl);
+      },
       child: Card(
         elevation: 4.0,
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),

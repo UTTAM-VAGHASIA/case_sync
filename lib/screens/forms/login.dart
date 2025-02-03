@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
@@ -42,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    print("Entered Login");
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -132,6 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _obscureText ? Icons.visibility : Icons.visibility_off,
                       ),
                       onPressed: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           _obscureText = !_obscureText;
                         });
@@ -146,7 +149,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: screenWidth * 0.5,
                   height: 70,
                   child: ElevatedButton(
-                    onPressed: _login,
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      print("Function called");
+                      _login();
+                    },
                     style: AppTheme.elevatedButtonStyle,
                     child: _isLoading
                         ? const CircularProgressIndicator(

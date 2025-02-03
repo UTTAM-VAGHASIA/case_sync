@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../../../services/api_service.dart';
@@ -91,6 +92,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
             height: 35,
           ),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -141,7 +143,10 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                     width: screenWidth * 0.5,
                     height: 70,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _registerAdvocate,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _isLoading ? null : _registerAdvocate();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
@@ -230,6 +235,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
                 _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
               ),
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 setState(() {
                   _isPasswordVisible = !_isPasswordVisible;
                 });

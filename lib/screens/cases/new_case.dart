@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -457,6 +458,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
               height: 35,
             ),
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Get.back();
             },
           ),
@@ -594,11 +596,12 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                           fontSize: 16,
                         ),
                       ),
-                      onTap: () => {
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           _isSummoned = true;
                           _selectSummonDate(context);
-                        }),
+                        });
                       },
                     ),
                     _buildDateField(
@@ -610,11 +613,12 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                           fontSize: 16,
                         ),
                       ),
-                      onTap: () => {
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           _isFiled = true;
                           _selectFilingDate(context);
-                        }),
+                        });
                       },
                     ),
                     _buildDateField(
@@ -627,11 +631,12 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                           fontSize: 16,
                         ),
                       ),
-                      onTap: () => {
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           _isNextDateGiven = true;
                           _selectNextDate(context);
-                        }),
+                        });
                       },
                     ),
                     _buildFilePickerField(
@@ -658,16 +663,21 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () => _removeFile(index),
-                                ),
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    onPressed: () {
+                                      HapticFeedback.mediumImpact();
+                                      _removeFile(index);
+                                    }),
                               ],
                             );
                           }),
                           const SizedBox(height: 10),
                           ElevatedButton.icon(
-                            onPressed: _clearAllFiles,
+                            onPressed: () {
+                              HapticFeedback.mediumImpact();
+                              _clearAllFiles();
+                            },
                             icon: const Icon(
                               Icons.delete_sweep,
                               color: Colors.white,
@@ -686,7 +696,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                         width: screenWidth * 0.5,
                         height: 70,
                         child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submitCase,
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            _isSubmitting ? null : _submitCase();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             shape: RoundedRectangleBorder(

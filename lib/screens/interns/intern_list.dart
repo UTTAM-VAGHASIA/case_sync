@@ -3,6 +3,7 @@ import 'dart:convert'; // For JSON decoding
 import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
 import 'package:intl/intl.dart';
@@ -146,6 +147,7 @@ class InternListScreenState extends State<InternListScreen> {
             height: 35,
           ),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -255,6 +257,7 @@ class InternListScreenState extends State<InternListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          HapticFeedback.mediumImpact();
           final result = await Navigator.push(
             context,
             MaterialPageRoute(

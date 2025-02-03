@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -28,6 +29,7 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
           height: 32,
         ),
         onPressed: () {
+          HapticFeedback.mediumImpact();
           Navigator.pop(context);
         },
       ),
@@ -47,7 +49,10 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(
             icon: const Icon(Icons.filter_list_alt,
                 size: 32, color: Colors.black),
-            onPressed: onFilterPressed,
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              onFilterPressed!();
+            },
           ),
         IconButton(
           padding: const EdgeInsets.only(left: 10.0, right: 20.0),
@@ -56,7 +61,10 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
             size: 32,
             color: Colors.black,
           ),
-          onPressed: onSearchPressed,
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            onSearchPressed!();
+          },
         ),
       ],
     );

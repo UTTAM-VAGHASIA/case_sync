@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
@@ -218,6 +219,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.pop(context);
             },
           ),
@@ -256,14 +258,20 @@ class EditTaskScreenState extends State<EditTaskScreen> {
               _buildDateField(
                 label: 'Assign Date',
                 hint: _assignDateDisplay,
-                onTap: () => _selectDate(context, false),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _selectDate(context, false);
+                },
                 isSelected: isAssigned,
               ),
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Expected End Date',
                 hint: _expectedEndDateDisplay,
-                onTap: () => _selectDate(context, true),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _selectDate(context, true);
+                },
                 isSelected: isEnded,
               ),
               const SizedBox(height: 20),
@@ -307,7 +315,10 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
-                  onPressed: _updateTask,
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _updateTask();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     shape: RoundedRectangleBorder(

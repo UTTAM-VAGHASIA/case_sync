@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
@@ -206,6 +207,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.pop(context);
             },
           ),
@@ -263,16 +265,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               ),
               const SizedBox(height: 20),
               _buildDateField(
-                label: 'Assign Date',
-                child: Text(
-                  _assignDateDisplay ?? 'Select Date',
-                  style: TextStyle(
-                    color: isAssigned ? Colors.black : Colors.grey,
-                    fontSize: 16,
+                  label: 'Assign Date',
+                  child: Text(
+                    _assignDateDisplay ?? 'Select Date',
+                    style: TextStyle(
+                      color: isAssigned ? Colors.black : Colors.grey,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-                onTap: () => _selectDate(context, false),
-              ),
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    _selectDate(context, false);
+                  }),
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Expected End Date',
@@ -283,14 +287,20 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     fontSize: 16,
                   ),
                 ),
-                onTap: () => _selectDate(context, true),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _selectDate(context, true);
+                },
               ),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _confirmTask,
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    isLoading ? null : _confirmTask();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     shape: RoundedRectangleBorder(

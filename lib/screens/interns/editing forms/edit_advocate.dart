@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
@@ -124,6 +125,7 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
             height: 35,
           ),
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.pop(context);
           },
         ),
@@ -209,7 +211,10 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
                     width: screenWidth * 0.5,
                     height: 70,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _editAdvocate,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _isLoading ? null : _editAdvocate();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         shape: RoundedRectangleBorder(

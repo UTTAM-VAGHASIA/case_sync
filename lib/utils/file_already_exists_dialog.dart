@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 
 class FileAlreadyExistsDialog extends StatelessWidget {
   final String title;
@@ -28,7 +29,10 @@ class FileAlreadyExistsDialog extends StatelessWidget {
       ),
       actions: [
         CupertinoDialogAction(
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            Navigator.of(context).pop(false);
+          },
           child: Text(
             cancelButtonText,
             style: const TextStyle(color: CupertinoColors.black),
@@ -36,6 +40,7 @@ class FileAlreadyExistsDialog extends StatelessWidget {
         ),
         CupertinoDialogAction(
           onPressed: () {
+            HapticFeedback.mediumImpact();
             onConfirm();
           },
           child: Text(
