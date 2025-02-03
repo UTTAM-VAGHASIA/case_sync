@@ -128,8 +128,8 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      firstDate: DateTime(1800),
+      lastDate: DateTime(2200),
     );
     if (picked != null) {
       setState(() {

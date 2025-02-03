@@ -30,7 +30,12 @@ class _EditInternScreenState extends State<EditInternScreen> {
     _nameController.text = widget.intern['name'] ?? '';
     _contactNumberController.text = widget.intern['contact'] ?? '';
     _emailController.text = widget.intern['email'] ?? '';
-    _selectedStatus = widget.intern['status'];
+    _selectedStatus = (widget.intern['status'] != 'enable' ||
+            widget.intern['status'] != 'disable' ||
+            widget.intern['status'] == null ||
+            widget.intern['status'] == '')
+        ? 'enable'
+        : widget.intern['status'];
   }
 
   @override
@@ -189,12 +194,6 @@ class _EditInternScreenState extends State<EditInternScreen> {
                     setState(() {
                       _selectedStatus = value!;
                     });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a status';
-                    }
-                    return null;
                   },
                 ),
                 SizedBox(height: screenHeight * 0.05),

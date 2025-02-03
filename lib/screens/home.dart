@@ -532,7 +532,7 @@ class _BadgeCounter extends StatelessWidget {
                   ),
                 )
               : Text(
-                  "${value == -2 ? "" : value}",
+                  "${value == -2 ? "</>" : value}",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,

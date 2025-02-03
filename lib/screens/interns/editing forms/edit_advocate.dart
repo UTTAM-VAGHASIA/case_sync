@@ -20,7 +20,6 @@ class EditAdvocateScreen extends StatefulWidget {
 }
 
 class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
-  final bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _contactController = TextEditingController();
@@ -48,6 +47,7 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
   }
 
   Future<void> _editAdvocate() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -84,19 +84,21 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData['response'])),
           );
-          Navigator.pop(context, true);
+          if (mounted) {
+            Navigator.pop(context, true);
+          }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(content: Text('Failed: ${responseData['response']}')),
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('Server error: ${response.statusCode}')),
         );
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('Error: $error')),
       );
     } finally {

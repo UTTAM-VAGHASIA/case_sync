@@ -91,8 +91,8 @@ class UpdateStageModalState extends State<UpdateStageModal> {
               DateTime? pickedDate = await showDatePicker(
                 context: context,
                 initialDate: DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2100),
+                firstDate: DateTime(1800),
+                lastDate: DateTime(2200),
               );
               if (pickedDate != null) {
                 setState(() {
