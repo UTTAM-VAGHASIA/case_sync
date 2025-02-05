@@ -217,10 +217,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.day}/${picked.month}/${picked.year}";
-        final apiDate =
-            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
-
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
         if (_isSummoned) {
           _selectedSummonDateDisplay = date;
           _selectedSummonDateApi = apiDate;
@@ -241,10 +239,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.day}/${picked.month}/${picked.year}";
-        final apiDate =
-            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
-
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
         if (_isFiled) {
           _selectedFilingDateDisplay = date;
           _selectedFilingDateApi = apiDate;
@@ -265,10 +261,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.day}/${picked.month}/${picked.year}";
-        final apiDate =
-            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
-
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
         if (_isNextDateGiven) {
           _selectedNextDateDisplay = date;
           _selectedNextDateApi = apiDate;
@@ -317,6 +311,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   }
 
   Future<void> _submitCase() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -406,23 +401,40 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         var data = json.decode(responseData);
 
         if (data['success']) {
-          Get.snackbar('Success', 'Case submitted successfully!',
-              snackPosition: SnackPosition.BOTTOM);
-          Get.back();
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                  "Case with case no: ${_caseNumberController.text} Added successfully!"),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
         } else {
-          Get.snackbar('Error', 'Failed to submit case: ${data['message']}',
-              snackPosition: SnackPosition.BOTTOM);
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text("Error: Failed to submit case: ${data['message']}"),
+              backgroundColor: Colors.red,
+            ),
+          );
           print('Error, failed to submit case: ${data['message']}');
         }
       } else {
-        Get.snackbar('Error: ${response.statusCode}',
-            'Failed to submit case. Try again later!',
-            snackPosition: SnackPosition.BOTTOM);
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(
+                "Error: Status Code:${response.statusCode}. Failed to submit case. Try again later!"),
+            backgroundColor: Colors.red,
+          ),
+        );
         print('Error: ${response.statusCode}');
       }
     } catch (e) {
-      Get.snackbar('Error', 'An error occurred: $e',
-          snackPosition: SnackPosition.BOTTOM);
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text("Error: An error occurred: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
       print('Error: $e');
     } finally {
       setState(() {

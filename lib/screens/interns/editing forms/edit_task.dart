@@ -37,13 +37,20 @@ class EditTaskScreenState extends State<EditTaskScreen> {
 
   bool isAssigned = false;
   bool isEnded = false;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    setState(() {
+      isLoading = true;
+    });
     _fetchInternList();
     _populateTaskDetails();
     getUsername();
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void _populateTaskDetails() {
@@ -133,9 +140,9 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.day}/${picked.month}/${picked.year}";
-        final apiDate =
-            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
+
         if (isEndDate) {
           _expectedEndDateDisplay = date;
           _expectedEndDateApi = apiDate;
@@ -155,6 +162,9 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _updateTask() async {
+    setState(() {
+      isLoading = true;
+    });
     if (_advocateName == null ||
         _assignedTo == null ||
         validateTaskInstruction(_taskInstructionController.text) != null) {
@@ -164,6 +174,9 @@ class EditTaskScreenState extends State<EditTaskScreen> {
           backgroundColor: Colors.red,
         ),
       );
+      setState(() {
+        isLoading = false;
+      });
       return;
     }
 
@@ -203,6 +216,10 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       }
     } catch (error) {
       _showErrorSnackBar("Error updating task: $error");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -325,13 +342,18 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text(
-                    'Update Task',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: isLoading
+                      ? CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        )
+                      : const Text(
+                          'Update Task',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 60),

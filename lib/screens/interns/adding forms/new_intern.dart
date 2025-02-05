@@ -47,10 +47,8 @@ class _NewInternScreenState extends State<NewInternScreen> {
     if (picked != null) {
       setState(() {
         _isSelected = true;
-        final date = "${picked.day}/${picked.month}/${picked.year}";
-        final apiDate =
-            "${picked.year}/${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}";
-
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
         _joiningDateDisplay = date;
         _joiningDateApi = apiDate;
         print(_joiningDateApi);

@@ -32,9 +32,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   String? _assignedTo;
   String? _assignDateDisplay = DateFormat('dd/MM/yyyy').format(DateTime.now());
   late String? _expectedEndDateDisplay =
-      DateFormat('yyyy-MM-dd').format(DateTime.now());
-  String? _assignDateApi = DateFormat('yyyy-MM-dd').format(DateTime.now());
-  String? _expectedEndDateApi = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String? _assignDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
+  String? _expectedEndDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
   final _taskInstructionController = TextEditingController();
   bool isAssigned = false;
   bool isExpected = false;
@@ -111,9 +111,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
     if (picked != null) {
       setState(() {
-        final date = "${picked.day}/${picked.month}/${picked.year}";
-        final apiDate =
-            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
         if (isEndDate) {
           isExpected = true;
           _expectedEndDateDisplay = date;
