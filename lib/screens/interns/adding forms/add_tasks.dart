@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
@@ -159,8 +160,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         "alloted_by": _advocateId,
         "alloted_date": _assignDateApi,
         "expected_end_date": _expectedEndDateApi,
-        "status": "pending",
-        "remark": "Some remark",
+        "status": "alloted",
+        "remark": "",
       });
 
       // Debugging logs
@@ -204,7 +205,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           backgroundColor: const Color(0xFFF3F3F3),
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: SvgPicture.asset('assets/icons/back_arrow.svg'),
             onPressed: () {
               HapticFeedback.mediumImpact();
               Navigator.pop(context);
@@ -228,26 +229,27 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              _buildTextField(
-                label: 'Case Number',
-                hint: widget.caseNumber,
-                controller: TextEditingController(text: widget.caseNumber),
-                readOnly: true,
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                label: 'Case Type',
-                hint: widget.caseType,
-                controller: TextEditingController(text: widget.caseType),
-                readOnly: true,
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                label: 'Assigned by',
-                hint: _advocateId ?? '',
-                controller: TextEditingController(text: _advocateName ?? ''),
-                readOnly: true,
-              ),
+              // _buildTextField(
+              //   label: 'Case Number',
+              //   hint: widget.caseNumber,
+              //   controller: TextEditingController(text: widget.caseNumber),
+              //   readOnly: true,
+              // ),
+              // const SizedBox(height: 20),
+              // _buildTextField(
+              //   label: 'Case Type',
+              //   hint: widget.caseType,
+              //   controller: TextEditingController(text: widget.caseType),
+              //   readOnly: true,
+              // ),
+              // const SizedBox(height: 20),
+              // _buildTextField(
+              //   label: 'Assigned by',
+              //   hint: _advocateId ?? '',
+              //   controller: TextEditingController(text: _advocateName ?? ''),
+              //   readOnly: true,
+              // ),
+              _buildGeneralInfoCard(),
               const SizedBox(height: 20),
               _buildDropdownField(
                 label: 'Assign to',
@@ -323,6 +325,93 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               const SizedBox(height: 60),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGeneralInfoCard() {
+    final List<MapEntry<String, String>> generalInfo = [
+      MapEntry('Case Type', widget.caseType),
+      MapEntry('Advocate Name', _advocateName.toString()),
+    ];
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: BorderSide(
+          color: Colors.black,
+          width: 1,
+        ),
+      ),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Section Header
+                Text(
+                  'Case No.: ${widget.caseNumber}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const Divider(
+                  thickness: 2,
+                  color: Colors.black,
+                ),
+                // Key-Value Rows
+                ...generalInfo.map((entry) {
+                  String displayValue =
+                      entry.value.isNotEmpty ? entry.value : '-';
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              entry.key,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              displayValue,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.black87,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (generalInfo.last != entry)
+                        Divider(
+                          thickness: 1,
+                          color: Colors.black38,
+                        )
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ],
         ),
       ),
     );

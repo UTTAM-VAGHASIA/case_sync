@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/models/advocate.dart';
+import 'package:case_sync/screens/cases/case_counter_list.dart';
 import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
@@ -10,17 +11,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 
-import '../models/case.dart';
+import '../models/notification.dart';
 import '../utils/constants.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/assigned_cases.dart';
 import 'cases/case_history.dart';
 import 'cases/new_case.dart';
+import 'cases/todays_case_list.dart';
 import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
 import 'interns/advocate_list.dart';
-import 'interns/assigned_case_list.dart';
 import 'interns/intern_list.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -39,44 +40,68 @@ class HomeScreenState extends State<HomeScreen> {
   ValueNotifier<int> companyCount = ValueNotifier<int>(-1);
   ValueNotifier<int> taskCount = ValueNotifier<int>(-1);
   ValueNotifier<int> newCaseCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> caseCounterCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> todaysCaseCount = ValueNotifier<int>(-1);
   String errorMessage = '';
-  ValueNotifier<List<Case>> caseList = ValueNotifier<List<Case>>([]);
+  ValueNotifier<List<Notifications>> notificationList =
+      ValueNotifier<List<Notifications>>([]);
   int count = 0;
   bool isSupported = false;
   bool isNotificationAllowed = false;
 
-  Future<List<Case>> fetchCaseCounter() async {
+  Future<List<Notifications>> fetchCaseCounter() async {
     try {
-      final response = await http.post(Uri.parse('$baseUrl/get_case_counter'));
+      final response = await http.post(Uri.parse('$baseUrl/notifications'));
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         if (responseData['success']) {
-          caseList.value = (responseData['data'] as List)
-              .map((item) => Case.fromJson(item))
+          notificationList.value = (responseData['data'] as List)
+              .map((item) => Notifications.fromJson(item))
               .toList();
           unassignedCasesCount.value =
               int.parse(responseData['counters'][0]['unassigned_count']);
           assignedCasesCount.value =
-              int.parse(responseData['counters'][1]['assigned_count']);
+              int.parse(responseData['counters'][0]['assigned_count']);
           caseHistoryCount.value =
-              int.parse(responseData['counters'][2]['history_count']);
+              int.parse(responseData['counters'][0]['history_count']);
           advocateCount.value =
-              int.parse(responseData['counters'][3]['advocate_count']);
+              int.parse(responseData['counters'][0]['advocate_count']);
           internCount.value =
-              int.parse(responseData['counters'][4]['intern_count']);
+              int.parse(responseData['counters'][0]['intern_count']);
           companyCount.value =
-              int.parse(responseData['counters'][5]['company_count']);
+              int.parse(responseData['counters'][0]['company_count']);
           taskCount.value =
-              int.parse(responseData['counters'][6]['task_count']);
+              int.parse(responseData['counters'][0]['task_count']);
           newCaseCount.value = -2;
+          caseCounterCount.value =
+              int.parse(responseData['counters'][0]['counters_count']);
+          todaysCaseCount.value =
+              int.parse(responseData['counters'][0]['todays_case_count']);
+          ;
 
-          print("Case List Added: ${caseList.value}");
-          return caseList.value;
+          print("Notification List Added: ${notificationList.value}");
+          return notificationList.value;
         }
       }
     } catch (e) {
+      print(e);
       _showErrorSnackBar('Failed to fetch data: $e');
     }
+
+    if (assignedCasesCount.value == -1) {
+      assignedCasesCount.value = 0;
+      unassignedCasesCount.value = 0;
+      caseHistoryCount.value = 0;
+      advocateCount.value = 0;
+      internCount.value = 0;
+      companyCount.value = 0;
+      taskCount.value = 0;
+      todaysCaseCount.value = 0;
+      caseCounterCount.value = 0;
+      newCaseCount.value = -2;
+      print("Entered If");
+    }
+    print("Hellooooo");
 
     return [];
   }
@@ -87,7 +112,7 @@ class HomeScreenState extends State<HomeScreen> {
         content: Text(
           message,
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.white,
           ),
         ),
         backgroundColor: Colors.black,
@@ -171,47 +196,44 @@ class HomeScreenState extends State<HomeScreen> {
                       context: context,
                       backgroundColor: const Color.fromRGBO(201, 201, 201, 1),
                       builder: (context) => NotificationDrawer(
-                        caseList: caseList.value,
+                        caseList: notificationList.value,
                         onRefresh: fetchCaseCounter,
                       ),
                     );
                   },
                 ),
-                ValueListenableBuilder<List<Case>>(
-                  valueListenable: caseList,
+                ValueListenableBuilder<List<Notifications>>(
+                  valueListenable: notificationList,
                   builder: (context, cases, child) {
                     setBadgeNumber(cases.length);
-                    return cases.isNotEmpty
-                        ? // Show badge only if there are notifications
-                        Positioned(
-                            right: 5,
-                            top: -3,
-                            child: Container(
-                              padding: const EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Color(0xFF292D32),
-                                  width: 2,
-                                ),
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 20,
-                                minHeight: 20,
-                              ),
-                              child: Text(
-                                caseList.value.length.toString(),
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          )
-                        : const SizedBox();
+                    return Positioned(
+                      right: 5,
+                      top: -3,
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Color(0xFF292D32),
+                            width: 2,
+                          ),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 20,
+                          minHeight: 20,
+                        ),
+                        child: Text(
+                          notificationList.value.length.toString(),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -242,12 +264,13 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-        child: SingleChildScrollView(
-          child: RefreshIndicator(
-            color: Colors.black,
-            onRefresh: () async {
-              fetchCaseCounter();
-            },
+        child: RefreshIndicator(
+          color: Colors.black,
+          onRefresh: () async {
+            fetchCaseCounter();
+          },
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -282,6 +305,44 @@ class HomeScreenState extends State<HomeScreen> {
                               color: const Color.fromRGBO(37, 27, 70, 1.000),
                               height: 1.1,
                             ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Notice',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 2,
+                            mainAxisSpacing: 2,
+                            childAspectRatio: cardWidth / cardHeight,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              _buildCard(
+                                title: 'Case Counter',
+                                iconPath: 'assets/icons/case_counter.svg',
+                                cardWidth: cardWidth,
+                                cardHeight: cardHeight,
+                                destinationScreen: CounterCases(),
+                                counterNotifier: caseCounterCount,
+                                shouldDisplayCounter: true,
+                              ),
+                              _buildCard(
+                                title: 'Today\'s Cases',
+                                iconPath: 'assets/icons/cases_today.svg',
+                                cardWidth: cardWidth,
+                                cardHeight: cardHeight,
+                                destinationScreen: CasesToday(),
+                                counterNotifier: todaysCaseCount,
+                                shouldDisplayCounter: true,
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                           const Text(
@@ -377,15 +438,15 @@ class HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                           ),
-                          _buildCard(
-                            title: 'Tasks',
-                            iconPath: 'assets/icons/tasks.svg',
-                            cardWidth: fullCardWidth,
-                            cardHeight: cardHeight,
-                            destinationScreen: AssignedCaseList(),
-                            counterNotifier: taskCount,
-                            shouldDisplayCounter: true,
-                          ),
+                          // _buildCard(
+                          //   title: 'Tasks',
+                          //   iconPath: 'assets/icons/tasks.svg',
+                          //   cardWidth: fullCardWidth,
+                          //   cardHeight: cardHeight,
+                          //   destinationScreen: AssignedCaseList(),
+                          //   counterNotifier: taskCount,
+                          //   shouldDisplayCounter: true,
+                          // ),
                           const SizedBox(height: 20),
                           const Text(
                             'Companies',

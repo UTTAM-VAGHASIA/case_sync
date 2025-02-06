@@ -1,12 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/case.dart';
+import '../../models/notification.dart';
 import 'notification_card.dart';
 
 class NotificationDrawer extends StatefulWidget {
-  final List<Case> caseList;
-  final Future<List<Case>> Function() onRefresh;
+  final List<Notifications> caseList;
+  final Future<List<Notifications>> Function() onRefresh;
   const NotificationDrawer(
       {super.key, required this.caseList, required this.onRefresh});
 
@@ -15,7 +16,7 @@ class NotificationDrawer extends StatefulWidget {
 }
 
 class _NotificationDrawerState extends State<NotificationDrawer> {
-  late List<Case> caseList;
+  late List<Notifications> caseList;
   bool isLoading = false;
 
   @override
@@ -26,9 +27,11 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    void removeCase(Case caseItem) {
+    void removeCase(Notifications caseItem) {
       setState(() {
-        print("Removed: ${caseItem.caseNo}");
+        if (kDebugMode) {
+          print("Removed: ${caseItem.msg}");
+        }
         caseList.removeWhere((c) => c.id == caseItem.id);
       });
     }
@@ -49,7 +52,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Notification Center',
+              'Notifications Center',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -59,7 +62,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
           ),
           const Divider(thickness: 1, height: 1, color: Colors.black54),
 
-          // Case List or Empty State
+          // Notifications List or Empty State
           Expanded(
             child: caseList.isEmpty
                 ? (isLoading)
@@ -95,11 +98,13 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                               GestureDetector(
                                   onLongPress: () async {
                                     HapticFeedback.selectionClick();
-                                    print("Long press detected");
+                                    if (kDebugMode) {
+                                      print("Long press detected");
+                                    }
                                     setState(() {
                                       isLoading = true;
                                     });
-                                    List<Case> tempList =
+                                    List<Notifications> tempList =
                                         await widget.onRefresh();
                                     setState(() {
                                       caseList = tempList;
@@ -122,11 +127,13 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                 : RefreshIndicator(
                     color: Colors.black,
                     onRefresh: () async {
-                      List<Case> tempList = await widget.onRefresh();
+                      List<Notifications> tempList = await widget.onRefresh();
                       setState(() {
                         caseList = tempList;
                       });
-                      print("Refreshed: ${caseList.length}");
+                      if (kDebugMode) {
+                        print("Refreshed: ${caseList.length}");
+                      }
                     },
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16.0),

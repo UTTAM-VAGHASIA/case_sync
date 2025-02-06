@@ -19,11 +19,11 @@ class AssignedCaseList extends StatefulWidget {
 
 class _AssignedCaseListState extends State<AssignedCaseList> {
   bool _isLoading = true;
-  List<CaseListData> _assignedCases = [];
+  List<Case> _assignedCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  List<CaseListData> _filteredCases = [];
+  List<Case> _filteredCases = [];
 
   late String _errorMessage;
 
@@ -45,7 +45,7 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
         if (data['success'] == true) {
           setState(() {
             _assignedCases = (data['data'] as List)
-                .map((item) => CaseListData.fromJson(item))
+                .map((item) => Case.fromJson(item))
                 .toList();
             _filteredCases = List.from(_assignedCases);
             if (kDebugMode) {

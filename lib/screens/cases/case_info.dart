@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/cases/view_docs.dart';
+import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:case_sync/utils/constants.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -9,7 +11,6 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../../utils/update_stage_modal.dart';
-import '../interns/adding forms/add_tasks.dart';
 
 class CaseInfoPage extends StatefulWidget {
   final String caseId;
@@ -104,13 +105,19 @@ class CaseInfoPageState extends State<CaseInfoPage> {
       if (data['success'] == true) {
         setState(() {
           stageList = List<Map<String, dynamic>>.from(data['data']);
-          print(stageList);
+          if (kDebugMode) {
+            print(stageList);
+          }
           selectedStage = stageList.isNotEmpty ? stageList.first['id'] : null;
-          print(selectedStage);
+          if (kDebugMode) {
+            print(selectedStage);
+          }
         });
       }
     } catch (e) {
-      print("Error fetching stage list: $e");
+      if (kDebugMode) {
+        print("Error fetching stage list: $e");
+      }
     }
   }
 
@@ -241,70 +248,72 @@ class CaseInfoPageState extends State<CaseInfoPage> {
             Padding(
               padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      _showUpdateStageModal();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _showUpdateStageModal();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 30),
-                    ),
-                    child: const Text(
-                      'Proceed Case',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      child: const Text(
+                        'Proceed Case',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      HapticFeedback.mediumImpact();
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddTaskScreen(
-                            caseType: _caseDetails['case_type'].toString(),
-                            caseNumber: widget.caseNo,
-                            caseId: widget.caseId,
+                  const SizedBox(width: 12), // Only gap between buttons
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        HapticFeedback.mediumImpact();
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TasksPage(
+                              caseId: widget.caseId,
+                              caseNumber: widget.caseNo,
+                            ),
                           ),
-                        ),
-                      );
+                        );
 
-                      // Refresh the task list if a new task was added
-                      if (result == true) {
-                        fetchCaseInfo();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        if (result == true) {
+                          fetchCaseInfo();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 30),
-                    ),
-                    child: const Text(
-                      'Add Task',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      child: const Text(
+                        'View Task',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            Container(
+            SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {

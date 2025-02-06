@@ -51,7 +51,7 @@ class ApiService {
         };
       }
     } catch (error) {
-      return {'success': false, 'message': 'Error occurred: $error'};
+      return {'success': false, 'message': false};
     }
   }
 
@@ -137,21 +137,19 @@ class ApiService {
 }
 
 class CaseApiService {
-  static Future<List<CaseListData>> fetchCaseList() async {
+  static Future<List<Case>> fetchCaseList() async {
     final response = await http.get(Uri.parse('$baseUrl/get_case_history'));
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       if (responseData['success']) {
         final List<dynamic> data = responseData['data'];
-        return data.map((item) => CaseListData.fromJson(item)).toList();
+        return data.map((item) => Case.fromJson(item)).toList();
       } else {
-        throw Exception(
-            'Failed to fetch case list: ${responseData['message']}');
+        return [];
       }
     } else {
-      throw Exception(
-          'Failed to fetch case list. Status code: ${response.statusCode}');
+      return [];
     }
   }
 }

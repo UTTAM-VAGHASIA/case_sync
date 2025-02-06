@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 
-import '../../components/basicUIcomponent.dart';
+import '../../components/basic_ui_component.dart';
 
 class TasksPage extends StatefulWidget {
   final String caseId;
@@ -228,6 +228,7 @@ class _TasksPageState extends State<TasksPage> {
                                     children: [
                                       const SizedBox(height: 5),
                                       Text("Alloted By: ${task['alloted_by']}"),
+                                      Text("Alloted To: ${task['alloted_to']}"),
                                       Text(
                                         "Alloted Date: ${_formatDate(task['alloted_date'])}",
                                       ),

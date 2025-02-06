@@ -109,10 +109,11 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
+                    final scaffoldMessenger = ScaffoldMessenger.of(context);
                     HapticFeedback.mediumImpact();
                     await SharedPrefService.clearUser();
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                       const SnackBar(
                         content: Text('You have been logged out successfully.'),
                       ),

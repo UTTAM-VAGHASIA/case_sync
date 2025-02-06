@@ -48,8 +48,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   String? _selectedCourtName;
   String? _selectedCityName;
   String? _selectedCaseStage;
-  List<String> _fileNames = [];
-  List<String> _filePaths = [];
+  final List<String> _fileNames = [];
+  final List<String> _filePaths = [];
 
   List<Map<String, String>> _caseTypeList = [];
   List<Map<String, String>> _caseStageList = [];

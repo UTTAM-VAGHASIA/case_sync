@@ -1,4 +1,5 @@
 import 'package:case_sync/models/case_list.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -12,17 +13,17 @@ class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
 
   @override
-  _CaseHistoryScreenState createState() => _CaseHistoryScreenState();
+  CaseHistoryScreenState createState() => CaseHistoryScreenState();
 }
 
-class _CaseHistoryScreenState extends State<CaseHistoryScreen>
+class CaseHistoryScreenState extends State<CaseHistoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late String selectedYear;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  List<CaseListData> _filteredCases = [];
+  List<Case> _filteredCases = [];
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
   late List<String> monthsWithCases;
@@ -77,12 +78,36 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
 
   List<String> _getMonthsForYear(String year) {
     if (!caseData.containsKey(year)) return [];
-    return caseData[year]
+
+    // Define the correct order of months
+    List<String> monthOrder = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+
+    // Get the list of months available for the given year
+    List<String> months = caseData[year]
             ?.entries
             .where((entry) => entry.value.isNotEmpty)
             .map((entry) => entry.key)
             .toList() ??
         [];
+
+    // Sort months based on their index in the monthOrder list
+    months
+        .sort((a, b) => monthOrder.indexOf(a).compareTo(monthOrder.indexOf(b)));
+
+    return months;
   }
 
   @override
@@ -134,7 +159,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
-  List<CaseListData> _filterCases(List<CaseListData> cases) {
+  List<Case> _filterCases(List<Case> cases) {
     return cases.where((caseItem) {
       return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
           caseItem.courtName.toLowerCase().contains(_searchQuery) ||
@@ -170,7 +195,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
     // Extract year and month from the search result
     final yearMonth = _resultTabs[_currentResultIndex].split('-');
     final targetYear = (yearMonth[0] == '') ? '-1' : yearMonth[0];
-    print(targetYear);
+    if (kDebugMode) {
+      print(targetYear);
+    }
     final targetMonth = yearMonth[1];
 
     // Ensure a state update occurs for any valid year
@@ -178,7 +205,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
       setState(() {
         // Update the year and months
         selectedYear = targetYear;
-        print(selectedYear);
+        if (kDebugMode) {
+          print(selectedYear);
+        }
         monthsWithCases = _getMonthsForYear(selectedYear);
 
         // Recreate the TabController for the new year
@@ -208,7 +237,9 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen>
         }
       });
     } else {
-      print("Target year $targetYear not found in caseData");
+      if (kDebugMode) {
+        print("Target year $targetYear not found in caseData");
+      }
     }
   }
 

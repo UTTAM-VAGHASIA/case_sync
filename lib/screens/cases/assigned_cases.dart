@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -18,8 +19,8 @@ class AssignedCases extends StatefulWidget {
 
 class AssignedCasesState extends State<AssignedCases> {
   bool _isLoading = true;
-  List<CaseListData> _assignedCases = [];
-  List<CaseListData> _filteredCases = [];
+  List<Case> _assignedCases = [];
+  List<Case> _filteredCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -57,9 +58,11 @@ class AssignedCasesState extends State<AssignedCases> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
-          print("Started");
+          if (kDebugMode) {
+            print("Started");
+          }
           _assignedCases = (data['data'] as List)
-              .map((item) => CaseListData.fromJson(item))
+              .map((item) => Case.fromJson(item))
               .toList();
           if (isOnPage) {
             setState(() {
@@ -73,7 +76,9 @@ class AssignedCasesState extends State<AssignedCases> {
               );
             });
           }
-          print('Assigned Cases Length: ${_assignedCases.length}');
+          if (kDebugMode) {
+            print('Assigned Cases Length: ${_assignedCases.length}');
+          }
 
           return _assignedCases.length;
         } else {

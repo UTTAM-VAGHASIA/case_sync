@@ -1,15 +1,14 @@
-import 'package:case_sync/screens/interns/tasks.dart';
+import 'package:case_sync/models/notification.dart';
+import 'package:case_sync/screens/interns/task_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../../models/case.dart';
-import '../cases/case_info.dart';
+import 'package:intl/intl.dart';
 
 class NotificationCard extends StatelessWidget {
-  final Case caseItem;
+  final Notifications caseItem;
   final bool isHighlighted;
   final bool isTask;
-  final Function(Case) onDismiss; // Callback when dismissed
+  final Function(Notifications) onDismiss; // Callback when dismissed
 
   const NotificationCard({
     super.key,
@@ -27,15 +26,9 @@ class NotificationCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => isTask
-                ? TasksPage(
-                    caseId: caseItem.id,
-                    caseNumber: caseItem.caseNo,
-                  )
-                : CaseInfoPage(
-                    caseId: caseItem.id,
-                    caseNo: caseItem.caseNo,
-                  ),
+            builder: (context) => TaskInfoPage(
+              task: {},
+            ),
           ),
         );
       },
@@ -74,7 +67,7 @@ class NotificationCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Case No: ${caseItem.caseNo}',
+                    'Name: ${caseItem.name}',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 20,
@@ -85,7 +78,14 @@ class NotificationCard extends StatelessWidget {
                     color: isHighlighted ? Colors.white : Colors.black,
                   ),
                   Text(
-                    'Case Counter: ${caseItem.caseCounter} days',
+                    'Message: ${caseItem.msg}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isHighlighted ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  Text(
+                    'Date/Time: ${((caseItem.dateTime) != null) ? DateFormat('EEE, dd/MM/yyyy, hh:mm a').format(caseItem.dateTime!) : ''}',
                     style: TextStyle(
                       fontSize: 14,
                       color: isHighlighted ? Colors.white : Colors.black,

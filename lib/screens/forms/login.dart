@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-import '../../components/basicUIcomponent.dart';
+import '../../components/basic_ui_component.dart';
 import '../../models/advocate.dart';
 import '../../services/api_service.dart';
 import '../../services/shared_pref.dart';
@@ -78,8 +78,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
           Get.offAll(() => const HomeScreen());
         } else {
-          // Handle login failure
-          Get.snackbar('Login Error', response['message']);
+          if (response['message'] == false) {
+            Get.snackbar('Error',
+                'Login failed because of no Internet Connection. Check the Internet Connection and try again.');
+            return;
+          } else {
+            Get.snackbar('Login failed', 'Incorrect Username or Password');
+          }
         }
       } catch (e) {
         print('An error occurred: $e');

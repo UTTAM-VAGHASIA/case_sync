@@ -1,24 +1,25 @@
 import 'dart:convert';
 
 import 'package:case_sync/utils/constants.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
-import '../../components/case_card.dart'; // Import CaseCard widget
+import '../../components/case_card.dart'; // Import your CaseCard component
 import '../../components/list_app_bar.dart';
-import '../../models/case_list.dart'; // Import CaseListData model
+import '../../models/case_list.dart'; // Import your CaseListData model
 
-class UnassignedCases extends StatefulWidget {
-  const UnassignedCases({super.key});
+class CasesToday extends StatefulWidget {
+  const CasesToday({super.key});
 
   @override
-  State<UnassignedCases> createState() => UnassignedCasesState();
+  State<CasesToday> createState() => CasesTodayState();
 }
 
-class UnassignedCasesState extends State<UnassignedCases> {
+class CasesTodayState extends State<CasesToday> {
   bool _isLoading = true;
-  List<Case> _unassignedCases = [];
+  List<Case> _caseList = [];
   List<Case> _filteredCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -28,13 +29,13 @@ class UnassignedCasesState extends State<UnassignedCases> {
   String? _selectedCourt;
   final List<String> _cities = [];
   final List<String> _courts = [];
-  String _errorMessage = '';
+  late String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
     _errorMessage = '';
-    if (_unassignedCases.isEmpty) fetchCases();
+    fetchCases();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -51,29 +52,36 @@ class UnassignedCasesState extends State<UnassignedCases> {
 
   Future<int> fetchCases([bool isOnPage = true]) async {
     try {
-      final url = Uri.parse('$baseUrl/get_unassigned_case_list');
-      final response = await http.get(url);
+      _errorMessage = '';
+      final url = Uri.parse('$baseUrl/get_todays_case');
+      final response = await http.post(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         if (data['success'] == true) {
-          _unassignedCases = (data['data'] as List)
+          if (kDebugMode) {
+            print("Started");
+          }
+          _caseList = (data['data'] as List)
               .map((item) => Case.fromJson(item))
               .toList();
           if (isOnPage) {
             setState(() {
-              _filteredCases = List.from(_unassignedCases);
+              _filteredCases = List.from(_caseList);
 
               _cities.addAll(
-                _unassignedCases.map((caseItem) => caseItem.cityName).toSet(),
+                _caseList.map((caseItem) => caseItem.cityName).toSet(),
               );
               _courts.addAll(
-                _unassignedCases.map((caseItem) => caseItem.courtName).toSet(),
+                _caseList.map((caseItem) => caseItem.courtName).toSet(),
               );
             });
           }
-          return _unassignedCases.length;
+          if (kDebugMode) {
+            print('Assigned Cases Length: ${_caseList.length}');
+          }
+
+          return _caseList.length;
         } else {
           _showError("No cases found.");
           if (isOnPage) {
@@ -115,7 +123,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
 
   void _updateFilteredCases() {
     setState(() {
-      _filteredCases = _unassignedCases.where((caseItem) {
+      _filteredCases = _caseList.where((caseItem) {
         final matchesSearchQuery = caseItem.caseNo
                 .toLowerCase()
                 .contains(_searchQuery.toLowerCase()) ||
@@ -141,16 +149,6 @@ class UnassignedCasesState extends State<UnassignedCases> {
     });
   }
 
-  void _resetFilters() {
-    setState(() {
-      _searchQuery = '';
-      _searchController.clear();
-      _selectedCity = null;
-      _selectedCourt = null;
-      _filteredCases = List.from(_unassignedCases);
-    });
-  }
-
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -158,8 +156,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
         controller: _searchController,
         decoration: InputDecoration(
           labelText: 'Search',
-          hintText: 'Search by case number, applicant, court or city',
-          hintStyle: TextStyle(fontSize: 12),
+          hintText: 'Search by case number, applicant, court, or city',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -182,22 +179,15 @@ class UnassignedCasesState extends State<UnassignedCases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ListAppBar(
-        title: "Unassigned Cases",
+        title: "Today's Cases",
         isSearching: _isSearching,
         onSearchPressed: () {
           setState(() {
             _isSearching = !_isSearching;
             if (!_isSearching) {
-              _resetFilters();
+              _searchController.clear();
             }
           });
-        },
-        onFilterPressed: () {
-          showModalBottomSheet(
-            backgroundColor: Colors.white,
-            context: context,
-            builder: (context) => _buildFilterOptions(),
-          );
         },
       ),
       backgroundColor: const Color(0xFFF3F3F3),
@@ -206,11 +196,10 @@ class UnassignedCasesState extends State<UnassignedCases> {
           if (_isSearching) _buildSearchBar(),
           Expanded(
             child: _isLoading
-                ? Center(
-                    child: const CircularProgressIndicator(
-                      color: Colors.black,
-                    ),
-                  )
+                ? const Center(
+                    child: CircularProgressIndicator(
+                    color: Colors.black,
+                  ))
                 : (_errorMessage.isNotEmpty)
                     ? Center(
                         child: Column(
@@ -229,106 +218,24 @@ class UnassignedCasesState extends State<UnassignedCases> {
                           ],
                         ),
                       )
-                    : RefreshIndicator(
-                        color: Colors.black,
-                        onRefresh: () async {
-                          setState(() {
-                            fetchCases();
-                          });
-                        },
-                        child: _filteredCases.isEmpty
-                            ? const Center(child: Text('No cases found.'))
-                            : ListView.builder(
-                                padding: const EdgeInsets.all(16.0),
-                                itemCount: _filteredCases.length,
-                                itemBuilder: (context, index) {
-                                  final caseItem = _filteredCases[index];
-                                  return CaseCard(caseItem: caseItem);
-                                },
-                              ),
-                      ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterOptions() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            "Filter Options",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _selectedCity,
-            onChanged: (value) {
-              setState(() {
-                _selectedCity = value;
-                _updateFilteredCases();
-              });
-            },
-            decoration: const InputDecoration(labelText: 'City'),
-            items: [
-              const DropdownMenuItem(
-                value: 'All',
-                child: Text('All Cities'),
-              ),
-              ..._cities.map(
-                (city) => DropdownMenuItem(
-                  value: city,
-                  child: Text(city),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _selectedCourt,
-            onChanged: (value) {
-              setState(() {
-                _selectedCourt = value;
-                _updateFilteredCases();
-              });
-            },
-            decoration: const InputDecoration(labelText: 'Court'),
-            items: [
-              const DropdownMenuItem(
-                value: 'All',
-                child: Text('All Courts'),
-              ),
-              ..._courts.map(
-                (court) => DropdownMenuItem(
-                  value: court,
-                  child: Text(court),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  _resetFilters();
-                  Navigator.pop(context);
-                },
-                child: const Text("Reset"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  Navigator.pop(context);
-                },
-                child: const Text("Done"),
-              ),
-            ],
+                    : _filteredCases.isEmpty
+                        ? const Center(child: Text('No cases found.'))
+                        : RefreshIndicator(
+                            color: Colors.black,
+                            onRefresh: () async {
+                              setState(() {
+                                fetchCases();
+                              });
+                            },
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16.0),
+                              itemCount: _filteredCases.length,
+                              itemBuilder: (context, index) {
+                                final caseItem = _filteredCases[index];
+                                return CaseCard(caseItem: caseItem);
+                              },
+                            ),
+                          ),
           ),
         ],
       ),
