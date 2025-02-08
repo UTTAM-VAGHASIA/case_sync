@@ -29,6 +29,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   late List<String> monthsWithCases;
   late Future<void> _caseDataFuture;
   final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> caseCardKeys = {};
 
   FocusNode fn = FocusNode();
 
@@ -79,7 +80,6 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   List<String> _getMonthsForYear(String year) {
     if (!caseData.containsKey(year)) return [];
 
-    // Define the correct order of months
     List<String> monthOrder = [
       "January",
       "February",
@@ -135,6 +135,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
           }
         });
       }
+
+      // Debug print to check the filtered results
+      print('Filtered Cases: $_filteredCases');
+      print('Result Tabs: $_resultTabs');
 
       // If no results, search other years
       if (_filteredCases.isEmpty) {
@@ -192,55 +196,91 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   void _switchTabToResult() {
     if (_filteredCases.isEmpty) return;
 
-    // Extract year and month from the search result
     final yearMonth = _resultTabs[_currentResultIndex].split('-');
-    final targetYear = (yearMonth[0] == '') ? '-1' : yearMonth[0];
-    if (kDebugMode) {
-      print(targetYear);
-    }
+    final targetYear = yearMonth[0];
     final targetMonth = yearMonth[1];
 
-    // Ensure a state update occurs for any valid year
-    if (caseData.containsKey(targetYear)) {
-      setState(() {
-        // Update the year and months
+    if (!caseData.containsKey(targetYear)) {
+      if (kDebugMode) {
+        print("🚨 Target year $targetYear not found in caseData");
+      }
+      return;
+    }
+
+    setState(() {
+      if (selectedYear != targetYear) {
         selectedYear = targetYear;
-        if (kDebugMode) {
-          print(selectedYear);
-        }
         monthsWithCases = _getMonthsForYear(selectedYear);
+      }
 
-        // Recreate the TabController for the new year
-        _tabController.dispose();
-        _tabController =
-            TabController(length: monthsWithCases.length, vsync: this);
+      final monthIndex = monthsWithCases.indexOf(targetMonth);
+      if (monthIndex != -1) {
+        _tabController.animateTo(monthIndex);
+      }
+    });
 
-        // Navigate to the correct month tab
-        final monthIndex = months.indexOf(targetMonth);
-        if (monthIndex >= 0) {
-          _tabController.animateTo(monthIndex);
+    /// 🚀 Ensure UI is fully built before scrolling
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) {
+        if (kDebugMode) {
+          print("🚨 ScrollController not attached yet.");
         }
-      });
+        return;
+      }
 
-      // Scroll to the highlighted case
-      Future.microtask(() {
-        final allCases = getCaseDataForMonth(selectedYear, targetMonth);
-        final highlightedIndex = allCases.indexWhere((caseItem) =>
-            caseItem.caseNo == _filteredCases[_currentResultIndex].caseNo);
+      final allCases = getCaseDataForMonth(selectedYear, targetMonth);
+      final highlightedIndex = allCases.indexWhere(
+        (caseItem) =>
+            caseItem.caseNo == _filteredCases[_currentResultIndex].caseNo,
+      );
 
-        if (highlightedIndex >= 0) {
+      if (highlightedIndex >= 0 && caseCardKeys.containsKey(highlightedIndex)) {
+        final context = caseCardKeys[highlightedIndex]!.currentContext;
+        if (context == null) return;
+
+        final box = context.findRenderObject() as RenderBox?;
+        if (box == null) return;
+
+        /// 🔥 Get the **exact height** of the CaseCard
+        double caseCardHeight = box.size.height;
+
+        /// 🔥 Get the **current scroll position**
+        double currentScroll = _scrollController.position.pixels;
+        double maxScrollExtent = _scrollController.position.maxScrollExtent;
+
+        /// 🔥 Calculate the **exact scroll position**
+        double scrollOffset = (highlightedIndex * caseCardHeight);
+
+        if (kDebugMode) {
+          print("🎯 Scrolling to index: $highlightedIndex");
+          print("📏 CaseCard Height: $caseCardHeight");
+          print("📌 Current Scroll Position: $currentScroll");
+          print("📌 Max Scroll Extent: $maxScrollExtent");
+          print(
+              "🚀 Calculated Scroll Offset Before Adjustments: $scrollOffset");
+        }
+
+        /// ✅ Ensure we don’t exceed max scroll limit
+        if (scrollOffset > maxScrollExtent) {
+          scrollOffset = maxScrollExtent;
+        }
+        if (scrollOffset < 0) {
+          scrollOffset = 0; // Prevent negative scroll
+        }
+
+        // /// 🚀 Step 1: Jump to position instantly
+        // _scrollController.jumpTo(scrollOffset);
+
+        /// 🚀 Step 2: Smoothly adjust for a better UX
+        Future.delayed(const Duration(milliseconds: 100), () {
           _scrollController.animateTo(
-            highlightedIndex * 200.0, // Approximate height per case card
-            duration: const Duration(milliseconds: 300),
+            scrollOffset,
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOut,
           );
-        }
-      });
-    } else {
-      if (kDebugMode) {
-        print("Target year $targetYear not found in caseData");
+        });
       }
-    }
+    });
   }
 
   @override
@@ -311,13 +351,13 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
             isSearching: _isSearching,
             onFilterPressed: null,
           ),
-          body: _buildBodyContent(),
+          body: buildBodyContent(),
         );
       },
     );
   }
 
-  Widget _buildBodyContent() {
+  Widget buildBodyContent() {
     var screenWidth = MediaQuery.sizeOf(context).width;
 
     // Check if monthsWithCases is empty and handle the scenario
@@ -472,6 +512,8 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                   },
                   child: allCases.isEmpty
                       ? ListView(
+                          controller:
+                              _scrollController, // ✅ Attach the scroll controller here!
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: const [
                             Padding(
@@ -486,37 +528,30 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                             ),
                           ],
                         )
-                      : SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: MediaQuery.of(context).size.height -
-                                  (AppBar().preferredSize.height +
-                                      kToolbarHeight), // Adjust based on the layout
-                            ),
-                            child: ListView.builder(
-                              controller: _scrollController,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: allCases.length,
-                              itemBuilder: (context, index) {
-                                var caseItem = allCases[index];
+                      : ListView.builder(
+                          // ✅ Remove SingleChildScrollView
+                          controller:
+                              _scrollController, // ✅ Attach the scroll controller here!
+                          physics:
+                              const AlwaysScrollableScrollPhysics(), // ✅ Allow scrolling
+                          itemCount: allCases.length,
+                          itemBuilder: (context, index) {
+                            caseCardKeys[index] = GlobalKey();
+                            var caseItem = allCases[index];
 
-                                bool isHighlighted = _isSearching &&
-                                    _filteredCases.isNotEmpty &&
-                                    _resultTabs[_currentResultIndex]
-                                        .endsWith(month) &&
-                                    _filteredCases[_currentResultIndex]
-                                            .caseNo ==
-                                        caseItem.caseNo;
+                            bool isHighlighted = _isSearching &&
+                                _filteredCases.isNotEmpty &&
+                                _resultTabs[_currentResultIndex]
+                                    .endsWith(month) &&
+                                _filteredCases[_currentResultIndex].caseNo ==
+                                    caseItem.caseNo;
 
-                                return CaseCard(
-                                  caseItem: caseItem,
-                                  isHighlighted: isHighlighted,
-                                );
-                              },
-                            ),
-                          ),
+                            return CaseCard(
+                              key: caseCardKeys[index],
+                              caseItem: caseItem,
+                              isHighlighted: isHighlighted,
+                            );
+                          },
                         ),
                 ),
               );

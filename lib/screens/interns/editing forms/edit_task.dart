@@ -262,6 +262,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                 label: 'Task Instructions',
                 hint: 'Enter instructions',
                 controller: _taskInstructionController,
+                maxLines: null,
               ),
               const SizedBox(height: 20),
               _buildDropdownField(
@@ -411,6 +412,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     required String label,
     required String hint,
     required TextEditingController controller,
+    int? maxLines = 1,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,6 +421,8 @@ class EditTaskScreenState extends State<EditTaskScreen> {
         const SizedBox(height: 10),
         TextField(
           controller: controller,
+          maxLines: maxLines,
+          keyboardType: TextInputType.multiline,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,

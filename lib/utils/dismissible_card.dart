@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'ios_alert_dialog.dart';
+
 class DismissibleCard extends StatelessWidget {
   final Widget child;
   final String name;
@@ -45,6 +47,17 @@ class DismissibleCard extends StatelessWidget {
             return false;
           } else if (direction == DismissDirection.endToStart &&
               onDelete != null) {
+            final confirm = await showCupertinoDialog<bool>(
+              context: context,
+              builder: (context) => IOSAlertDialog(
+                title: "Delete Item",
+                message:
+                    "Are you sure you want to delete $name's data from the list?",
+                cancelButtonText: "Cancel",
+                confirmButtonText: "Delete",
+                onConfirm: onDelete!,
+              ),
+            );
             return false;
           }
           return false;

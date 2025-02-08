@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/notification.dart';
@@ -110,6 +111,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                               SizedBox(height: screenHeight * 0.03),
                               GestureDetector(
                                   onLongPress: () async {
+                                    HapticFeedback.mediumImpact();
                                     setState(() {
                                       isLoading = true;
                                     });
@@ -139,6 +141,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                 : RefreshIndicator(
                     color: Colors.black,
                     onRefresh: () async {
+                      HapticFeedback.mediumImpact();
                       List<Notifications> tempList = await widget.onRefresh();
                       await SharedPrefService.saveLastRefreshed(DateTime.now());
                       lastRefreshed = DateTime.now();

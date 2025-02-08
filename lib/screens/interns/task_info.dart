@@ -3,10 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart'; // For date formatting
 
-class TaskInfoPage extends StatelessWidget {
+class TaskInfoPage extends StatefulWidget {
   final Map<String, dynamic> task;
 
   const TaskInfoPage({required this.task, super.key});
+
+  @override
+  _TaskInfoPageState createState() => _TaskInfoPageState();
+}
+
+class _TaskInfoPageState extends State<TaskInfoPage> {
+  bool _isCollapsed = true;
+  bool _isRemarksCollapsed = true;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +33,6 @@ class TaskInfoPage extends StatelessWidget {
       leading: IconButton(
         icon: SvgPicture.asset(
           'assets/icons/back_arrow.svg',
-          color: Colors.black,
         ),
         onPressed: () {
           HapticFeedback.mediumImpact();
@@ -44,18 +51,129 @@ class TaskInfoPage extends StatelessWidget {
   }
 
   Widget _buildBody() {
-    return task.isEmpty
-        ? const Center(child: CircularProgressIndicator())
+    return widget.task.isEmpty
+        ? const Center(
+            child: CircularProgressIndicator(
+            color: Colors.black,
+          ))
         : SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: _buildDetailsCard(details: task),
+            child: Column(
+              children: [
+                _buildDetailsCard(details: widget.task),
+                const SizedBox(height: 16),
+                _buildRemarksCard(),
+              ],
+            ),
           );
   }
 
-  Widget _buildDetailsCard({
-    required Map<String, dynamic> details,
-  }) {
-    // Grouping details into sections with correct order
+  Widget _buildRemarksCard() {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: const BorderSide(
+          color: Colors.black,
+          width: 1,
+        ),
+      ),
+      elevation: 3,
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isRemarksCollapsed = !_isRemarksCollapsed;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Remarks',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const Divider(
+                    thickness: 2,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(height: 8),
+                  if (_isRemarksCollapsed)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Click to expand for more remarks...',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Stage: 14',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Remarks: Testing',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'DOS: 2025-02-07',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        _isRemarksCollapsed
+                            ? "Click to Expand"
+                            : "Click to Collapse",
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsCard({required Map<String, dynamic> details}) {
     final Map<String, List<MapEntry<String, dynamic>>> groupedDetails = {
       'General Info': [
         details.entries.firstWhere((e) => e.key == 'case_num'),
@@ -84,128 +202,250 @@ class TaskInfoPage extends StatelessWidget {
         ),
       ),
       elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Dynamically build sections
-            ...groupedDetails.entries.map((section) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.black),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section Header
-                    Text(
-                      section.key,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const Divider(
-                      thickness: 2,
-                      color: Colors.black,
-                    ),
-                    const SizedBox(height: 8),
-                    // Special handling for 'Instructions' section
-                    if (section.key == 'Instruction') ...[
-                      // Display the instruction value directly
-                      Text(
-                        section.value.first.value?.toString() ?? '-',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ] else ...[
-                      // Key-Value Pairs for other sections
-                      ...section.value.map((entry) {
-                        String displayValue;
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isCollapsed = !_isCollapsed;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_isCollapsed)
+                    // Display the specified fields when collapsed
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildKeyValueRow('Case No.', details['case_num']),
+                          _buildKeyValueRow(
+                              'Alloted By', details['alloted_by']),
+                          _buildKeyValueRow(
+                              'Alloted To', details['alloted_to']),
+                          _buildKeyValueRow('Alloted Date',
+                              _formatDate(details['alloted_date'])),
+                          _buildKeyValueRow('Expected End Date',
+                              _formatDate(details['expected_end_date'])),
+                          ...groupedDetails.entries.map((section) {
+                            if (section.key != 'Instruction') {
+                              return SizedBox.shrink();
+                            }
 
-                        // Handle date formatting
-                        if (['alloted_date', 'expected_end_date']
-                            .contains(entry.key)) {
-                          displayValue = _formatDate(entry.value);
-                        } else if (entry.value == null ||
-                            entry.value.toString().isEmpty ||
-                            entry.value == '0000-00-00') {
-                          displayValue = '-';
-                        } else {
-                          displayValue = entry.value.toString();
-                        }
-
-                        // Convert the key to a more readable format if needed
-                        String displayKey = _formatKey(entry.key);
-
-                        return Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: Text(
-                                    displayKey,
+                            return Container(
+                              // margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.black),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Section Header
+                                  Text(
+                                    section.key,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const Divider(
+                                    thickness: 2,
+                                    color: Colors.black,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    section.value.first.value?.toString() ??
+                                        '-',
+                                    style: const TextStyle(
+                                      fontSize: 15,
                                       color: Colors.black87,
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    displayValue,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black54,
-                                    ),
-                                    textAlign: TextAlign.right,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (section.value.last != entry)
-                              const Divider(
-                                thickness: 1,
-                                color: Colors.black38,
+                                ],
                               ),
+                            );
+                          }),
+                          SizedBox(
+                            height: 12,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    // Display all details when expanded
+                    ...groupedDetails.entries.map((section) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Section Header
+                            Text(
+                              section.key,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const Divider(
+                              thickness: 2,
+                              color: Colors.black,
+                            ),
+                            const SizedBox(height: 8),
+                            if (section.key == 'Instruction')
+                              Text(
+                                section.value.first.value?.toString() ?? '-',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.black87,
+                                ),
+                              )
+                            else
+                              ...section.value.map((entry) {
+                                String displayValue;
+
+                                // Handle date formatting
+                                if (['alloted_date', 'expected_end_date']
+                                    .contains(entry.key)) {
+                                  displayValue = _formatDate(entry.value);
+                                } else if (entry.value == null ||
+                                    entry.value.toString().isEmpty ||
+                                    entry.value == '0000-00-00') {
+                                  displayValue = '-';
+                                } else {
+                                  displayValue = entry.value.toString();
+                                }
+
+                                // Convert the key to a more readable format if needed
+                                String displayKey = _formatKey(entry.key);
+
+                                return Column(
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            displayKey,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                            displayValue,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black54,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (section.value.last != entry)
+                                      const Divider(
+                                        thickness: 1,
+                                        color: Colors.black38,
+                                      ),
+                                  ],
+                                );
+                              }),
                           ],
-                        );
-                      }),
+                        ),
+                      );
+                    }),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        _isCollapsed ? "Click to Expand" : "Click to Collapse",
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ],
-                  ],
-                ),
-              );
-            }),
-            // Spacer to add some bottom padding
-            const SizedBox(height: 16),
-          ],
-        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
 
-// Helper method to format keys for display
+  Widget _buildKeyValueRow(String key, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: Text(
+                  key,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  value?.toString() ?? '-',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+          const Divider(
+            thickness: 1,
+            color: Colors.black38,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper methods for formatting keys and dates
   String _formatKey(String key) {
-    // Convert snake_case to Title Case (e.g., 'alloted_by' -> 'Alloted By')
     return key
         .split('_')
         .map((word) => word[0].toUpperCase() + word.substring(1))
         .join(' ');
   }
 
-// Helper method to format date strings
   String _formatDate(dynamic date) {
     if (date == null || date.toString().isEmpty || date == '0000-00-00') {
       return 'No Date';

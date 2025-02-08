@@ -263,6 +263,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 label: 'Task Instruction',
                 hint: 'Instructions',
                 controller: _taskInstructionController,
+                maxLines: null,
               ),
               const SizedBox(height: 20),
               _buildDateField(
@@ -464,6 +465,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     required String hint,
     required TextEditingController controller,
     bool readOnly = false,
+    int? maxLines = 1,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,6 +475,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         TextField(
           controller: controller,
           readOnly: readOnly,
+          maxLines: maxLines,
+          keyboardType: TextInputType.multiline,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
