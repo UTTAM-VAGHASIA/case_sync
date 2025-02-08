@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart'; // For date formatting
+
+import '../../utils/constants.dart';
 
 class TaskInfoPage extends StatefulWidget {
   final Map<String, dynamic> task;
@@ -15,6 +20,53 @@ class TaskInfoPage extends StatefulWidget {
 class _TaskInfoPageState extends State<TaskInfoPage> {
   bool _isCollapsed = true;
   bool _isRemarksCollapsed = true;
+  String? errorMessage;
+  bool isLoading = false;
+
+  late List<Map<String, dynamic>> sampleTaskHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRemarks();
+  }
+
+  Future<void> fetchRemarks() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final url = Uri.parse('$baseUrl/get_task_history');
+      final response =
+          await http.post(url, body: {'task_id': widget.task['id']});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'].isNotEmpty) {
+          setState(() {
+            sampleTaskHistory = List<Map<String, dynamic>>.from(data['data']);
+            errorMessage = null;
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            errorMessage = "No remarks found for the given task.";
+            isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          errorMessage = "Failed to fetch remarks.";
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "An error occurred: $e";
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,37 +108,46 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
             child: CircularProgressIndicator(
             color: Colors.black,
           ))
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildDetailsCard(details: widget.task),
-                const SizedBox(height: 16),
-                _buildRemarksCard(),
-              ],
+        : RefreshIndicator(
+            color: Colors.black,
+            onRefresh: fetchRemarks,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildDetailsCard(details: widget.task),
+                  const SizedBox(height: 16),
+                  _buildRemarksCard(),
+                ],
+              ),
             ),
           );
   }
 
   Widget _buildRemarksCard() {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: const BorderSide(
-          color: Colors.black,
-          width: 1,
+    return GestureDetector(
+      onTap: () {
+        if (sampleTaskHistory.isNotEmpty &&
+            !isLoading &&
+            errorMessage == null) {
+          setState(() {
+            _isRemarksCollapsed = !_isRemarksCollapsed;
+          });
+        }
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: const BorderSide(
+            color: Colors.black,
+            width: 1,
+          ),
         ),
-      ),
-      elevation: 3,
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isRemarksCollapsed = !_isRemarksCollapsed;
-              });
-            },
-            child: Container(
+        elevation: 3,
+        child: Column(
+          children: [
+            Container(
               padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,71 +165,115 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                     color: Colors.black,
                   ),
                   const SizedBox(height: 8),
-                  if (_isRemarksCollapsed)
+                  if (isLoading)
+                    Center(
+                      child: LinearProgressIndicator(
+                        color: Colors.black,
+                      ),
+                    )
+                  else if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.red,
+                        ),
+                      ),
+                    )
+                  else if (_isRemarksCollapsed)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.black),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
-                            'Click to expand for more remarks...',
+                            sampleTaskHistory[0]['remarks'],
                             style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black87,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
                             ),
                           ),
+                          const Divider(
+                            thickness: 2,
+                            color: Colors.black,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildKeyValueRow(
+                              'Stage', sampleTaskHistory[0]['stage']),
+                          _buildKeyValueRow('Date of Submission',
+                              _formatDate(sampleTaskHistory[0]['dos'])),
+                          _buildKeyValueRow('Date Time',
+                              _formatDate(sampleTaskHistory[0]['date_time'])),
+                          _buildKeyValueRow(
+                              'Status', sampleTaskHistory[0]['status']),
                         ],
                       ),
                     )
                   else
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Stage: 14',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black87,
-                            ),
+                    Column(
+                      children: sampleTaskHistory.map((entry) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.black),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Remarks: Testing',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black87,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry['remarks'],
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const Divider(
+                                thickness: 2,
+                                color: Colors.black,
+                              ),
+                              const SizedBox(height: 8),
+                              _buildKeyValueRow('Stage', entry['stage']),
+                              _buildKeyValueRow('Date of Submission',
+                                  _formatDate(entry['dos'])),
+                              _buildKeyValueRow(
+                                  'Date Time', _formatDate(entry['date_time'])),
+                              _buildKeyValueRow('Status', entry['status']),
+                            ],
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'DOS: 2025-02-07',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      }).toList(),
                     ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        _isRemarksCollapsed
-                            ? "Click to Expand"
-                            : "Click to Collapse",
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
+                  if (!isLoading && errorMessage == null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          _isRemarksCollapsed
+                              ? "See more Remarks"
+                              : "See less Remarks",
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-        ],
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -397,44 +502,41 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
   }
 
   Widget _buildKeyValueRow(String key, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 1,
-                child: Text(
-                  key,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              flex: 1,
+              child: Text(
+                key,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.black87,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  value?.toString() ?? '-',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                  textAlign: TextAlign.right,
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                value?.toString() ?? '-',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
                 ),
+                textAlign: TextAlign.right,
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
+        if (!(key == "Status"))
           const Divider(
             thickness: 1,
             color: Colors.black38,
           ),
-        ],
-      ),
+      ],
     );
   }
 
