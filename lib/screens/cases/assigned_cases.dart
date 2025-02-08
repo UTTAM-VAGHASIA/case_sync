@@ -231,7 +231,9 @@ class AssignedCasesState extends State<AssignedCases> {
                               itemCount: _filteredCases.length,
                               itemBuilder: (context, index) {
                                 final caseItem = _filteredCases[index];
-                                return CaseCard(caseItem: caseItem);
+                                return CaseCard(
+                                  caseItem: caseItem,
+                                );
                               },
                             ),
                           ),

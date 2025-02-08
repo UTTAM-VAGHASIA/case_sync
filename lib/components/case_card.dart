@@ -10,12 +10,14 @@ class CaseCard extends StatelessWidget {
   final Case caseItem;
   final bool isHighlighted;
   final bool isTask;
+  final bool isUnassigned;
 
   const CaseCard({
     super.key,
     required this.caseItem,
     this.isHighlighted = false,
     this.isTask = false,
+    this.isUnassigned = false,
   });
 
   @override
@@ -34,6 +36,7 @@ class CaseCard extends StatelessWidget {
                 : CaseInfoPage(
                     caseId: caseItem.id,
                     caseNo: caseItem.caseNo,
+                    isUnassigned: isUnassigned,
                   ),
           ),
         );

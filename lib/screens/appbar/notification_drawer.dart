@@ -1,15 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/notification.dart';
+import '../../services/shared_pref.dart';
 import 'notification_card.dart';
 
 class NotificationDrawer extends StatefulWidget {
   final List<Notifications> caseList;
   final Future<List<Notifications>> Function() onRefresh;
-  const NotificationDrawer(
-      {super.key, required this.caseList, required this.onRefresh});
+
+  const NotificationDrawer({
+    super.key,
+    required this.caseList,
+    required this.onRefresh,
+  });
 
   @override
   State<NotificationDrawer> createState() => _NotificationDrawerState();
@@ -18,11 +23,19 @@ class NotificationDrawer extends StatefulWidget {
 class _NotificationDrawerState extends State<NotificationDrawer> {
   late List<Notifications> caseList;
   bool isLoading = false;
+  DateTime? lastRefreshed;
 
   @override
   void initState() {
     super.initState();
+    initialise();
     caseList = widget.caseList;
+  }
+
+  Future<void> initialise() async {
+    lastRefreshed = await SharedPrefService.getLastRefreshed();
+    setState(
+        () {}); // Trigger rebuild to reflect the initial value of lastRefreshed
   }
 
   @override
@@ -78,7 +91,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'No Cases with less than 10 days of counter',
+                                'No Notification (Last refreshed ${DateFormat.jm().format(lastRefreshed ?? DateTime.now())})',
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
@@ -97,15 +110,14 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                               SizedBox(height: screenHeight * 0.03),
                               GestureDetector(
                                   onLongPress: () async {
-                                    HapticFeedback.selectionClick();
-                                    if (kDebugMode) {
-                                      print("Long press detected");
-                                    }
                                     setState(() {
                                       isLoading = true;
                                     });
+                                    await SharedPrefService.saveLastRefreshed(
+                                        DateTime.now());
                                     List<Notifications> tempList =
                                         await widget.onRefresh();
+                                    lastRefreshed = DateTime.now();
                                     setState(() {
                                       caseList = tempList;
                                       isLoading = false;
@@ -128,6 +140,8 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                     color: Colors.black,
                     onRefresh: () async {
                       List<Notifications> tempList = await widget.onRefresh();
+                      await SharedPrefService.saveLastRefreshed(DateTime.now());
+                      lastRefreshed = DateTime.now();
                       setState(() {
                         caseList = tempList;
                       });

@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/advocate.dart';
 
 class SharedPrefService {
@@ -10,6 +12,20 @@ class SharedPrefService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userJson = jsonEncode(user.toJson());
     await prefs.setString(_userKey, userJson);
+  }
+
+  static Future<void> saveLastRefreshed(DateTime lastRefreshed) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastRefreshed', lastRefreshed.toIso8601String());
+  }
+
+  static Future<DateTime> getLastRefreshed() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? lastRefreshedString = prefs.getString('lastRefreshed');
+    if (lastRefreshedString != null) {
+      return DateTime.parse(lastRefreshedString);
+    }
+    return DateTime.now();
   }
 
   // Get Advocate object from SharedPreferences

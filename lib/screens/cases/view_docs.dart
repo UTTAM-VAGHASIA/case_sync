@@ -278,9 +278,7 @@ class DocumentCardState extends State<DocumentCard> {
               onTap: () async {
                 HapticFeedback.mediumImpact();
                 Navigator.pop(context);
-                final filePath =
-                    await _downloadFile(url, tempDir, fileName, false);
-                if (filePath != null) await OpenFile.open(filePath);
+                await _downloadFile(url, tempDir, fileName, false);
               },
             ),
             ListTile(

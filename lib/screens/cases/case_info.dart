@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/cases/view_docs.dart';
+import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
 import 'package:case_sync/screens/interns/tasks.dart';
 import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/foundation.dart';
@@ -15,8 +16,13 @@ import '../../utils/update_stage_modal.dart';
 class CaseInfoPage extends StatefulWidget {
   final String caseId;
   final String caseNo;
+  final bool isUnassigned;
 
-  const CaseInfoPage({super.key, required this.caseId, required this.caseNo});
+  const CaseInfoPage(
+      {super.key,
+      required this.caseId,
+      required this.caseNo,
+      this.isUnassigned = false});
 
   @override
   CaseInfoPageState createState() => CaseInfoPageState();
@@ -280,10 +286,16 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                         final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => TasksPage(
-                              caseId: widget.caseId,
-                              caseNumber: widget.caseNo,
-                            ),
+                            builder: (context) => widget.isUnassigned
+                                ? AddTaskScreen(
+                                    caseNumber: widget.caseNo,
+                                    caseType: _caseDetails['case_type'],
+                                    caseId: widget.caseId,
+                                  )
+                                : TasksPage(
+                                    caseId: widget.caseId,
+                                    caseNumber: widget.caseNo,
+                                  ),
                           ),
                         );
 
@@ -300,9 +312,9 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                           vertical: 14,
                         ),
                       ),
-                      child: const Text(
-                        'View Task',
-                        style: TextStyle(
+                      child: Text(
+                        widget.isUnassigned ? 'Add Task' : 'View Task',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

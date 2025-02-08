@@ -80,10 +80,13 @@ class HomeScreenState extends State<HomeScreen> {
           ;
 
           print("Notification List Added: ${notificationList.value}");
+
+          await SharedPrefService.saveLastRefreshed(DateTime.now());
           return notificationList.value;
         }
       }
     } catch (e) {
+      await SharedPrefService.saveLastRefreshed(DateTime.now());
       print(e);
       _showErrorSnackBar('Failed to fetch data: $e');
     }
@@ -103,6 +106,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
     print("Hellooooo");
 
+    await SharedPrefService.saveLastRefreshed(DateTime.now());
     return [];
   }
 
