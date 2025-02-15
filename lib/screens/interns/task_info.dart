@@ -1,17 +1,18 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 
 import '../../utils/constants.dart';
 
 class TaskInfoPage extends StatefulWidget {
-  final Map<String, dynamic> task;
+  final String taskId;
 
-  const TaskInfoPage({required this.task, super.key});
+  const TaskInfoPage({required this.taskId, super.key});
 
   @override
   _TaskInfoPageState createState() => _TaskInfoPageState();
@@ -23,12 +24,54 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
   String? errorMessage;
   bool isLoading = false;
 
+  Map<String, dynamic> task = {};
   late List<Map<String, dynamic>> sampleTaskHistory = [];
 
   @override
   void initState() {
     super.initState();
+    print(widget.taskId);
+    fetchTaskDetails();
     fetchRemarks();
+  }
+
+  Future<void> fetchTaskDetails() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final url = Uri.parse('$baseUrl/get_task_info');
+      final response = await http.post(url, body: {'task_id': widget.taskId});
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['data'].isNotEmpty) {
+          setState(() {
+            task = List<Map<String, dynamic>>.from(data['data'])[0];
+            if (kDebugMode) {
+              print("Task fetched: $task");
+            }
+            errorMessage = null;
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            errorMessage = "No remarks found for the given task.";
+            isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          errorMessage = "Failed to fetch remarks.";
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "An error occurred: $e";
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> fetchRemarks() async {
@@ -37,8 +80,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
     });
     try {
       final url = Uri.parse('$baseUrl/get_task_history');
-      final response =
-          await http.post(url, body: {'task_id': widget.task['id']});
+      final response = await http.post(url, body: {'task_id': widget.taskId});
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -103,7 +145,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
   }
 
   Widget _buildBody() {
-    return widget.task.isEmpty
+    return task.isEmpty
         ? const Center(
             child: CircularProgressIndicator(
             color: Colors.black,
@@ -116,7 +158,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildDetailsCard(details: widget.task),
+                  _buildDetailsCard(details: task),
                   const SizedBox(height: 16),
                   _buildRemarksCard(),
                 ],
@@ -281,12 +323,12 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
   Widget _buildDetailsCard({required Map<String, dynamic> details}) {
     final Map<String, List<MapEntry<String, dynamic>>> groupedDetails = {
       'General Info': [
-        details.entries.firstWhere((e) => e.key == 'case_num'),
+        details.entries.firstWhere((e) => e.key == 'case_no'),
         details.entries.firstWhere((e) => e.key == 'status'),
       ],
       'Assignment Details': [
-        details.entries.firstWhere((e) => e.key == 'alloted_by'),
-        details.entries.firstWhere((e) => e.key == 'alloted_to'),
+        details.entries.firstWhere((e) => e.key == 'alloted_by_name'),
+        details.entries.firstWhere((e) => e.key == 'alloted_to_name'),
         details.entries.firstWhere((e) => e.key == 'action_by'),
       ],
       'Dates': [
@@ -327,11 +369,11 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildKeyValueRow('Case No.', details['case_num']),
+                          _buildKeyValueRow('Case No.', details['case_no']),
                           _buildKeyValueRow(
-                              'Alloted By', details['alloted_by']),
+                              'Alloted By', details['alloted_by_name']),
                           _buildKeyValueRow(
-                              'Alloted To', details['alloted_to']),
+                              'Alloted To', details['alloted_to_name']),
                           _buildKeyValueRow('Alloted Date',
                               _formatDate(details['alloted_date'])),
                           _buildKeyValueRow('Expected End Date',

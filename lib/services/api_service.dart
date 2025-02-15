@@ -137,14 +137,14 @@ class ApiService {
 }
 
 class CaseApiService {
-  static Future<List<Case>> fetchCaseList() async {
+  static Future<List<CaseListData>> fetchCaseList() async {
     final response = await http.get(Uri.parse('$baseUrl/get_case_history'));
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       if (responseData['success']) {
         final List<dynamic> data = responseData['data'];
-        return data.map((item) => Case.fromJson(item)).toList();
+        return data.map((item) => CaseListData.fromJson(item)).toList();
       } else {
         return [];
       }

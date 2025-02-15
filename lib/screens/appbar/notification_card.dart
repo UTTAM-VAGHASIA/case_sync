@@ -22,15 +22,17 @@ class NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        print(caseItem.toJson());
         HapticFeedback.mediumImpact();
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => TaskInfoPage(
-              task: {},
+              taskId: caseItem.taskId,
             ),
           ),
         );
+        onDismiss(caseItem);
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0),

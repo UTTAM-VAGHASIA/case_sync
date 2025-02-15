@@ -244,7 +244,7 @@ class _TasksPageState extends State<TasksPage> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            TaskInfoPage(task: task),
+                                            TaskInfoPage(taskId: task['id']),
                                       ),
                                     );
                                   },

@@ -8,6 +8,7 @@ import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../services/case_services.dart';
 import '../constants/date_constants.dart';
+import 'editing_forms/edit_case.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
@@ -23,7 +24,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  List<Case> _filteredCases = [];
+  List<CaseListData> _filteredCases = [];
   int _currentResultIndex = 0;
   List<String> _resultTabs = [];
   late List<String> monthsWithCases;
@@ -163,7 +164,7 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
     });
   }
 
-  List<Case> _filterCases(List<Case> cases) {
+  List<CaseListData> _filterCases(List<CaseListData> cases) {
     return cases.where((caseItem) {
       return caseItem.caseNo.toLowerCase().contains(_searchQuery) ||
           caseItem.courtName.toLowerCase().contains(_searchQuery) ||

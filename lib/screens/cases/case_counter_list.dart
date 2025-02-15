@@ -19,8 +19,8 @@ class CounterCases extends StatefulWidget {
 
 class CounterCasesState extends State<CounterCases> {
   bool _isLoading = true;
-  List<Case> _caseList = [];
-  List<Case> _filteredCases = [];
+  List<CaseListData> _caseList = [];
+  List<CaseListData> _filteredCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -62,7 +62,7 @@ class CounterCasesState extends State<CounterCases> {
             print("Started");
           }
           _caseList = (data['data'] as List)
-              .map((item) => Case.fromJson(item))
+              .map((item) => CaseListData.fromJson(item))
               .toList();
           print(_caseList.length);
           if (isOnPage) {

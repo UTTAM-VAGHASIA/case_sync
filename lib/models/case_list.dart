@@ -1,4 +1,4 @@
-class Case {
+class CaseListData {
   final String id;
   final String caseNo;
   final String handleBy;
@@ -14,7 +14,7 @@ class Case {
   final DateTime dateOfFiling;
   final DateTime nextDate;
 
-  Case({
+  CaseListData({
     required this.id,
     required this.caseNo,
     required this.handleBy,
@@ -31,8 +31,8 @@ class Case {
     required this.caseCounter,
   });
 
-  factory Case.fromJson(Map<String, dynamic> json) {
-    return Case(
+  factory CaseListData.fromJson(Map<String, dynamic> json) {
+    return CaseListData(
       id: json['id'] ?? '',
       caseNo: json['case_no'] ?? '',
       handleBy: json['handle_by'] ?? '',

@@ -8,7 +8,8 @@ import 'package:http/http.dart' as http;
 
 import '../../components/case_card.dart'; // Import your CaseCard component
 import '../../components/list_app_bar.dart';
-import '../../models/case_list.dart'; // Import your CaseListData model
+import '../../models/case_list.dart';
+import 'editing_forms/edit_case.dart'; // Import your CaseListData model
 
 class AssignedCases extends StatefulWidget {
   const AssignedCases({super.key});
@@ -19,8 +20,8 @@ class AssignedCases extends StatefulWidget {
 
 class AssignedCasesState extends State<AssignedCases> {
   bool _isLoading = true;
-  List<Case> _assignedCases = [];
-  List<Case> _filteredCases = [];
+  List<CaseListData> _assignedCases = [];
+  List<CaseListData> _filteredCases = [];
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -62,7 +63,7 @@ class AssignedCasesState extends State<AssignedCases> {
             print("Started");
           }
           _assignedCases = (data['data'] as List)
-              .map((item) => Case.fromJson(item))
+              .map((item) => CaseListData.fromJson(item))
               .toList();
           if (isOnPage) {
             setState(() {

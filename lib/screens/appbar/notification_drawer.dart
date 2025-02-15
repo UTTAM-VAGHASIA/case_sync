@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../../models/notification.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/constants.dart';
 import 'notification_card.dart';
 
 class NotificationDrawer extends StatefulWidget {
@@ -41,13 +45,43 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    void removeCase(Notifications caseItem) {
-      setState(() {
-        if (kDebugMode) {
-          print("Removed: ${caseItem.msg}");
+    void removeCase(Notifications caseItem) async {
+      final String url = "$baseUrl/read_notification";
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(url),
+      );
+      request.fields['not_id'] = caseItem.id;
+
+      try {
+        final response = await request.send();
+
+        if (response.statusCode == 200) {
+          var ResponseData = await response.stream.bytesToString();
+          final Map<String, dynamic> responseData = jsonDecode(ResponseData);
+          if (responseData["success"] == true) {
+            if (kDebugMode) {
+              print("Removed: ${caseItem.id}");
+            }
+            setState(() {
+              caseList.removeWhere((c) => c.id == caseItem.id);
+            });
+          } else {
+            if (kDebugMode) {
+              print("Error: ${responseData['message']}");
+            }
+          }
+        } else {
+          if (kDebugMode) {
+            print("Failed to call API. Status Code: ${response.statusCode}");
+          }
         }
-        caseList.removeWhere((c) => c.id == caseItem.id);
-      });
+      } catch (e) {
+        if (kDebugMode) {
+          print("Exception: $e");
+        }
+      }
     }
 
     final screenHeight = MediaQuery.of(context).size.height;

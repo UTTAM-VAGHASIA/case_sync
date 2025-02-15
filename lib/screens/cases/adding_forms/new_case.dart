@@ -8,9 +8,9 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import '../../models/advocate.dart';
-import '../../services/shared_pref.dart';
-import '../../utils/constants.dart';
+import '../../../models/advocate.dart';
+import '../../../services/shared_pref.dart';
+import '../../../utils/constants.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -390,6 +390,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
               .add(await http.MultipartFile.fromPath('case_docs[]', docPath));
         }
       }
+      print("Case Image: ${request.files[0].filename}");
+      print("Case Docs: ${request.files[1].filename}");
+      print("Case Docs: ${request.files[2].filename}");
+      print("Case Docs: ${request.files[3].filename}");
 
       // Send the request
       var response = await request.send();
