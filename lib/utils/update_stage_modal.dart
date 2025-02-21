@@ -57,19 +57,19 @@ class UpdateStageModalState extends State<UpdateStageModal> {
 
       print(request.fields['data']);
 
-      var response = await request.send();
-      var responseData = await response.stream.bytesToString();
-      var data = jsonDecode(responseData);
-
-      if (data['success'] == true) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text("Stage updated successfully!")),
-        );
-      } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(data['message'] ?? "Failed to update.")),
-        );
-      }
+      // var response = await request.send();
+      // var responseData = await response.stream.bytesToString();
+      // var data = jsonDecode(responseData);
+      //
+      // if (data['success'] == true) {
+      //   scaffoldMessenger.showSnackBar(
+      //     const SnackBar(content: Text("Stage updated successfully!")),
+      //   );
+      // } else {
+      //   scaffoldMessenger.showSnackBar(
+      //     SnackBar(content: Text(data['message'] ?? "Failed to update.")),
+      //   );
+      // }
     } catch (e) {
       scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text("An error occurred.")),
