@@ -90,18 +90,29 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                 final currentStageName = _caseDetails['stage_name'];
 
                 final matchingStage = stageList.firstWhere(
-                  (stage) => stage['stage'] == currentStageName,
+                      (stage) => stage['stage'] == currentStageName,
                   orElse: () => <String, dynamic>{},
                 );
 
                 print(matchingStage['id']);
 
-                selectedStage = matchingStage.isNotEmpty
-                    ? matchingStage['id']?.toString()
-                    : null;
+                // Check if matchingStage is not empty
+                if (matchingStage.isNotEmpty) {
+                  final currentStageIndex = stageList.indexOf(matchingStage);
+
+                  // If the current stage is the last in the list, don't increment the stage
+                  if (currentStageIndex < stageList.length - 1) {
+                    selectedStage = (int.parse(matchingStage['id']) + 1).toString();
+                  } else {
+                    selectedStage = matchingStage['id']; // Keep the current stage if it's the last one
+                  }
+                } else {
+                  selectedStage = null;
+                }
 
                 print(selectedStage);
               }
+
 
               _isLoading = false;
             });
@@ -157,7 +168,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
           .toList(),
       'Legal Details': details.entries
           .where((e) =>
-              ['Current Stage', 'Next Stage', 'Court', 'City'].contains(e.key))
+              ['Current Stage', 'Court', 'City'].contains(e.key))
           .toList(),
       'Advocates': details.entries
           .where((e) => [
@@ -473,17 +484,6 @@ class CaseInfoPageState extends State<CaseInfoPage> {
   }
 
   Future<void> _showUpdateStageModal() async {
-    final currentStageName = _caseDetails['stage_name'];
-
-    // Find stage ID for current stage name
-    final matchingStage = stageList.firstWhere(
-      (stage) => stage['name'] == currentStageName,
-      orElse: () => <String, dynamic>{},
-    );
-
-    final currentStageId =
-        matchingStage.isNotEmpty ? matchingStage['id']?.toString() : null;
-
     // Pass stage ID, not name
     await showModalBottomSheet(
       context: context,
@@ -497,5 +497,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
         );
       },
     );
+
+    fetchCaseInfo();
   }
 }
