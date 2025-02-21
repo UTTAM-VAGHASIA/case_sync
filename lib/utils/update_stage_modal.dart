@@ -26,6 +26,7 @@ class UpdateStageModal extends StatefulWidget {
 }
 
 class UpdateStageModalState extends State<UpdateStageModal> {
+  final _remarkController = TextEditingController();
   late DateTime selectedDate;
   String? selectedStage;
 
@@ -36,6 +37,12 @@ class UpdateStageModalState extends State<UpdateStageModal> {
     selectedStage = widget.initialStage;
   }
 
+  @override
+  void dispose() {
+    _remarkController.dispose();
+    super.dispose();
+  }
+
   Future<void> _updateNextStage(DateTime nextDate, String nextStage) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
@@ -44,8 +51,11 @@ class UpdateStageModalState extends State<UpdateStageModal> {
       request.fields['data'] = jsonEncode({
         "case_id": widget.caseId,
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
-        "next_stage": nextStage
+        "next_stage": nextStage,
+        "remark": _remarkController.text,
       });
+
+      print(request.fields['data']);
 
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
@@ -139,6 +149,12 @@ class UpdateStageModalState extends State<UpdateStageModal> {
             }).toList(),
             onChanged: (value) => setState(() => selectedStage = value),
           ),
+          const SizedBox(height: 16,),
+          _buildTextField(
+            hint: 'Add Remark Here',
+            controller: _remarkController,
+            maxLines: null,
+          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
@@ -157,6 +173,34 @@ class UpdateStageModalState extends State<UpdateStageModal> {
           const SizedBox(height: 16),
         ],
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String hint,
+    required TextEditingController controller,
+    bool readOnly = false,
+    int? maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          readOnly: readOnly,
+          maxLines: maxLines,
+          keyboardType: TextInputType.multiline,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            hintText: hint,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

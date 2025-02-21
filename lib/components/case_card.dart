@@ -7,7 +7,7 @@ import '../models/case_list.dart';
 import '../screens/cases/case_info.dart';
 
 class CaseCard extends StatelessWidget {
-  final Case caseItem;
+  final CaseListData caseItem;
   final bool isHighlighted;
   final bool isTask;
   final bool isUnassigned;
