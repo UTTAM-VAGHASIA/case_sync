@@ -84,6 +84,25 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                 'date_of_filing': parseDate(caseData['date_of_filing']),
                 'case_counter': caseData['case_counter'],
               };
+
+              if (_caseDetails['stage_name'] != null) {
+                print(("${_caseDetails['stage_name']}"));
+                final currentStageName = _caseDetails['stage_name'];
+
+                final matchingStage = stageList.firstWhere(
+                  (stage) => stage['stage'] == currentStageName,
+                  orElse: () => <String, dynamic>{},
+                );
+
+                print(matchingStage['id']);
+
+                selectedStage = matchingStage.isNotEmpty
+                    ? matchingStage['id']?.toString()
+                    : null;
+
+                print(selectedStage);
+              }
+
               _isLoading = false;
             });
           }
@@ -113,10 +132,6 @@ class CaseInfoPageState extends State<CaseInfoPage> {
           stageList = List<Map<String, dynamic>>.from(data['data']);
           if (kDebugMode) {
             print(stageList);
-          }
-          selectedStage = stageList.isNotEmpty ? stageList.first['id'] : null;
-          if (kDebugMode) {
-            print(selectedStage);
           }
         });
       }
@@ -458,6 +473,18 @@ class CaseInfoPageState extends State<CaseInfoPage> {
   }
 
   Future<void> _showUpdateStageModal() async {
+    final currentStageName = _caseDetails['stage_name'];
+
+    // Find stage ID for current stage name
+    final matchingStage = stageList.firstWhere(
+      (stage) => stage['name'] == currentStageName,
+      orElse: () => <String, dynamic>{},
+    );
+
+    final currentStageId =
+        matchingStage.isNotEmpty ? matchingStage['id']?.toString() : null;
+
+    // Pass stage ID, not name
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -465,11 +492,10 @@ class CaseInfoPageState extends State<CaseInfoPage> {
         return UpdateStageModal(
           caseId: widget.caseId,
           initialDate: _caseDetails['next_date'] ?? DateTime.now(),
-          initialStage: selectedStage ?? '0',
+          initialStage: selectedStage,
           stageList: stageList,
         );
       },
     );
-    await fetchCaseInfo();
   }
 }
