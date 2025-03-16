@@ -1,0 +1,151 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+
+import '../../constants/constants.dart';
+import 'document_card.dart';
+
+class ViewDocsPage extends StatefulWidget {
+  final String caseId;
+  final String caseNo;
+
+  const ViewDocsPage({super.key, required this.caseId, required this.caseNo});
+
+  @override
+  State<ViewDocsPage> createState() => _ViewDocsPageState();
+}
+
+class _ViewDocsPageState extends State<ViewDocsPage>
+    with AutomaticKeepAliveClientMixin {
+  final List<Map<String, dynamic>> _documents = [];
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDocuments();
+  }
+
+  Future<void> _fetchDocuments() async {
+    _documents.clear();
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/get_case_documents'),
+        body: {'case_no': widget.caseId},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'].isNotEmpty) {
+          if (!mounted) return;
+          setState(() {
+            // Parse the fetched data
+            final fetchedDocuments =
+                List<Map<String, dynamic>>.from(data['data']);
+
+            // Remove duplicates by ensuring unique `file_id`
+            final existingFileIds =
+                _documents.map((doc) => doc['file_id']).toSet();
+            final filteredDocuments = fetchedDocuments.where((doc) {
+              return !existingFileIds.contains(doc['file_id']);
+            }).toList();
+
+            // Add only unique documents
+            _documents.addAll(filteredDocuments);
+            if (kDebugMode) {
+              print("Filtered unique documents: $_documents");
+            }
+          });
+        } else {
+          if (!mounted) return;
+          setState(() => _errorMessage = 'No documents available.');
+        }
+      } else {
+        if (!mounted) return;
+        setState(() => _errorMessage =
+            'Failed to fetch documents. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = 'An error occurred: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator(color: Colors.black))
+          else if (_errorMessage.isNotEmpty)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_errorMessage, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      _fetchDocuments();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
+          else
+            RefreshIndicator(
+              color: Colors.black,
+              onRefresh: () async {
+                setState(() {
+                  _fetchDocuments();
+                });
+              },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(
+                      color: Colors.black,
+                      width: 1,
+                    ),
+                  ),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(8.0),
+                    itemCount: _documents.length,
+                    itemBuilder: (context, index) => DocumentCard(
+                      doc: _documents[index],
+                      caseNo: widget.caseNo,
+                      onEditSuccess: _fetchDocuments,
+                    ),
+                  ),
+                ),
+              ),
+            )
+        ],
+      ),
+    );
+  }
+}

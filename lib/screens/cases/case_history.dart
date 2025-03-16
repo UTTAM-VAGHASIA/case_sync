@@ -1,14 +1,12 @@
+import 'package:case_sync/components/case_card.dart';
+import 'package:case_sync/components/list_app_bar.dart';
 import 'package:case_sync/models/case_list.dart';
+import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/services/case_services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
-
-import '../../components/case_card.dart';
-import '../../components/list_app_bar.dart';
-import '../../services/case_services.dart';
-import '../constants/date_constants.dart';
-import 'editing_forms/edit_case.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
@@ -138,8 +136,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
       }
 
       // Debug print to check the filtered results
-      print('Filtered Cases: $_filteredCases');
-      print('Result Tabs: $_resultTabs');
+      if (kDebugMode) {
+        print('Filtered Cases: $_filteredCases');
+        print('Result Tabs: $_resultTabs');
+      }
 
       // If no results, search other years
       if (_filteredCases.isEmpty) {

@@ -7,7 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import '../../utils/constants.dart';
+import '../constants/constants.dart';
 
 class TaskInfoPage extends StatefulWidget {
   final String taskId;
@@ -19,7 +19,7 @@ class TaskInfoPage extends StatefulWidget {
 }
 
 class _TaskInfoPageState extends State<TaskInfoPage> {
-  bool _isCollapsed = true;
+  bool _isCollapsed = false;
   bool _isRemarksCollapsed = true;
   String? errorMessage;
   bool isLoading = false;
@@ -45,9 +45,10 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['data'].isNotEmpty) {
+        if (data['data'] is List && data['data'].isNotEmpty) {
           setState(() {
-            task = List<Map<String, dynamic>>.from(data['data'])[0];
+            task =
+                Map<String, dynamic>.from(data['data'][0]); // Safe conversion
             if (kDebugMode) {
               print("Task fetched: $task");
             }
@@ -56,13 +57,13 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
           });
         } else {
           setState(() {
-            errorMessage = "No remarks found for the given task.";
+            errorMessage = "No task found for the given ID.";
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = "Failed to fetch remarks.";
+          errorMessage = "Failed to fetch task details.";
           isLoading = false;
         });
       }
@@ -207,12 +208,16 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                     color: Colors.black,
                   ),
                   const SizedBox(height: 8),
+
+                  // Show loading indicator
                   if (isLoading)
-                    Center(
+                    const Center(
                       child: LinearProgressIndicator(
                         color: Colors.black,
                       ),
                     )
+
+                  // Show error message
                   else if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
@@ -224,6 +229,21 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                         ),
                       ),
                     )
+
+                  // Show empty remarks message
+                  else if (sampleTaskHistory.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        "No remarks available.",
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    )
+
+                  // Show remarks when collapsed
                   else if (_isRemarksCollapsed)
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -237,29 +257,31 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            sampleTaskHistory[0]['remarks'],
-                            style: TextStyle(
+                            sampleTaskHistory.first['remarks'],
+                            // Safe access
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: Colors.black,
                             ),
                           ),
-                          const Divider(
-                            thickness: 2,
-                            color: Colors.black,
-                          ),
+                          const Divider(thickness: 2, color: Colors.black),
                           const SizedBox(height: 8),
                           _buildKeyValueRow(
-                              'Stage', sampleTaskHistory[0]['stage']),
+                              'Stage', sampleTaskHistory.first['stage']),
                           _buildKeyValueRow('Date of Submission',
-                              _formatDate(sampleTaskHistory[0]['dos'])),
-                          _buildKeyValueRow('Date Time',
-                              _formatDate(sampleTaskHistory[0]['date_time'])),
+                              _formatDate(sampleTaskHistory.first['dos'])),
                           _buildKeyValueRow(
-                              'Status', sampleTaskHistory[0]['status']),
+                              'Date Time',
+                              _formatDate(
+                                  sampleTaskHistory.first['date_time'])),
+                          _buildKeyValueRow(
+                              'Status', sampleTaskHistory.first['status']),
                         ],
                       ),
                     )
+
+                  // Show full remarks list when expanded
                   else
                     Column(
                       children: sampleTaskHistory.map((entry) {
@@ -276,16 +298,13 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                             children: [
                               Text(
                                 entry['remarks'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.black,
                                 ),
                               ),
-                              const Divider(
-                                thickness: 2,
-                                color: Colors.black,
-                              ),
+                              const Divider(thickness: 2, color: Colors.black),
                               const SizedBox(height: 8),
                               _buildKeyValueRow('Stage', entry['stage']),
                               _buildKeyValueRow('Date of Submission',
@@ -298,7 +317,10 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                         );
                       }).toList(),
                     ),
-                  if (!isLoading && errorMessage == null)
+
+                  if (!isLoading &&
+                      errorMessage == null &&
+                      sampleTaskHistory.isNotEmpty)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [

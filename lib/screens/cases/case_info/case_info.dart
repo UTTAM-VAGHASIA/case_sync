@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/cases/view_docs.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
 import 'package:case_sync/screens/interns/tasks.dart';
-import 'package:case_sync/utils/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,7 +11,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import '../../utils/update_stage_modal.dart';
+import '../../../utils/update_stage_modal.dart';
 
 class CaseInfoPage extends StatefulWidget {
   final String caseId;
@@ -69,11 +69,11 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                 'case_no': caseData['case_no'],
                 'year': caseData['year'],
                 'case_type': caseData['case_type'],
-                'stage_name': caseData['stage_name'],
+                'stage': caseData['stage'],
                 'company_name': caseData['company_name'],
-                'advocate_name': caseData['advocate_name'],
+                'handled_by': caseData['advocate_name'],
                 'applicant': caseData['applicant'],
-                'opp_name': caseData['opp_name'],
+                'opponent': caseData['opp_name'],
                 'court_name': caseData['court_name'],
                 'city_name': caseData['city_name'],
                 'next_date': parseDate(caseData['next_date']),
@@ -90,7 +90,7 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                 final currentStageName = _caseDetails['stage_name'];
 
                 final matchingStage = stageList.firstWhere(
-                      (stage) => stage['stage'] == currentStageName,
+                  (stage) => stage['stage'] == currentStageName,
                   orElse: () => <String, dynamic>{},
                 );
 
@@ -102,9 +102,11 @@ class CaseInfoPageState extends State<CaseInfoPage> {
 
                   // If the current stage is the last in the list, don't increment the stage
                   if (currentStageIndex < stageList.length - 1) {
-                    selectedStage = (int.parse(matchingStage['id']) + 1).toString();
+                    selectedStage =
+                        (int.parse(matchingStage['id']) + 1).toString();
                   } else {
-                    selectedStage = matchingStage['id']; // Keep the current stage if it's the last one
+                    selectedStage = matchingStage[
+                        'id']; // Keep the current stage if it's the last one
                   }
                 } else {
                   selectedStage = null;
@@ -112,7 +114,6 @@ class CaseInfoPageState extends State<CaseInfoPage> {
 
                 print(selectedStage);
               }
-
 
               _isLoading = false;
             });
@@ -166,9 +167,12 @@ class CaseInfoPageState extends State<CaseInfoPage> {
           .where(
               (e) => ['Case Year', 'Case Type', 'Case Counter'].contains(e.key))
           .toList(),
+      'Clients': details.entries
+          .where((e) => ['Plaintiff Name', 'Opponent Name', 'Company Name']
+              .contains(e.key))
+          .toList(),
       'Legal Details': details.entries
-          .where((e) =>
-              ['Current Stage', 'Court', 'City'].contains(e.key))
+          .where((e) => ['Current Stage', 'Court', 'City'].contains(e.key))
           .toList(),
       'Advocates': details.entries
           .where((e) => [
@@ -449,11 +453,12 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                           details: {
                             'Case Year': _caseDetails['year'],
                             'Case Type': _caseDetails['case_type'],
-                            'Current Stage': _caseDetails['stage_name'],
+                            'Current Stage': _caseDetails['stage'],
                             'Next Stage': _caseDetails['next_stage'],
                             'Company Name': _caseDetails['company_name'],
                             'Plaintiff Name': _caseDetails['applicant'],
                             'Opponent Name': _caseDetails['opp_name'],
+                            'Handled By': _caseDetails['handled_by'],
                             'Complainant Advocate':
                                 _caseDetails['complainant_advocate'],
                             'Respondent Advocate':

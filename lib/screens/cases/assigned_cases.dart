@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import '../../components/case_card.dart'; // Import your CaseCard component
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
-import 'editing_forms/edit_case.dart'; // Import your CaseListData model
 
 class AssignedCases extends StatefulWidget {
   const AssignedCases({super.key});

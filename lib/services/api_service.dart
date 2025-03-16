@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/case_list.dart';
-import '../utils/constants.dart';
+import '../screens/constants/constants.dart';
 
 class ApiService {
   static const Map<String, String> headers = {
@@ -20,11 +20,9 @@ class ApiService {
       );
       request.fields.addAll({'data': jsonEncode(bodyData)});
       request.headers.addAll(headers);
-
+      print("MERA DATA:" + request.fields.toString());
       // Send the request and handle timeout
-      http.StreamedResponse response =
-          await request.send().timeout(const Duration(seconds: 10));
-
+      http.StreamedResponse response = await request.send();
       // Handle response status
       if (response.statusCode == 200) {
         String responseBody = await response.stream.bytesToString();
@@ -51,6 +49,7 @@ class ApiService {
         };
       }
     } catch (error) {
+      print("Error: $error");
       return {'success': false, 'message': false};
     }
   }
@@ -58,6 +57,7 @@ class ApiService {
   // Login user method
   static Future<Map<String, dynamic>> loginUser(
       String email, String password) async {
+    print("I am here ");
     return _sendRequest(
       '/login_advocate',
       {

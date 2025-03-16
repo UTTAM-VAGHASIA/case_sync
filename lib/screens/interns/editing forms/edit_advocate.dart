@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -10,6 +10,7 @@ import '../../../utils/validator.dart';
 
 class EditAdvocateScreen extends StatefulWidget {
   final Map<String, dynamic> advocate;
+
   const EditAdvocateScreen({
     super.key,
     required this.advocate,

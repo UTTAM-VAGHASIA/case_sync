@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
 import 'package:case_sync/screens/interns/editing%20forms/edit_task.dart';
 import 'package:case_sync/screens/interns/task_info.dart';
-import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -98,7 +98,9 @@ class _TasksPageState extends State<TasksPage> {
         if (data['success'] == true) {
           setState(() {
             _tasks = List<Map<String, dynamic>>.from(data['data']);
-            print('Task Details: ${_tasks[0]}');
+            if (kDebugMode) {
+              print('Task Details: ${_tasks[0]}');
+            }
           });
         } else {
           _showError(data['message'] ?? "No tasks found.");
@@ -116,6 +118,7 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Future<void> _deleteTask(String taskId) async {
+    var scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       final url = Uri.parse('$baseUrl/delete_task');
       final response = await http.post(url, body: {'task_id': taskId});
@@ -126,7 +129,7 @@ class _TasksPageState extends State<TasksPage> {
           setState(() {
             _tasks.removeWhere((task) => task['id'] == taskId);
           });
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text("Task deleted successfully.")),
           );
         } else {
@@ -146,7 +149,9 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Future<void> _handleEdit(Map<String, dynamic> task) async {
-    print("Edit task: ${task['instruction']}");
+    if (kDebugMode) {
+      print("Edit task: ${task['instruction']}");
+    }
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -159,7 +164,9 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   void _handleDelete(Map<String, dynamic> task) {
-    print("Delete task: ${task['instruction']}");
+    if (kDebugMode) {
+      print("Delete task: ${task['instruction']}");
+    }
     _deleteTask(task['id']);
   }
 
@@ -185,8 +192,9 @@ class _TasksPageState extends State<TasksPage> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-              color: Colors.black,
-            ))
+                color: Colors.black,
+              ),
+            )
           : _tasks.isEmpty
               ? const Center(child: Text("No tasks found for this case."))
               : Padding(
@@ -302,20 +310,6 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   String _monthName(int month) {
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December"
-    ];
     return months[month - 1];
   }
 }

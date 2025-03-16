@@ -1,7 +1,7 @@
 import 'dart:convert'; // For JSON decoding
 
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/screens/interns/adding%20forms/new_advocate.dart';
-import 'package:case_sync/utils/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

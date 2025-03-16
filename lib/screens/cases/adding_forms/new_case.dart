@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
-import '../../../utils/constants.dart';
+import '../../constants/constants.dart';
 
 class NewCaseScreen extends StatefulWidget {
   const NewCaseScreen({super.key});
@@ -26,6 +26,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   final TextEditingController _caseYearController = TextEditingController();
   final TextEditingController _applicantController = TextEditingController();
   final TextEditingController _opponentController = TextEditingController();
+  final TextEditingController _remarkController = TextEditingController();
   final TextEditingController _complainantAdvocateController =
       TextEditingController();
   final TextEditingController _respondentAdvocateController =
@@ -39,9 +40,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
       DateFormat('dd/MM/yyyy').format(DateTime.now());
   String _selectedFilingDateApi =
       DateFormat('yyyy/MM/dd').format(DateTime.now());
-  String _selectedNextDateDisplay =
-      DateFormat('dd/MM/yyyy').format(DateTime.now());
-  String _selectedNextDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
+
+  // String _selectedNextDateDisplay =
+  //     DateFormat('dd/MM/yyyy').format(DateTime.now());
+  // String _selectedNextDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
   String? _selectedCaseType;
   String? _selectedHandler;
   String? _selectedCompany;
@@ -62,7 +64,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   bool _isLoading = true;
   bool _isSummoned = false;
   bool _isFiled = false;
-  bool _isNextDateGiven = false;
+
+  // bool _isNextDateGiven = false;
 
   @override
   void dispose() {
@@ -70,6 +73,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     _caseYearController.dispose();
     _applicantController.dispose();
     _opponentController.dispose();
+    _remarkController.dispose();
     _respondentAdvocateController.dispose();
     _complainantAdvocateController.dispose();
     super.dispose();
@@ -252,27 +256,27 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     }
   }
 
-  Future<void> _selectNextDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1800),
-      lastDate: DateTime(2200),
-    );
-    if (picked != null) {
-      setState(() {
-        final date = DateFormat('dd/MM/yyyy').format(picked);
-        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
-        if (_isNextDateGiven) {
-          _selectedNextDateDisplay = date;
-          _selectedNextDateApi = apiDate;
-          print('Next Date Api: $_selectedNextDateApi');
-        }
-      });
-
-      FocusManager.instance.primaryFocus?.unfocus();
-    }
-  }
+  // Future<void> _selectNextDate(BuildContext context) async {
+  //   final DateTime? picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: DateTime.now(),
+  //     firstDate: DateTime(1800),
+  //     lastDate: DateTime(2200),
+  //   );
+  //   if (picked != null) {
+  //     setState(() {
+  //       final date = DateFormat('dd/MM/yyyy').format(picked);
+  //       final apiDate = DateFormat('yyyy/MM/dd').format(picked);
+  //       if (_isNextDateGiven) {
+  //         _selectedNextDateDisplay = date;
+  //         _selectedNextDateApi = apiDate;
+  //         print('Next Date Api: $_selectedNextDateApi');
+  //       }
+  //     });
+  //
+  //     FocusManager.instance.primaryFocus?.unfocus();
+  //   }
+  // }
 
   Future<void> _pickDocuments() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -366,9 +370,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         )['id'],
         "sr_date": _selectedSummonDateApi,
         "date_of_filing": _selectedFilingDateApi,
-        "next_date": _selectedNextDateApi,
+        "next_date": _selectedSummonDateApi,
         "complainant_advocate": _complainantAdvocateController.text,
         "respondent_advocate": _respondentAdvocateController.text,
+        "remarks": _remarkController.text,
       });
 
       print("##########################################");
@@ -390,10 +395,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
               .add(await http.MultipartFile.fromPath('case_docs[]', docPath));
         }
       }
-      print("Case Image: ${request.files[0].filename}");
-      print("Case Docs: ${request.files[1].filename}");
-      print("Case Docs: ${request.files[2].filename}");
-      print("Case Docs: ${request.files[3].filename}");
 
       // Send the request
       var response = await request.send();
@@ -430,7 +431,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
             backgroundColor: Colors.red,
           ),
         );
-        print('Error: ${response.statusCode}');
+        print('Error hua hai: ${response.statusCode}');
       }
     } catch (e) {
       scaffoldMessenger.showSnackBar(
@@ -637,23 +638,12 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                         });
                       },
                     ),
-                    _buildDateField(
-                      label: 'Next Date',
-                      child: Text(
-                        _selectedNextDateDisplay,
-                        style: TextStyle(
-                          color:
-                              _isNextDateGiven ? Colors.black : Colors.black54,
-                          fontSize: 16,
-                        ),
-                      ),
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        setState(() {
-                          _isNextDateGiven = true;
-                          _selectNextDate(context);
-                        });
-                      },
+                    _buildTextField(
+                      'Remarks',
+                      'Enter Remark Here',
+                      _remarkController,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
                     ),
                     _buildFilePickerField(
                         'Attach Documents', 'Attach Documents', _pickDocuments),
@@ -748,7 +738,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   Widget _buildTextField(
       String label, String hintText, TextEditingController controller,
       {TextInputType keyboardType = TextInputType.text,
-      String? Function(String?)? validator}) {
+      String? Function(String?)? validator,
+      int? maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -757,6 +748,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(

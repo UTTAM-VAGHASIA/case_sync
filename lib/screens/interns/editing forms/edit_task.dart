@@ -7,8 +7,8 @@ import 'package:intl/intl.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
-import '../../../utils/constants.dart';
 import '../../../utils/validator.dart';
+import '../../constants/constants.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final Map<String, dynamic> taskDetails;

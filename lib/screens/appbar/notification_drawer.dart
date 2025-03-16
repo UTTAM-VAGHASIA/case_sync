@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/notification.dart';
 import '../../services/shared_pref.dart';
-import '../../utils/constants.dart';
+import '../constants/constants.dart';
 import 'notification_card.dart';
 
 class NotificationDrawer extends StatefulWidget {

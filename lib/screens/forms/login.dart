@@ -7,8 +7,8 @@ import '../../components/basic_ui_component.dart';
 import '../../models/advocate.dart';
 import '../../services/api_service.dart';
 import '../../services/shared_pref.dart';
-import '../../utils/validator.dart'; // Import your validators
-import '../home.dart';
+import '../../utils/validator.dart';
+import '../home.dart'; // Import your validators
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -78,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           Get.offAll(() => const HomeScreen());
         } else {
+          print("response['success']${response["success"]}");
           if (response['message'] == false) {
             Get.snackbar('Error',
                 'Login failed because of no Internet Connection. Check the Internet Connection and try again.');

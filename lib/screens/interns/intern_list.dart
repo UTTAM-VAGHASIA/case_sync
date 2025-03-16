@@ -1,6 +1,6 @@
 import 'dart:convert'; // For JSON decoding
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -227,7 +227,8 @@ class InternListScreenState extends State<InternListScreen> {
                                     ),
                                     const SizedBox(height: 5.0),
                                     Text(
-                                      'Email: ${intern['email']}', // Displaying email dynamically
+                                      'Email: ${intern['email']}',
+                                      // Displaying email dynamically
                                       style: const TextStyle(
                                         fontSize: 14.0,
                                       ),

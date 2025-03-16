@@ -1,6 +1,7 @@
 import 'dart:convert';
+import 'dart:developer';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,6 @@ import 'package:http/http.dart' as http;
 import '../../components/case_card.dart'; // Import CaseCard widget
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
-import 'editing_forms/edit_case.dart'; // Import CaseListData model
 
 class UnassignedCases extends StatefulWidget {
   const UnassignedCases({super.key});
@@ -59,6 +59,8 @@ class UnassignedCasesState extends State<UnassignedCases> {
         final data = jsonDecode(response.body);
 
         if (data['success'] == true) {
+          log(data['data'].toString());
+          log(data['data'][0]['date_of_filing'].toString());
           _unassignedCases = (data['data'] as List)
               .map((item) => CaseListData.fromJson(item))
               .toList();
@@ -72,6 +74,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
               _courts.addAll(
                 _unassignedCases.map((caseItem) => caseItem.courtName).toSet(),
               );
+              _errorMessage = '';
             });
           }
           return _unassignedCases.length;
@@ -244,6 +247,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
                                 itemCount: _filteredCases.length,
                                 itemBuilder: (context, index) {
                                   final caseItem = _filteredCases[index];
+                                  print(index.toString());
                                   return CaseCard(
                                     caseItem: caseItem,
                                     isUnassigned: true,

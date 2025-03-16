@@ -1,13 +1,17 @@
 import 'dart:convert';
 
+import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import 'constants.dart';
+import '../screens/constants/constants.dart';
 
 class UpdateStageModal extends StatefulWidget {
+  final String? proceedingId;
+  final String? insertedBy;
+  final bool isEditing;
   final String caseId;
   final DateTime initialDate;
   final String? initialStage;
@@ -15,10 +19,13 @@ class UpdateStageModal extends StatefulWidget {
 
   const UpdateStageModal({
     super.key,
+    this.proceedingId,
     required this.initialDate,
     required this.initialStage,
     required this.stageList,
     required this.caseId,
+    this.isEditing = false,
+    this.insertedBy,
   });
 
   @override
@@ -34,7 +41,16 @@ class UpdateStageModalState extends State<UpdateStageModal> {
   void initState() {
     super.initState();
     selectedDate = widget.initialDate;
-    selectedStage = widget.initialStage;
+    selectedStage = widget.stageList
+            .any((item) => item['id'].toString() == widget.initialStage)
+        ? widget.initialStage
+        : null;
+
+    print("UpdateStageModal");
+    print("Initial date: ${DateFormat('yyyy/MM/dd').format(selectedDate)}");
+    print("Initial stage: $selectedStage");
+    print("Stage list: ${widget.stageList}");
+    print("Case ID: $widget.caseId");
   }
 
   @override
@@ -45,14 +61,53 @@ class UpdateStageModalState extends State<UpdateStageModal> {
 
   Future<void> _updateNextStage(DateTime nextDate, String nextStage) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final String advocateId = (await SharedPrefService.getUser())!.id;
     try {
-      final url = Uri.parse('$baseUrl/next_stage');
+      final url = Uri.parse('$baseUrl/proceed_case_add');
       var request = http.MultipartRequest("POST", url);
       request.fields['data'] = jsonEncode({
         "case_id": widget.caseId,
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
         "next_stage": nextStage,
-        // "remark": _remarkController.text,
+        "remark": _remarkController.text,
+        "inserted_by": advocateId,
+      });
+
+      print(request.fields['data']);
+
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      var data = jsonDecode(responseData);
+
+      if (data['success'] == true) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text("Stage updated successfully!")),
+        );
+      } else {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(data['message'] ?? "Failed to update.")),
+        );
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text("An error occurred.")),
+      );
+    }
+  }
+
+  Future<void> _editProceeding(String proceedingId, String caseId,
+      DateTime nextDate, String nextStage, String advocateId) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    try {
+      final url = Uri.parse('$baseUrl/proceed_case_edit');
+      var request = http.MultipartRequest("POST", url);
+      request.fields['data'] = jsonEncode({
+        "proceed_id": proceedingId,
+        "case_id": caseId,
+        "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
+        "next_stage": nextStage,
+        "remark": _remarkController.text,
+        "inserted_by": advocateId,
       });
 
       print(request.fields['data']);
@@ -149,7 +204,9 @@ class UpdateStageModalState extends State<UpdateStageModal> {
             }).toList(),
             onChanged: (value) => setState(() => selectedStage = value),
           ),
-          const SizedBox(height: 16,),
+          const SizedBox(
+            height: 16,
+          ),
           _buildTextField(
             hint: 'Add Remark Here',
             controller: _remarkController,
@@ -157,10 +214,19 @@ class UpdateStageModalState extends State<UpdateStageModal> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               HapticFeedback.mediumImpact();
-              _updateNextStage(
-                  selectedDate, selectedStage ?? widget.initialStage!);
+              if (!widget.isEditing) {
+                _updateNextStage(
+                    selectedDate, selectedStage ?? widget.initialStage!);
+              } else {
+                _editProceeding(
+                    widget.proceedingId!,
+                    widget.caseId,
+                    selectedDate,
+                    selectedStage ?? widget.initialStage!,
+                    widget.insertedBy!);
+              }
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(

@@ -12,7 +12,7 @@ class ListAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.onSearchPressed,
     this.onFilterPressed, // Make it optional
-    this.isSearching = false,
+    required this.isSearching,
     required this.title,
   });
 

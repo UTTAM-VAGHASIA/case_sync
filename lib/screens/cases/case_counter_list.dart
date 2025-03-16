@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -232,7 +232,10 @@ class CounterCasesState extends State<CounterCases> {
                               itemCount: _filteredCases.length,
                               itemBuilder: (context, index) {
                                 final caseItem = _filteredCases[index];
-                                return CaseCard(caseItem: caseItem);
+                                return CaseCard(
+                                  caseItem: caseItem,
+                                  isOnCounter: true,
+                                );
                               },
                             ),
                           ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/check_update.dart';
 import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/screens/cases/case_counter_list.dart';
 import 'package:case_sync/services/case_services.dart';
@@ -12,7 +13,6 @@ import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 
 import '../models/notification.dart';
-import '../utils/constants.dart';
 import 'appbar/notification_drawer.dart';
 import 'appbar/settings_drawer.dart';
 import 'cases/adding_forms/new_case.dart';
@@ -21,6 +21,7 @@ import 'cases/case_history.dart';
 import 'cases/todays_case_list.dart';
 import 'cases/unassigned_cases.dart';
 import 'companies/companies.dart';
+import 'constants/constants.dart';
 import 'interns/advocate_list.dart';
 import 'interns/intern_list.dart';
 
@@ -127,6 +128,9 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CheckUpdate.checkForUpdate(context);
+    });
     allowNotification();
     fetchCaseCounter();
     populateCaseData();
@@ -342,7 +346,7 @@ class HomeScreenState extends State<HomeScreen> {
                                 iconPath: 'assets/icons/cases_today.svg',
                                 cardWidth: cardWidth,
                                 cardHeight: cardHeight,
-                                destinationScreen: CasesToday(),
+                                destinationScreen: UpcomingCases(),
                                 counterNotifier: todaysCaseCount,
                                 shouldDisplayCounter: true,
                               ),
@@ -575,7 +579,8 @@ class _BadgeCounter extends StatelessWidget {
       valueListenable: counterNotifier,
       builder: (context, value, child) {
         return Container(
-          width: 40, // Fixed size for uniformity
+          width: 40,
+          // Fixed size for uniformity
           height: 40,
           decoration: BoxDecoration(
             color: value == -1 ? Colors.transparent : Colors.white,

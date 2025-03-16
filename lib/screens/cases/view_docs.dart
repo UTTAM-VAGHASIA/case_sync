@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/utils/dismissible_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -351,56 +352,61 @@ class DocumentCardState extends State<DocumentCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFileThumbnail(docUrl, extension),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fileName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.0,
+        child: DismissibleCard(
+          name: '',
+          onEdit: () => {},
+          onDelete: () => {},
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFileThumbnail(docUrl, extension),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fileName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Added By: ${widget.doc['handled_by']}',
-                          style: const TextStyle(fontSize: 14.0),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Date: ${widget.doc['date_time']}',
-                          style: const TextStyle(fontSize: 14.0),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            'Added By: ${widget.doc['handled_by']}',
+                            style: const TextStyle(fontSize: 14.0),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Date: ${widget.doc['date_time']}',
+                            style: const TextStyle(fontSize: 14.0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_progress > 0.0 &&
+                    _progress < 1.0) // ✅ Show only if downloading
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: LinearProgressIndicator(
+                      value: _progress,
+                      backgroundColor: Colors.grey[300],
+                      color: Colors.black,
+                      minHeight: 4.0,
                     ),
                   ),
-                ],
-              ),
-              if (_progress > 0.0 &&
-                  _progress < 1.0) // ✅ Show only if downloading
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: LinearProgressIndicator(
-                    value: _progress,
-                    backgroundColor: Colors.grey[300],
-                    color: Colors.black,
-                    minHeight: 4.0,
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

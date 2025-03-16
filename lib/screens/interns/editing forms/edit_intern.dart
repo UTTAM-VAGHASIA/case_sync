@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -9,6 +9,7 @@ import '../../../utils/validator.dart';
 
 class EditInternScreen extends StatefulWidget {
   final Map<String, dynamic> intern;
+
   const EditInternScreen({super.key, required this.intern});
 
   @override

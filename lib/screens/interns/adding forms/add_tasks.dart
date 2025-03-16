@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:case_sync/utils/constants.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -160,7 +160,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         "alloted_by": _advocateId,
         "alloted_date": _assignDateApi,
         "expected_end_date": _expectedEndDateApi,
-        "status": "alloted",
         "remark": "",
       });
 
