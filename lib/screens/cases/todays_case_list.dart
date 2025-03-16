@@ -248,7 +248,7 @@ class UpcomingCasesState extends State<UpcomingCases>
       },
       child: Scaffold(
         appBar: ListAppBar(
-          title: "Today's Cases",
+          title: "Upcoming Cases",
           isSearching: _isSearching,
           onSearchPressed: () {
             setState(() {

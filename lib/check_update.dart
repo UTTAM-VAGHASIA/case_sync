@@ -72,24 +72,24 @@ class CheckUpdate {
           }
         },
         child: AlertDialog(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.white,
           title: Text(
             "Update Available",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
           content: Text(
             "A new version is available. Please update to continue.",
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: Colors.black87),
           ),
           actions: [
             if (!forceUpdate)
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Later", style: TextStyle(color: Colors.white)),
+                child: Text("Later", style: TextStyle(color: Colors.red)),
               ),
             TextButton(
               onPressed: () => launchUrl(Uri.parse(updateUrl)),
-              child: Text("Update Now", style: TextStyle(color: Colors.white)),
+              child: Text("Update Now", style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
