@@ -63,40 +63,79 @@ class CheckUpdate {
       BuildContext context, String updateUrl, bool forceUpdate) {
     showDialog(
       context: context,
-      barrierDismissible: !forceUpdate, // Block closing if forced update
-      builder: (context) => PopScope(
-        canPop: !forceUpdate,
-        onPopInvokedWithResult: (didPop, _) {
-          if (forceUpdate) {
-            SystemNavigator.pop(); // Close the app if forced update
-          }
-        },
-        child: AlertDialog(
+      barrierDismissible: !forceUpdate,
+      builder: (BuildContext context) {
+        return AlertDialog(
           backgroundColor: Colors.white,
-          title: Text(
-            "Update Available",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          content: Text(
-            "A new version is available. Please update to continue.",
-            style: TextStyle(color: Colors.black87),
-          ),
-          actions: [
-            if (!forceUpdate)
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Later", style: TextStyle(color: Colors.red)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.system_update, size: 60, color: Colors.black),
+              SizedBox(height: 10),
+              Text(
+                "Update Available",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            TextButton(
-              onPressed: () => launchUrl(Uri.parse(updateUrl)),
-              child: Text("Update Now", style: TextStyle(color: Colors.black)),
-            ),
-          ],
-        ),
-      ),
+              SizedBox(height: 10),
+              Text(
+                "A new version of the app is available.\nPlease update to continue.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (!forceUpdate)
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text("Later"),
+                      ),
+                    ),
+                  if (!forceUpdate) SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        launchUrl(Uri.parse(updateUrl));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text("Update Now"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     ).then((_) {
       if (forceUpdate) {
-        SystemNavigator.pop(); // Ensure app closes on force update
+        SystemNavigator.pop(); // Close app if update is mandatory
       }
     });
   }

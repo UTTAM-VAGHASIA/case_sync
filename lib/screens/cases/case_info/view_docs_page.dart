@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../constants/constants.dart';
 import 'document_card.dart';
@@ -113,8 +114,10 @@ class _ViewDocsPageState extends State<ViewDocsPage>
               ),
             )
           else
-            RefreshIndicator(
-              color: Colors.black,
+            LiquidPullToRefresh(
+              backgroundColor: Colors.black,
+              color: Colors.transparent,
+              showChildOpacityTransition: false,
               onRefresh: () async {
                 setState(() {
                   _fetchDocuments();

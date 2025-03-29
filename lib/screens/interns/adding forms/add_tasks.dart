@@ -43,6 +43,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   bool isLoading = false;
 
   List<Map<String, String>> _internList = [];
+  List<Map<String, String>> _advocateList = [];
+
+  String selectedRole = 'Intern';
+  List<dynamic> dropdownItems = [];
 
   @override
   void initState() {
@@ -77,6 +81,32 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         if (data['success'] == true) {
           setState(() {
             _internList = (data['data'] as List)
+                .map((intern) => {
+                      'id': intern['id'].toString(),
+                      'name': intern['name'].toString(),
+                    })
+                .toList();
+          });
+        } else {
+          _showErrorSnackBar('Failed to load intern list.');
+        }
+      } else {
+        _showErrorSnackBar('Server error: ${response.statusCode}');
+      }
+    } catch (error) {
+      _showErrorSnackBar('Failed to fetch data: $error');
+    }
+  }
+
+  Future<void> _fetchAdvocateList() async {
+    final url = '$baseUrl/get_advocate_list';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _advocateList = (data['data'] as List)
                 .map((intern) => {
                       'id': intern['id'].toString(),
                       'name': intern['name'].toString(),
@@ -211,241 +241,266 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             },
           ),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Text(
-                  'Add Task',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    height: 1.2,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    'Add Task',
+                    style: TextStyle(
+                      fontSize: 36, // Slightly smaller for balance
+                      fontWeight: FontWeight.w900, // Bolder for emphasis
+                      letterSpacing: 1.2, // Add spacing for elegance
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 30),
-              // _buildTextField(
-              //   label: 'Case Number',
-              //   hint: widget.caseNumber,
-              //   controller: TextEditingController(text: widget.caseNumber),
-              //   readOnly: true,
-              // ),
-              // const SizedBox(height: 20),
-              // _buildTextField(
-              //   label: 'Case Type',
-              //   hint: widget.caseType,
-              //   controller: TextEditingController(text: widget.caseType),
-              //   readOnly: true,
-              // ),
-              // const SizedBox(height: 20),
-              // _buildTextField(
-              //   label: 'Assigned by',
-              //   hint: _advocateId ?? '',
-              //   controller: TextEditingController(text: _advocateName ?? ''),
-              //   readOnly: true,
-              // ),
-              _buildGeneralInfoCard(),
-              const SizedBox(height: 20),
-              _buildDropdownField(
-                label: 'Assign to',
-                hint: 'Select Intern',
-                value: _assignedTo,
-                items: _internList,
-                onChanged: (value) => setState(() => _assignedTo = value),
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                label: 'Task Instruction',
-                hint: 'Instructions',
-                controller: _taskInstructionController,
-                maxLines: null,
-              ),
-              const SizedBox(height: 20),
-              _buildDateField(
+                const SizedBox(height: 24),
+                _buildGeneralInfoCard(),
+                const SizedBox(height: 24),
+                Text(
+                  'Assign To',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Center buttons
+                  children: [
+                    _buildRoleButton('Intern'),
+                    const SizedBox(width: 12),
+                    _buildRoleButton('Advocate'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildDropdownField(
+                    label: 'Assign to',
+                    hint: 'Select $selectedRole',
+                    value: _assignedTo,
+                    items:
+                        selectedRole == 'Intern' ? _internList : _advocateList,
+                    onChanged: (value) => setState(() => _assignedTo = value),
+                    isLabeled: false),
+                const SizedBox(height: 24),
+                _buildTextField(
+                  label: 'Task Instruction',
+                  hint: 'Enter instructions',
+                  controller: _taskInstructionController,
+                  maxLines: null, // Allow more visible lines
+                ),
+                const SizedBox(height: 24),
+                _buildDateField(
                   label: 'Assign Date',
                   child: Text(
                     _assignDateDisplay ?? 'Select Date',
                     style: TextStyle(
-                      color: isAssigned ? Colors.black : Colors.grey,
+                      color: isAssigned ? Colors.black : Colors.grey[600],
                       fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    _selectDate(context, false);
-                  }),
-              const SizedBox(height: 20),
-              _buildDateField(
-                label: 'Expected End Date',
-                child: Text(
-                  _expectedEndDateDisplay ?? 'Select Date',
-                  style: TextStyle(
-                    color: isExpected ? Colors.black : Colors.grey,
-                    fontSize: 16,
-                  ),
+                  onTap: () => _selectDate(context, false),
                 ),
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  _selectDate(context, true);
-                },
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    isLoading ? null : _confirmTask();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                const SizedBox(height: 24),
+                _buildDateField(
+                  label: 'Expected End Date',
+                  child: Text(
+                    _expectedEndDateDisplay ?? 'Select Date',
+                    style: TextStyle(
+                      color: isExpected ? Colors.black : Colors.grey[600],
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  child: isLoading
-                      ? CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        )
-                      : Text(
-                          'Confirm',
-                          style: TextStyle(
-                            fontSize: 20,
+                  onTap: () => _selectDate(context, true),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : _confirmTask,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      elevation: 4, // Add shadow for depth
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(12), // Softer corners
+                      ),
+                    ),
+                    child: isLoading
+                        ? const CircularProgressIndicator(
                             color: Colors.white,
+                            strokeWidth: 2,
+                          )
+                        : const Text(
+                            'Confirm',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 60),
-            ],
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGeneralInfoCard() {
-    final List<MapEntry<String, String>> generalInfo = [
-      MapEntry('Case Type', widget.caseType),
-      MapEntry('Advocate Name', _advocateName.toString()),
-    ];
-
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: BorderSide(
-          color: Colors.black,
-          width: 1,
+// Enhanced Role Button
+  Widget _buildRoleButton(String role) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: () {
+          setState(() {
+            selectedRole = role;
+            _assignedTo = null;
+            role == 'Intern' ? _fetchInternList() : _fetchAdvocateList();
+          });
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: selectedRole == role ? Colors.black : Colors.white,
+          foregroundColor: selectedRole == role ? Colors.white : Colors.black,
+          elevation: 2,
+          // Subtle shadow
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          side: BorderSide(color: Colors.black, width: 1),
         ),
-      ),
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Section Header
-                Text(
-                  'Case No.: ${widget.caseNumber}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-                const Divider(
-                  thickness: 2,
-                  color: Colors.black,
-                ),
-                // Key-Value Rows
-                ...generalInfo.map((entry) {
-                  String displayValue =
-                      entry.value.isNotEmpty ? entry.value : '-';
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: Text(
-                              entry.key,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            flex: 2,
-                            child: Text(
-                              displayValue,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: Colors.black87,
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (generalInfo.last != entry)
-                        Divider(
-                          thickness: 1,
-                          color: Colors.black38,
-                        )
-                    ],
-                  );
-                }),
-              ],
-            ),
-          ],
+        child: Text(
+          role,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
 
+// Enhanced General Info Card
+  Widget _buildGeneralInfoCard() {
+    final List<MapEntry<String, String>> generalInfo = [
+      MapEntry('Case Type', widget.caseType),
+      MapEntry('Advocate Name', _advocateName ?? 'Loading...'),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Case No.: ${widget.caseNumber}',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const Divider(thickness: 1, color: Colors.black54, height: 20),
+          ...generalInfo.map((entry) {
+            String displayValue = entry.value.isNotEmpty ? entry.value : '-';
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    entry.key,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    displayValue,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+// Enhanced Dropdown Field
   Widget _buildDropdownField({
     required String label,
     required String hint,
     required String? value,
     required List<Map<String, String>> items,
     required ValueChanged<String?> onChanged,
+    bool isLabeled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 10),
+        if (isLabeled)
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        if (isLabeled) const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(20),
             color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: DropdownButtonFormField<String>(
             value: value,
             decoration: InputDecoration(
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 20,
+                vertical: 14,
+                horizontal: 16,
               ),
-              border: InputBorder.none,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
             ),
-            hint: Text(hint, style: const TextStyle(color: Colors.grey)),
+            hint: Text(hint, style: TextStyle(color: Colors.grey[600])),
             items: items
                 .map((item) => DropdownMenuItem<String>(
                       value: item['id'],
@@ -453,43 +508,70 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     ))
                 .toList(),
             onChanged: onChanged,
+            style: const TextStyle(color: Colors.black, fontSize: 16),
           ),
         ),
       ],
     );
   }
 
+// Enhanced Text Field
   Widget _buildTextField({
     required String label,
     required String hint,
     required TextEditingController controller,
     bool readOnly = false,
     int? maxLines = 1,
+    bool isLabeled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 10),
-        TextField(
-          controller: controller,
-          readOnly: readOnly,
-          maxLines: maxLines,
-          keyboardType: TextInputType.multiline,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            hintText: hint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none,
+        if (isLabeled)
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
             ),
+          ),
+        if (isLabeled) const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            readOnly: readOnly,
+            maxLines: maxLines,
+            keyboardType: TextInputType.multiline,
+            decoration: InputDecoration(
+              fillColor: Colors.white,
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey[600]),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.all(16),
+            ),
+            style: const TextStyle(fontSize: 16),
           ),
         ),
       ],
     );
   }
 
+// Enhanced Date Field
   Widget _buildDateField({
     required String label,
     required VoidCallback onTap,
@@ -498,22 +580,36 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
-              borderRadius: BorderRadius.circular(20),
               color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black54, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
                 child,
                 const Spacer(),
-                const Icon(Icons.calendar_today, color: Colors.black),
+                Icon(Icons.calendar_today, color: Colors.black54, size: 20),
               ],
             ),
           ),

@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -132,8 +133,10 @@ class ViewDocsState extends State<ViewDocs> {
               ),
             )
           else
-            RefreshIndicator(
-              color: Colors.black,
+            LiquidPullToRefresh(
+              backgroundColor: Colors.black,
+              color: Colors.transparent,
+              showChildOpacityTransition: false,
               onRefresh: () async {
                 setState(() {
                   _fetchDocuments();

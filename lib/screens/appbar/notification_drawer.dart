@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../models/notification.dart';
 import '../../services/shared_pref.dart';
@@ -172,8 +173,10 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
                           ),
                         ),
                       )
-                : RefreshIndicator(
-                    color: Colors.black,
+                : LiquidPullToRefresh(
+                    backgroundColor: Colors.black,
+                    color: Colors.transparent,
+                    showChildOpacityTransition: false,
                     onRefresh: () async {
                       HapticFeedback.mediumImpact();
                       List<Notifications> tempList = await widget.onRefresh();

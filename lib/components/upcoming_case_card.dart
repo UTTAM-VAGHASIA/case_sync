@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:case_sync/screens/cases/case_info/bottom_nav_bar.dart';
+import 'package:case_sync/screens/constants/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../models/case_list.dart';
@@ -11,10 +15,13 @@ class UpcomingCaseCard extends StatefulWidget {
   final CaseListData caseItem;
   final bool isHighlighted;
 
+  final Function(DateTime date) updateCases;
+
   const UpcomingCaseCard({
     super.key,
     required this.caseItem,
     required this.isHighlighted,
+    required this.updateCases,
   });
 
   @override
@@ -25,14 +32,125 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
   void _showPriorityDialog() {
     showDialog(
       context: context,
-      builder: (context) => PriorityDialog(
-        onPrioritySelected: (priority) {
-          setState(() {
-            widget.caseItem.priorityNumber = priority;
-          });
-        },
-      ),
+      builder: (context) => PriorityDialog(onPrioritySelected: updatePriority),
     );
+    setState(() {});
+  }
+
+  Future<void> updatePriority(int? priority) async {
+    if (widget.caseItem.priorityNumber == null && priority != null) {
+      // print("###################### ADDING ########################");
+      await addPrioritySequence(widget.caseItem.id, priority, "admin");
+    } else if (widget.caseItem.priorityNumber != null && priority == null) {
+      // print("###################### DELETING ########################");
+      await deletePrioritySequence(widget.caseItem.priorityId);
+    } else if (widget.caseItem.priorityNumber != null && priority != null) {
+      // print("###################### UPDATING ########################");
+      await updatePrioritySequence(
+        widget.caseItem.id,
+        widget.caseItem.priorityId,
+        priority,
+        "admin",
+      );
+    }
+  }
+
+  Future<void> addPrioritySequence(
+      String caseId, int sequence, String addedBy) async {
+    try {
+      // print("Case Id: $caseId");
+      // print("Case Sequence: $sequence");
+      // print("Added By: $addedBy");
+      final url = Uri.parse("$baseUrl/add_sequence");
+      final request = http.MultipartRequest('POST', url);
+
+      request.fields['data'] = jsonEncode({
+        'case_id': caseId,
+        'sequence': sequence,
+        'added_by': addedBy,
+      });
+
+      // print("Request Fields: \n ${request.fields['data']}");
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = jsonDecode(responseBody);
+
+        if (data['success'] == true) {
+          // print("true");
+          await widget.updateCases(widget.caseItem.nextDate);
+        } else {
+          // print("Failed");
+        }
+      }
+    } catch (e) {
+      // print("Catched");
+      print(e);
+    }
+  }
+
+  Future<void> deletePrioritySequence(String? sequenceId) async {
+    try {
+      final url = Uri.parse("$baseUrl/delete_sequence");
+      final request = http.MultipartRequest('POST', url);
+
+      request.fields['data'] = jsonEncode({
+        'id': sequenceId,
+      });
+
+      // print("Request Fields: \n ${request.fields['data']}");
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = jsonDecode(responseBody);
+
+        if (data['success'] == true) {
+          await widget.updateCases(widget.caseItem.nextDate);
+        } else {
+          // print("Failed");
+        }
+      }
+    } catch (e) {
+      // print("Catched");
+      print(e);
+    }
+  }
+
+  Future<void> updatePrioritySequence(
+      String caseId, String? sequenceId, int sequence, String addedBy) async {
+    try {
+      final url = Uri.parse("$baseUrl/edit_sequence");
+      final request = http.MultipartRequest('POST', url);
+
+      request.fields['data'] = jsonEncode({
+        'id': sequenceId,
+        'case_id': caseId,
+        'sequence': sequence,
+        'added_by': addedBy,
+      });
+
+      // print("Request Fields: \n ${request.fields['data']}");
+
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final data = jsonDecode(responseBody);
+
+        if (data['success'] == true) {
+          await widget.updateCases(widget.caseItem.nextDate);
+        } else {
+          // print("Failed");
+        }
+      }
+    } catch (e) {
+      // print("Catched");
+      print(e);
+    }
   }
 
   @override
@@ -67,12 +185,17 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Case No: ${widget.caseItem.caseNo}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
-                      color: widget.isHighlighted ? Colors.white : Colors.black,
+                  Expanded(
+                    child: Text(
+                      'Case No: ${widget.caseItem.caseNo}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        color:
+                            widget.isHighlighted ? Colors.white : Colors.black,
+                      ),
+                      overflow: TextOverflow.fade,
+                      maxLines: null,
                     ),
                   ),
                   (DateFormat("dd-MM-yyyy").format(widget.caseItem.nextDate) ==
@@ -88,23 +211,26 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
                                 size: 32,
                               ),
                             )
-                          : Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: widget.isHighlighted
-                                    ? Colors.black
-                                    : Colors.white,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '${widget.caseItem.priorityNumber}',
-                                style: TextStyle(
+                          : GestureDetector(
+                              onTap: _showPriorityDialog,
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
                                   color: widget.isHighlighted
                                       ? Colors.white
                                       : Colors.black,
-                                  fontSize: 16,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '${widget.caseItem.priorityNumber}',
+                                  style: TextStyle(
+                                    color: widget.isHighlighted
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ),
                             )

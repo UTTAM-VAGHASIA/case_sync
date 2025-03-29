@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import 'editing forms/edit_advocate.dart'; // Add http for API calls
 
@@ -142,82 +143,102 @@ class AdvocateListScreenState extends State<AdvocateListScreen> {
         ),
       ),
       body: Container(
+        color: const Color(0xFFF3F3F3), // Consistent background
         child: isLoading
             ? const Center(
                 child: CircularProgressIndicator(
-                color: Colors.black,
-              ))
-            : RefreshIndicator(
-                color: Colors.black,
-                onRefresh: fetchAdvocates,
+                  color: Colors.black,
+                ),
+              )
+            : LiquidPullToRefresh(
+                backgroundColor: Colors.black,
+                color: Colors.transparent,
+                showChildOpacityTransition: false,
+                onRefresh: () => fetchAdvocates(),
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(
-                      left: 16.0, right: 16.0, bottom: 16.0),
+                  padding: const EdgeInsets.all(16.0), // Consistent padding
                   itemCount: advocates.length,
                   itemBuilder: (context, index) {
                     final advocate = advocates[index];
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(),
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      // Space between cards
                       child: Card(
-                        color: Colors.white, // Set card background to white
+                        color: Colors.white,
                         shape: RoundedRectangleBorder(
                           side: const BorderSide(color: Colors.black, width: 1),
-                          borderRadius: BorderRadius.circular(15.0),
+                          borderRadius:
+                              BorderRadius.circular(12.0), // Softer corners
                         ),
-                        elevation: 3, // Adds shadow effect
+                        elevation: 4,
+                        // Subtle shadow
+                        shadowColor: Colors.black.withOpacity(0.1),
                         child: DismissibleCard(
                           name: "${advocate['name']}",
                           onEdit: () => _handleEdit(advocate),
                           onDelete: () =>
                               _handleDelete(advocate['id'].toString()),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12.0, horizontal: 16.0),
+                            padding: const EdgeInsets.all(
+                                16.0), // Consistent padding
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(
-                                  width: 10,
-                                  height: 100,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: advocate['status'] == 'enable'
-                                          ? Colors.black
-                                          : Colors.red,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
+                                // Status Indicator
+                                Container(
+                                  width: 8, // Slightly narrower
+                                  decoration: BoxDecoration(
+                                    color: advocate['status'] == 'enable'
+                                        ? Colors.green
+                                        : Colors.red,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Center(
+                                    child: Text('\n\n\n\n\n'),
                                   ),
                                 ),
-                                const SizedBox(
-                                  width: 15,
-                                  height: 100,
-                                ),
+                                const SizedBox(width: 16), // Increased spacing
+                                // Details Column
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
+                                        CrossAxisAlignment.start,
                                     children: [
+                                      // Name
                                       Text(
                                         advocate['name'],
                                         style: const TextStyle(
-                                          fontSize: 20.0,
+                                          color: Colors.black,
+                                          fontSize: 22, // Larger for emphasis
+                                          fontWeight: FontWeight.w700, // Bolder
                                         ),
                                       ),
-                                      const SizedBox(height: 5.0),
+                                      const SizedBox(height: 8),
+                                      // Divider after name
+                                      Divider(
+                                        color: Colors.black54,
+                                        thickness: 1,
+                                        height: 1, // Tight spacing
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // Contact
                                       Text(
                                         'Contact No.: +91 ${advocate['contact']}',
                                         style: const TextStyle(
-                                          fontSize: 14.0,
+                                          fontSize: 14,
+                                          color: Colors.black87,
                                         ),
                                       ),
-                                      const SizedBox(height: 5.0),
+                                      const SizedBox(height: 8),
+                                      // Email
                                       Text(
                                         'Email: ${advocate['email']}',
                                         style: const TextStyle(
-                                          fontSize: 14.0,
+                                          fontSize: 14,
+                                          color: Colors.black87,
                                         ),
                                       ),
-                                      const SizedBox(height: 5.0),
                                     ],
                                   ),
                                 ),

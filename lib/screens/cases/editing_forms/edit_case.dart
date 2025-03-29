@@ -343,8 +343,10 @@ class EditCaseScreenState extends State<EditCaseScreen> {
 //             },
 //           ),
 //         ),
-//         body: RefreshIndicator(
-//           color: Colors.black,
+//         body: LiquidPullToRefresh(
+//           backgroundColor: Colors.black,
+//           color: Colors.transparent,
+//           showChildOpacityTransition: false,
 //           onRefresh: () async {
 //             setState(() {
 //               _fetchDropdownData();

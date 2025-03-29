@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import 'add_companies.dart';
 import 'edit_company.dart';
@@ -129,9 +130,10 @@ class CompaniesScreenState extends State<CompaniesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F3F3),
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
-        title: Text(
+        title: const Text(
           'Companies',
           style: TextStyle(
             fontSize: 30,
@@ -141,7 +143,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
         ),
         titleSpacing: -10,
         toolbarHeight: 70,
-        backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+        backgroundColor: const Color(0xFFF3F3F3),
         elevation: 0,
         leadingWidth: 56 + 10,
         leading: IconButton(
@@ -162,78 +164,97 @@ class CompaniesScreenState extends State<CompaniesScreen> {
             child: isLoading
                 ? const Center(
                     child: CircularProgressIndicator(
-                    color: Colors.black,
-                  ))
-                : RefreshIndicator(
-                    color: Colors.black,
+                      color: Colors.black,
+                    ),
+                  )
+                : LiquidPullToRefresh(
+                    backgroundColor: Colors.black,
+                    color: Colors.transparent,
+                    showChildOpacityTransition: false,
                     onRefresh: fetchCompanies,
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      padding: const EdgeInsets.all(16.0), // Consistent padding
                       itemCount: companies.length,
                       itemBuilder: (context, index) {
                         return DismissibleCard(
                           name: '${companies[index]['name']}',
                           child: Card(
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                              side: BorderSide(
+                              borderRadius: BorderRadius.circular(12.0),
+                              // Softer corners
+                              side: const BorderSide(
                                 width: 1,
                                 color: Colors.black,
                               ),
                             ),
-                            elevation: 2,
+                            elevation: 4, // Subtle shadow
+                            shadowColor: Colors.black.withOpacity(0.1),
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
+                              // Consistent padding
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(
-                                    width: 10,
-                                    height: 100,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: companies[index]['status'] ==
-                                                'enable'
-                                            ? Colors.black
-                                            : Colors.red,
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
+                                  // Status Indicator
+                                  Container(
+                                    width: 8, // Slightly narrower
+                                    decoration: BoxDecoration(
+                                      color:
+                                          companies[index]['status'] == 'enable'
+                                              ? Colors.green
+                                              : Colors.red,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Center(
+                                      child: Text('\n\n\n\n\n'),
                                     ),
                                   ),
                                   const SizedBox(
-                                    width: 15,
-                                    height: 100,
-                                  ),
+                                      width: 16), // Increased spacing
+                                  // Details Column
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+                                        // Company Name
                                         Text(
-                                          '${companies[index]['name']!}',
+                                          '${companies[index]['name']}',
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
+                                            fontSize: 22, // Larger for emphasis
+                                            fontWeight:
+                                                FontWeight.w700, // Bolder
+                                            color: Colors.black,
                                           ),
                                         ),
-                                        const SizedBox(height: 10),
+                                        const SizedBox(height: 8),
+                                        // Divider after name
+                                        Divider(
+                                          color: Colors.black54,
+                                          thickness: 1,
+                                          height: 1, // Tight spacing
+                                        ),
+                                        const SizedBox(height: 12),
+                                        // Contact Person
                                         Text(
-                                          'Contact Person: ${companies[index]['contact_person']!}',
+                                          'Contact Person: ${companies[index]['contact_person']}',
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
                                             fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black87,
                                           ),
                                         ),
-                                        const SizedBox(height: 5),
+                                        const SizedBox(height: 8),
+                                        // Contact Number
                                         Text(
-                                          'Contact No.: +91 ${companies[index]['phone']!}',
+                                          'Contact No.: +91 ${companies[index]['phone']}',
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
                                             fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black87,
                                           ),
                                         ),
-                                        const SizedBox(height: 5),
                                       ],
                                     ),
                                   ),
@@ -262,14 +283,29 @@ class CompaniesScreenState extends State<CompaniesScreen> {
               builder: (context) => AddCompanyScreen(),
             ),
           );
-
-          // Refresh the task list if a new task was added
           if (result == true) {
             fetchCompanies();
           }
         },
-        label: const Text('Add'),
-        icon: const Icon(Icons.add),
+        backgroundColor: Colors.black,
+        elevation: 4,
+        // Add shadow
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Softer corners
+        ),
+        label: const Text(
+          'Add',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        icon: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 24,
+        ),
       ),
     );
   }

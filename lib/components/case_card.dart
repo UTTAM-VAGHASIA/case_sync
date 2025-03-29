@@ -61,6 +61,7 @@ class CaseCard extends StatelessWidget {
               if (isOnCounter) getIndicator(caseItem.caseCounter),
               if (isOnCounter) SizedBox(width: 10),
               Expanded(
+                flex: 7,
                 // Move Expanded here inside Row
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,16 +133,18 @@ class CaseCard extends StatelessWidget {
   Widget getIndicator(String caseCounter) {
     return caseCounter.isEmpty
         ? SizedBox.shrink()
-        : Container(
+        : SizedBox(
             width: 10,
-            height: 160,
-            decoration: BoxDecoration(
-                color: (int.parse(caseCounter) >= 30)
-                    ? Colors.green
-                    : (int.parse(caseCounter) >= 15)
-                        ? Colors.yellow
-                        : Colors.red,
-                borderRadius: BorderRadius.circular(16.0)),
+            child: Container(
+              height: 160,
+              decoration: BoxDecoration(
+                  color: (int.parse(caseCounter) >= 30)
+                      ? Colors.green
+                      : (int.parse(caseCounter) >= 15)
+                          ? Colors.yellow
+                          : Colors.red,
+                  borderRadius: BorderRadius.circular(16.0)),
+            ),
           );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../components/case_card.dart';
 import '../../models/case_list.dart';
@@ -194,8 +195,10 @@ class _AssignedCaseListState extends State<AssignedCaseList> {
                         ),
                       ),
                     Expanded(
-                      child: RefreshIndicator(
-                        color: Colors.black,
+                      child: LiquidPullToRefresh(
+                        backgroundColor: Colors.black,
+                        color: Colors.transparent,
+                        showChildOpacityTransition: false,
                         onRefresh: _fetchCases,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16.0),

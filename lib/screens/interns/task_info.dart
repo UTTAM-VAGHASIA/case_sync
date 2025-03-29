@@ -1,12 +1,15 @@
 import 'dart:convert';
 
+import 'package:case_sync/screens/interns/adding%20forms/add_remark.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
+import '../../components/basic_ui_component.dart';
 import '../constants/constants.dart';
 
 class TaskInfoPage extends StatefulWidget {
@@ -23,6 +26,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
   bool _isRemarksCollapsed = true;
   String? errorMessage;
   bool isLoading = false;
+  List<Map<String, dynamic>> stageList = [];
 
   Map<String, dynamic> task = {};
   late List<Map<String, dynamic>> sampleTaskHistory = [];
@@ -35,16 +39,50 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
     fetchRemarks();
   }
 
+  Future<void> _fetchStageList() async {
+    try {
+      if (kDebugMode) {
+        print("Fetching stage list...");
+      }
+      final url = Uri.parse('$baseUrl/stage_list');
+      var request = http.MultipartRequest("POST", url);
+      request.fields['case_id'] = task['case_id'];
+
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      var data = jsonDecode(responseData);
+
+      if (data['success'] == true) {
+        setState(() {
+          stageList = List<Map<String, dynamic>>.from(data['data']);
+          if (kDebugMode) {
+            print("Stage List: $stageList");
+          }
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching stage list: $e");
+      }
+    }
+    if (kDebugMode) {
+      print("Fetched stage list");
+    }
+  }
+
   Future<void> fetchTaskDetails() async {
     setState(() {
       isLoading = true;
     });
     try {
+      print("Fetching Task: ");
       final url = Uri.parse('$baseUrl/get_task_info');
       final response = await http.post(url, body: {'task_id': widget.taskId});
+      print("Response Received: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print("${data['data']}");
         if (data['data'] is List && data['data'].isNotEmpty) {
           setState(() {
             task =
@@ -55,6 +93,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
             errorMessage = null;
             isLoading = false;
           });
+          _fetchStageList();
         } else {
           setState(() {
             errorMessage = "No task found for the given ID.";
@@ -151,9 +190,14 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
             child: CircularProgressIndicator(
             color: Colors.black,
           ))
-        : RefreshIndicator(
-            color: Colors.black,
-            onRefresh: fetchRemarks,
+        : LiquidPullToRefresh(
+            backgroundColor: Colors.black,
+            color: Colors.transparent,
+            showChildOpacityTransition: false,
+            onRefresh: () async {
+              fetchTaskDetails();
+              fetchRemarks();
+            },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
@@ -166,6 +210,24 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
               ),
             ),
           );
+  }
+
+  Future<void> _showUpdateStageModal() async {
+    // Pass stage ID, not name
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return AddRemarkModal(
+          currentStage: task['stage'],
+          taskId: task['id'],
+          caseId: task['case_id'],
+          stageId: task['stage'],
+        );
+      },
+    );
+
+    fetchRemarks();
   }
 
   Widget _buildRemarksCard() {
@@ -195,13 +257,35 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Remarks',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Remarks',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: AppTheme.elevatedButtonStyle.copyWith(
+                            shape: WidgetStateProperty.all(
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)))),
+                        // Use the style from AppTheme
+                        onPressed: () async {
+                          HapticFeedback.mediumImpact();
+                          _showUpdateStageModal();
+                        },
+                        child: Text(
+                          "Add Remark",
+                          style: AppTheme.buttonTextStyle.apply(
+                              fontSizeDelta:
+                                  0.1), // Use the button text style from AppTheme
+                        ),
+                      ),
+                    ],
                   ),
                   const Divider(
                     thickness: 2,
@@ -268,13 +352,11 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                           const Divider(thickness: 2, color: Colors.black),
                           const SizedBox(height: 8),
                           _buildKeyValueRow(
-                              'Stage', sampleTaskHistory.first['stage']),
+                              'Stage', sampleTaskHistory.first['stage_name']),
                           _buildKeyValueRow('Date of Submission',
-                              _formatDate(sampleTaskHistory.first['dos'])),
-                          _buildKeyValueRow(
-                              'Date Time',
-                              _formatDate(
-                                  sampleTaskHistory.first['date_time'])),
+                              _formatDate(sampleTaskHistory.first['fdos'])),
+                          _buildKeyValueRow('Date Time',
+                              _formatDate(sampleTaskHistory.first['fdt'])),
                           _buildKeyValueRow(
                               'Status', sampleTaskHistory.first['status']),
                         ],
@@ -306,11 +388,11 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                               ),
                               const Divider(thickness: 2, color: Colors.black),
                               const SizedBox(height: 8),
-                              _buildKeyValueRow('Stage', entry['stage']),
+                              _buildKeyValueRow('Stage', entry['stage_name']),
                               _buildKeyValueRow('Date of Submission',
-                                  _formatDate(entry['dos'])),
+                                  _formatDate(entry['fdos'])),
                               _buildKeyValueRow(
-                                  'Date Time', _formatDate(entry['date_time'])),
+                                  'Date Time', _formatDate(entry['fdt'])),
                               _buildKeyValueRow('Status', entry['status']),
                             ],
                           ),

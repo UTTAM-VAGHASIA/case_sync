@@ -27,10 +27,7 @@ class NotificationCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TaskInfoPage(
-              taskId: caseItem.taskId,
-            ),
-          ),
+              builder: (context) => TaskInfoPage(taskId: caseItem.taskId)),
         );
         onDismiss(caseItem);
       },
@@ -45,8 +42,10 @@ class NotificationCard extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Dismissible(
-            key: Key(caseItem.id.toString()), // Unique key for each item
-            direction: DismissDirection.endToStart, // Swipe left to dismiss
+            key: Key(caseItem.id.toString()),
+            // Unique key for each item
+            direction: DismissDirection.endToStart,
+            // Swipe left to dismiss
             background: Container(
               padding: const EdgeInsets.only(right: 20),
               decoration: BoxDecoration(

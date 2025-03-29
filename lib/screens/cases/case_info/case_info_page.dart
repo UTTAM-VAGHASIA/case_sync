@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../constants/constants.dart';
 
@@ -27,6 +28,8 @@ class CaseInfoPage extends StatefulWidget {
 
 class _CaseInfoPageState extends State<CaseInfoPage>
     with AutomaticKeepAliveClientMixin {
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
+      _snackbarController;
   bool _isLoading = true;
   Map<String, dynamic> _caseDetails = {};
   String? selectedStage;
@@ -159,8 +162,11 @@ class _CaseInfoPageState extends State<CaseInfoPage>
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
   }
 
   Widget _buildDetailsCard({
@@ -309,8 +315,10 @@ class _CaseInfoPageState extends State<CaseInfoPage>
                     style: TextStyle(fontSize: 18, color: Colors.black54),
                   ),
                 )
-              : RefreshIndicator(
-                  color: Colors.black,
+              : LiquidPullToRefresh(
+                  backgroundColor: Colors.black,
+                  color: Colors.transparent,
+                  showChildOpacityTransition: false,
                   onRefresh: () async {
                     setState(() {
                       fetchCaseInfo();

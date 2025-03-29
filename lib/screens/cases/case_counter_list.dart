@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../components/case_card.dart'; // Import your CaseCard component
 import '../../components/list_app_bar.dart';
@@ -220,8 +221,10 @@ class CounterCasesState extends State<CounterCases> {
                       )
                     : _filteredCases.isEmpty
                         ? const Center(child: Text('No cases found.'))
-                        : RefreshIndicator(
-                            color: Colors.black,
+                        : LiquidPullToRefresh(
+                            backgroundColor: Colors.black,
+                            color: Colors.transparent,
+                            showChildOpacityTransition: false,
                             onRefresh: () async {
                               setState(() {
                                 fetchCases();

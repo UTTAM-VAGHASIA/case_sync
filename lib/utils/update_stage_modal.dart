@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -61,7 +60,6 @@ class UpdateStageModalState extends State<UpdateStageModal> {
 
   Future<void> _updateNextStage(DateTime nextDate, String nextStage) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final String advocateId = (await SharedPrefService.getUser())!.id;
     try {
       final url = Uri.parse('$baseUrl/proceed_case_add');
       var request = http.MultipartRequest("POST", url);
@@ -70,7 +68,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
         "next_stage": nextStage,
         "remark": _remarkController.text,
-        "inserted_by": advocateId,
+        "inserted_by": "admin",
       });
 
       print(request.fields['data']);
@@ -107,7 +105,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
         "next_stage": nextStage,
         "remark": _remarkController.text,
-        "inserted_by": advocateId,
+        "inserted_by": "admin",
       });
 
       print(request.fields['data']);

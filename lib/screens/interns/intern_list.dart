@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http; // Add http for API calls
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import 'adding forms/new_intern.dart';
 import 'editing forms/edit_intern.dart'; // For date formatting
@@ -36,6 +37,7 @@ class InternListScreenState extends State<InternListScreen> {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
         if (responseBody['success'] == true) {
+          print("Response Body: ${responseBody['data'].toString()}");
           interns = responseBody['data']; // Access the "data" key
           if (isOnPage) {
             setState(() {
@@ -153,98 +155,114 @@ class InternListScreenState extends State<InternListScreen> {
         ),
       ),
       body: Container(
+        color: const Color(0xFFF3F3F3), // Match AddTaskScreen background
         child: isLoading
             ? const Center(
                 child: CircularProgressIndicator(
-                color: Colors.black,
-              ))
-            : RefreshIndicator(
-                color: Colors.black,
+                  color: Colors.black,
+                ),
+              )
+            : LiquidPullToRefresh(
+                backgroundColor: Colors.black,
+                color: Colors.transparent,
+                showChildOpacityTransition: false,
                 onRefresh: fetchInterns,
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(
-                    left: 16.0,
-                    right: 16.0,
-                    bottom: 16.0,
-                  ),
+                  padding: const EdgeInsets.all(16.0), // Consistent padding
                   itemCount: interns.length,
                   itemBuilder: (context, index) {
                     final intern = interns[index];
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(),
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      // Space between cards
                       child: Card(
                         color: Colors.white,
                         shape: RoundedRectangleBorder(
                           side: const BorderSide(color: Colors.black, width: 1),
-                          borderRadius: BorderRadius.circular(15.0),
+                          borderRadius:
+                              BorderRadius.circular(12.0), // Softer corners
                         ),
-                        elevation: 3,
+                        elevation: 4,
+                        // Subtle shadow for depth
+                        shadowColor: Colors.black.withValues(alpha: 0.1),
                         child: DismissibleCard(
                           name: '${intern['name']}',
                           onEdit: () => _handleEdit(intern),
                           onDelete: () =>
                               _handleDelete(intern['id'].toString()),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12.0, horizontal: 16.0),
+                            padding: const EdgeInsets.all(16.0),
+                            // Consistent inner padding
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(
-                                  width: 10,
-                                  height: 100,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          interns[index]['status'] == 'enable'
-                                              ? Colors.black
-                                              : Colors.red,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
+                                // Status Indicator
+                                Container(
+                                  width: 8, // Slightly narrower
+                                  decoration: BoxDecoration(
+                                    color: intern['status'] == 'enable'
+                                        ? Colors.green
+                                        : Colors.red,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Center(
+                                    child: Text('\n\n\n\n\n'),
                                   ),
                                 ),
-                                const SizedBox(
-                                  width: 15,
-                                  height: 100,
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      intern['name'],
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 20.0,
+                                const SizedBox(width: 16), // Increased spacing
+                                // Details Column
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Name
+                                      Text(
+                                        intern['name'],
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 22, // Larger for emphasis
+                                          fontWeight: FontWeight.w700, // Bolder
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5.0),
-                                    Text(
-                                      'Contact No.: +91 ${intern['contact']}',
-                                      style: const TextStyle(
-                                        fontSize: 14.0,
+                                      const SizedBox(height: 8),
+                                      // Divider after name
+                                      Divider(
+                                        color: Colors.black54,
+                                        thickness: 1,
+                                        height: 1, // Tighten spacing
                                       ),
-                                    ),
-                                    const SizedBox(height: 5.0),
-                                    Text(
-                                      'Email: ${intern['email']}',
-                                      // Displaying email dynamically
-                                      style: const TextStyle(
-                                        fontSize: 14.0,
+                                      const SizedBox(height: 12),
+                                      // Contact
+                                      Text(
+                                        'Contact No.: +91 ${intern['contact']}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5.0),
-                                    Text(
-                                      'Joining Date: ${formatDate(intern['date_time'])}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 14.0,
+                                      const SizedBox(height: 8),
+                                      // Email
+                                      Text(
+                                        'Email: ${intern['email']}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(
-                                      height: 5.0,
-                                    ),
-                                  ],
+                                      const SizedBox(height: 8),
+                                      // Joining Date
+                                      Text(
+                                        'Joining Date: ${formatDate(intern['date_time'])}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

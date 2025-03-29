@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../../utils/update_stage_modal.dart';
 
@@ -436,8 +437,10 @@ class CaseInfoPageState extends State<CaseInfoPage> {
                     style: TextStyle(fontSize: 18, color: Colors.black54),
                   ),
                 )
-              : RefreshIndicator(
-                  color: Colors.black,
+              : LiquidPullToRefresh(
+                  backgroundColor: Colors.black,
+                  color: Colors.transparent,
+                  showChildOpacityTransition: false,
                   onRefresh: () async {
                     setState(() {
                       fetchCaseInfo();

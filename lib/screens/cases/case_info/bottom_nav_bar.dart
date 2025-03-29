@@ -44,12 +44,16 @@ class BottomNavBarState extends State<BottomNavBar> {
       duration: const Duration(milliseconds: 400),
       curve: Curves.ease,
     );
+
+    ScaffoldMessenger.of(context).clearSnackBars();
   }
 
   void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
     });
+
+    ScaffoldMessenger.of(context).clearSnackBars();
   }
 
   void _onCaseItemFetched(Map<String, dynamic> fetchedCaseItem) {

@@ -394,12 +394,20 @@ class DocumentCardState extends State<DocumentCard> {
     if (extension == 'pdf') {
       return const Icon(Icons.picture_as_pdf, size: 50, color: Colors.red);
     } else if (['jpg', 'jpeg', 'png'].contains(extension)) {
-      return Image.network(url, height: 50, width: 50, fit: BoxFit.cover,
+      return Image.network(url, width: 50, fit: BoxFit.fitHeight,
           errorBuilder: (_, __, ___) {
-        return const Icon(Icons.image, size: 50, color: Colors.grey);
+        return const Icon(
+          Icons.image,
+          size: 50,
+          color: Colors.grey,
+        );
       });
     } else {
-      return const Icon(Icons.insert_drive_file, size: 50, color: Colors.blue);
+      return const Icon(
+        Icons.insert_drive_file,
+        size: 50,
+        color: Colors.blue,
+      );
     }
   }
 
@@ -465,10 +473,10 @@ class DocumentCardState extends State<DocumentCard> {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16.0,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
+                                Divider(
+                                  color: Colors.black,
+                                ),
                                 Text(
                                   'Added By: ${widget.doc['handled_by']}',
                                   style: const TextStyle(fontSize: 14.0),

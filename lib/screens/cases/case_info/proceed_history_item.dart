@@ -49,7 +49,7 @@ class ProceedHistoryItem extends StatelessWidget {
           border: Border.all(color: Colors.black),
         ),
         child: DismissibleCard(
-          name: 'proceeding data for "${proceeding.stage}" stage',
+          name: 'proceeding data for "${proceeding.nextStageId}" stage',
           onEdit: onEdit,
           onDelete: onDelete,
           child: Container(
@@ -57,7 +57,7 @@ class ProceedHistoryItem extends StatelessWidget {
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               title: Text(
-                "Stage: ${proceeding.stage}",
+                "Stage: ${proceeding.stageName}",
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -69,15 +69,13 @@ class ProceedHistoryItem extends StatelessWidget {
                 children: [
                   const Divider(thickness: 2, color: Colors.black),
                   const SizedBox(height: 5),
-                  Text("Inserted By: ${proceeding.insertedBy}"),
+                  Text("Inserted By: ${proceeding.insertedByName}"),
                   Divider(thickness: 1, color: Colors.black38),
                   Text(
                       "Added on: ${formatDate(proceeding.dateOfCreation.toString())}"),
                   Divider(thickness: 1, color: Colors.black38),
                   Text(
                       "Next Date: ${formatDate(proceeding.nextDate.toString())}"),
-                  Divider(thickness: 1, color: Colors.black38),
-                  Text("Next Stage: ${proceeding.nextStage}"),
                   Divider(thickness: 1, color: Colors.black38),
                   Text("Remark: ${proceeding.remark}"),
                 ],

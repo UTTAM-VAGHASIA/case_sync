@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
@@ -41,9 +42,9 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   String _selectedFilingDateApi =
       DateFormat('yyyy/MM/dd').format(DateTime.now());
 
-  // String _selectedNextDateDisplay =
-  //     DateFormat('dd/MM/yyyy').format(DateTime.now());
-  // String _selectedNextDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
+  String _selectedNextDateDisplay =
+      DateFormat('dd/MM/yyyy').format(DateTime.now());
+  String _selectedNextDateApi = DateFormat('yyyy/MM/dd').format(DateTime.now());
   String? _selectedCaseType;
   String? _selectedHandler;
   String? _selectedCompany;
@@ -64,6 +65,8 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   bool _isLoading = true;
   bool _isSummoned = false;
   bool _isFiled = false;
+
+  bool _isNextDateGiven = false;
 
   // bool _isNextDateGiven = false;
 
@@ -256,27 +259,27 @@ class NewCaseScreenState extends State<NewCaseScreen> {
     }
   }
 
-  // Future<void> _selectNextDate(BuildContext context) async {
-  //   final DateTime? picked = await showDatePicker(
-  //     context: context,
-  //     initialDate: DateTime.now(),
-  //     firstDate: DateTime(1800),
-  //     lastDate: DateTime(2200),
-  //   );
-  //   if (picked != null) {
-  //     setState(() {
-  //       final date = DateFormat('dd/MM/yyyy').format(picked);
-  //       final apiDate = DateFormat('yyyy/MM/dd').format(picked);
-  //       if (_isNextDateGiven) {
-  //         _selectedNextDateDisplay = date;
-  //         _selectedNextDateApi = apiDate;
-  //         print('Next Date Api: $_selectedNextDateApi');
-  //       }
-  //     });
-  //
-  //     FocusManager.instance.primaryFocus?.unfocus();
-  //   }
-  // }
+  Future<void> _selectNextDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1800),
+      lastDate: DateTime(2200),
+    );
+    if (picked != null) {
+      setState(() {
+        final date = DateFormat('dd/MM/yyyy').format(picked);
+        final apiDate = DateFormat('yyyy/MM/dd').format(picked);
+        if (_isNextDateGiven) {
+          _selectedNextDateDisplay = date;
+          _selectedNextDateApi = apiDate;
+          print('Next Date Api: $_selectedNextDateApi');
+        }
+      });
+
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+  }
 
   Future<void> _pickDocuments() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -356,7 +359,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
               {'id': ''}, // Default to an empty string or handle appropriately
         )['id'],
         "added_by": user.id, // Dynamically pass the user ID
-        "user_type": "advocate", // Hardcoded as per your requirement
         "company_id": _companyList.firstWhere(
           (element) => element['id'] == _selectedCompany,
           orElse: () =>
@@ -370,7 +372,7 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         )['id'],
         "sr_date": _selectedSummonDateApi,
         "date_of_filing": _selectedFilingDateApi,
-        "next_date": _selectedSummonDateApi,
+        "next_date": _selectedNextDateApi,
         "complainant_advocate": _complainantAdvocateController.text,
         "respondent_advocate": _respondentAdvocateController.text,
         "remarks": _remarkController.text,
@@ -480,8 +482,10 @@ class NewCaseScreenState extends State<NewCaseScreen> {
             },
           ),
         ),
-        body: RefreshIndicator(
-          color: Colors.black,
+        body: LiquidPullToRefresh(
+          backgroundColor: Colors.black,
+          color: Colors.transparent,
+          showChildOpacityTransition: false,
           onRefresh: () async {
             setState(() {
               _fetchDropdownData();
@@ -518,13 +522,17 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                       return null;
                     }),
                     _buildTextField(
-                        'Case Year', 'Case Year', _caseYearController,
-                        validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the Case Year';
-                      }
-                      return null;
-                    }),
+                      'Case Year',
+                      'Case Year',
+                      _caseYearController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter the Case Year';
+                        }
+                        return null;
+                      },
+                      keyboardType: TextInputType.number,
+                    ),
                     _buildDropdownField(
                       'Case Type',
                       'Select Case Type',
@@ -618,6 +626,24 @@ class NewCaseScreenState extends State<NewCaseScreen> {
                         setState(() {
                           _isSummoned = true;
                           _selectSummonDate(context);
+                        });
+                      },
+                    ),
+                    _buildDateField(
+                      label: 'Next Date',
+                      child: Text(
+                        _selectedNextDateDisplay,
+                        style: TextStyle(
+                          color:
+                              _isNextDateGiven ? Colors.black : Colors.black54,
+                          fontSize: 16,
+                        ),
+                      ),
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _isNextDateGiven = true;
+                          _selectNextDate(context);
                         });
                       },
                     ),

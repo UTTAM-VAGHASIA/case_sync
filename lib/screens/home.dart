@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_new_badger/flutter_new_badger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../models/notification.dart';
@@ -272,8 +273,10 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-        child: RefreshIndicator(
-          color: Colors.black,
+        child: LiquidPullToRefresh(
+          backgroundColor: Colors.black,
+          color: Colors.transparent,
+          showChildOpacityTransition: false,
           onRefresh: () async {
             fetchCaseCounter();
           },
@@ -410,7 +413,7 @@ class HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 20),
                           const Text(
-                            'Interns',
+                            'Officials',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,

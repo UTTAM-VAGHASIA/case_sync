@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 class CaseHistoryScreen extends StatefulWidget {
   const CaseHistoryScreen({super.key});
@@ -503,8 +504,10 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
               return Container(
                 margin:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                child: RefreshIndicator(
-                  color: Colors.black,
+                child: LiquidPullToRefresh(
+                  backgroundColor: Colors.black,
+                  color: Colors.transparent,
+                  showChildOpacityTransition: false,
                   onRefresh: () async {
                     setState(() {
                       populateCaseData();

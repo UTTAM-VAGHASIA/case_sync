@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../../components/basic_ui_component.dart';
 import '../../../models/proceed_history_list.dart';
@@ -73,39 +74,13 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
               }
 
               if (kDebugMode) {
-                print(proceedingList[0].stage); // change to [0]
+                print("Stage Id");
+                print(proceedingList[0].nextStageId); // change to [0]
               }
-              final currentStageName = proceedingList[0].stage; // change to [0]
-
-              final matchingStage = stageList.firstWhere(
-                // change to firstWhere
-                (stage) => stage['stage'] == currentStageName,
-                orElse: () => <String, dynamic>{},
-              );
+              selectedStage = proceedingList[0].nextStageId;
 
               if (kDebugMode) {
-                print(matchingStage['id']);
-              }
-
-              // Check if matchingStage is not empty
-              if (matchingStage.isNotEmpty) {
-                final currentStageIndex = stageList.indexOf(matchingStage);
-
-                // // If the current stage is the last in the list, don't increment the stage
-                // if (currentStageIndex < stageList.length - 1) {
-                //   selectedStage =
-                //       (int.parse(matchingStage['id']) + 1).toString();
-                // } else {
-                //   selectedStage = matchingStage[
-                //       'id']; // Keep the current stage if it's the last one
-                // }
-
-                selectedStage = (currentStageIndex).toString();
-              } else {
-                selectedStage = null;
-              }
-
-              if (kDebugMode) {
+                print("Selected Stage: ");
                 print(selectedStage);
               }
             } else {
@@ -203,11 +178,10 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
   Future<void> _handleEdit(ProceedHistoryListData proceeding) async {
     var scaffoldMessenger = ScaffoldMessenger.of(context);
     if (kDebugMode) {
-      print("Edit task: ${proceeding.stage}");
+      print("Edit task: ${proceeding.nextStageId}");
     }
 
-    if (advocateId == proceeding.insertedBy &&
-        (proceeding.insertedBy != null || proceeding.insertedBy != "")) {
+    if (advocateId == proceeding.insertedBy && (proceeding.insertedBy != "")) {
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -219,7 +193,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
             initialDate: (proceeding.nextDate != DateTime.parse("0001-01-01"))
                 ? proceeding.nextDate
                 : DateTime.now(),
-            initialStage: proceeding.nextStage,
+            initialStage: proceeding.nextStageId,
             stageList: stageList,
             insertedBy: proceeding.insertedBy,
           );
@@ -240,7 +214,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
   void _handleDelete(ProceedHistoryListData proceeding) {
     var scaffoldMessenger = ScaffoldMessenger.of(context);
     if (kDebugMode) {
-      print("Delete task: ${proceeding.stage}");
+      print("Delete task: ${proceeding.nextStageId}");
     }
     if (advocateId == proceeding.insertedBy &&
         (proceeding.insertedBy != null || proceeding.insertedBy != "")) {
@@ -295,8 +269,10 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
                     )
                   : Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: RefreshIndicator(
-                        color: Colors.black,
+                      child: LiquidPullToRefresh(
+                        backgroundColor: Colors.black,
+                        color: Colors.transparent,
+                        showChildOpacityTransition: false,
                         onRefresh: () async {
                           fetchProceedings();
                         },
@@ -352,7 +328,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
           return UpdateStageModal(
             caseId: widget.caseId,
             initialDate: DateTime.now(),
-            initialStage: null,
+            initialStage: selectedStage,
             stageList: stageList,
           );
         }

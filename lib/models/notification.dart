@@ -5,8 +5,6 @@ class Notifications {
   final String senderId;
   final String receiverId;
   final String msg;
-  final String senderType;
-  final String receiverType;
   final String status;
   final String playStatus;
   final DateTime? dateTime;
@@ -19,8 +17,6 @@ class Notifications {
     required this.senderId,
     required this.receiverId,
     required this.msg,
-    required this.senderType,
-    required this.receiverType,
     required this.status,
     required this.playStatus,
     required this.dateTime,
@@ -29,16 +25,14 @@ class Notifications {
 
   factory Notifications.fromJson(Map<String, dynamic> json) {
     return Notifications(
-      id: json['id'].toString() ?? '',
-      taskId: json['task_id'].toString() ?? '',
+      id: json['id'].toString(),
+      taskId: json['task_id'].toString(),
       type: json['type']?.toString() ?? '',
-      senderId: json['sender_id'].toString() ?? '',
-      receiverId: json['receiver_id'].toString() ?? '',
+      senderId: json['sender_id'].toString(),
+      receiverId: json['receiver_id'].toString(),
       msg: json['msg']?.toString() ?? '',
-      senderType: json['sender_type']?.toString() ?? '',
-      receiverType: json['receiver_type']?.toString() ?? '',
-      status: json['status'].toString() ?? '',
-      playStatus: json['playstatus'].toString() ?? '',
+      status: json['status'].toString(),
+      playStatus: json['playstatus'].toString(),
       dateTime: DateTime.tryParse(json['datetime']?.toString() ?? ''),
       name: json['name']?.toString() ?? '',
     );
@@ -52,8 +46,6 @@ class Notifications {
       'sender_id': senderId.toString(),
       'receiver_id': receiverId.toString(),
       'msg': msg,
-      'sender_type': senderType,
-      'receiver_type': receiverType,
       'status': status.toString(),
       'playstatus': playStatus.toString(),
       'datetime': dateTime?.toIso8601String(),

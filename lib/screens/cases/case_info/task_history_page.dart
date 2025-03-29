@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../../components/basic_ui_component.dart';
 import '../../../utils/dismissible_card.dart';
@@ -157,8 +158,10 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
                     )
                   : Padding(
                       padding: const EdgeInsets.all(16.0),
-                      child: RefreshIndicator(
-                        color: Colors.black,
+                      child: LiquidPullToRefresh(
+                        backgroundColor: Colors.black,
+                        color: Colors.transparent,
+                        showChildOpacityTransition: false,
                         onRefresh: () async {
                           fetchTasks();
                         },
@@ -252,15 +255,16 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
                                           ),
                                         ],
                                       ),
-                                      onTap: () {
+                                      onTap: () async {
                                         HapticFeedback.mediumImpact();
-                                        Navigator.push(
+                                        await Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => TaskInfoPage(
                                                 taskId: task['id']),
                                           ),
                                         );
+                                        fetchTasks();
                                       },
                                     ),
                                   ),
