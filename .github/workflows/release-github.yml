@@ -94,6 +94,15 @@ jobs:
           awk '/^## \['${{ env.APP_VERSION }}'\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > ${{ env.NOTES_PATH }}
         shell: bash
 
+      # --- NEW DEBUG STEP ---
+      - name: Verify Build Output Exists # Add this step
+        run: |
+          echo "Checking for APK file at: ${{ env.APK_PATH }}"
+          ls -l build/app/outputs/flutter-apk/
+          # Optional: Add a check for version.json too if needed
+          # echo "Checking for version.json at: ${{ env.VERSION_JSON_PATH }}"
+          # ls -l ${{ env.VERSION_JSON_PATH }} || echo "version.json not found"
+
       # --- Create Release and Upload Assets ---
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v1
