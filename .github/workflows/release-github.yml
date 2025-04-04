@@ -95,24 +95,30 @@ jobs:
         shell: bash
 
       # --- NEW DEBUG STEP ---
-      - name: Verify Build Output Exists # Add this step
+      - name: Verify Build Output Exists
         run: |
-          echo "Checking for APK file at: ${{ env.APK_PATH }}"
-          ls -l build/app/outputs/flutter-apk/
-          # Optional: Add a check for version.json too if needed
-          # echo "Checking for version.json at: ${{ env.VERSION_JSON_PATH }}"
-          # ls -l ${{ env.VERSION_JSON_PATH }} || echo "version.json not found"
+          echo "--- Checking for APK file ---"
+          ls -l ${{ env.APK_PATH }} || echo "APK NOT FOUND at ${{ env.APK_PATH }}"
+          echo "--- Checking for version.json ---"
+          ls -l ${{ env.VERSION_JSON_PATH }} || echo "version.json NOT FOUND at ${{ env.VERSION_JSON_PATH }} (in root)"
+          echo "--- Current Directory Contents ---" # See where files actually are
+          ls -la
+        shell: bash
 
       # --- Create Release and Upload Assets ---
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }} # Use the full tag that triggered the workflow
-          name: Release ${{ env.APP_VERSION }} # Name of the release
-          # Use body_path to read notes from the extracted file
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ env.APP_VERSION }}
           body_path: ${{ env.NOTES_PATH }}
           draft: false
           prerelease: false
-          files: | # List files to upload: source path [=> destination name]
-            ${{ env.APK_PATH }} => ${{ env.APK_NAME }}
-            ${{ env.VERSION_JSON_PATH }} => ${{ env.VERSION_JSON_NAME }}
+          # --- TEMPORARY TEST: Simplify files input ---
+          files: |
+            ${{ env.APK_PATH }}
+            ${{ env.VERSION_JSON_PATH }}
+          # --- END TEMPORARY TEST ---
+          # files: | # Original version
+          #  ${{ env.APK_PATH }} => ${{ env.APK_NAME }}
+          #  ${{ env.VERSION_JSON_PATH }} => ${{ env.VERSION_JSON_NAME }}
