@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart'; // Import flutter_markdown
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -27,7 +28,7 @@ class CheckUpdate {
   static const String githubApiUrl =
       "https://api.github.com/repos/$githubOwner/$githubRepo/releases/latest";
 
-  static Future<void> checkForUpdate(BuildContext context) async {
+  static Future<void> checkForUpdate() async {
     String updateUrl = "";
     String latestVersion = "";
     bool forceUpdate = false;
@@ -120,8 +121,8 @@ class CheckUpdate {
     if (latestVersion.isNotEmpty && currentVersion != latestVersion) {
       print("Update available. Showing dialog.");
       // --- Pass releaseNotesBody to the dialog ---
-      showUpdateDialog(
-          context, updateUrl, forceUpdate, latestVersion, releaseNotesBody);
+      showUpdateDialog(Get.context!, updateUrl, forceUpdate, latestVersion,
+          releaseNotesBody);
       // -------------------------------------------
     } else {
       print("App is up to date or no new version found.");

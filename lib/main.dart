@@ -25,7 +25,7 @@ class CaseSyncApp extends StatelessWidget {
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (GetPlatform.isAndroid || Platform.isAndroid) {
-        CheckUpdate.checkForUpdate(context);
+        CheckUpdate.checkForUpdate();
       }
     });
     return GetMaterialApp(
