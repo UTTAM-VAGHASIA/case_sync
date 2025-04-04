@@ -56,7 +56,7 @@ jobs:
 
       # --- Build APK ---
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
 
       # --- Prepare version.json (with Dynamic Force Update) ---
       - name: Construct APK Download URL
@@ -81,6 +81,9 @@ jobs:
             "force_update": ${FORCE_UPDATE_FLAG}
           }' > ${{ env.VERSION_JSON_PATH }}
         shell: bash # Important for the [[ ]] syntax and variable expansion
+
+      - name: Show version.json content
+        run: cat ${{ env.VERSION_JSON_PATH }}
 
       # --- Extract Release Notes from CHANGELOG.md ---
       - name: Extract Release Notes
