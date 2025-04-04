@@ -8,6 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - New feature work in progress.
 
+## [1.6.8] - 2024-04-04
+
+### Added
+
+- GitHub Actions Integration for Future Updates
+
 ## [1.6.7] - 2024-04-04
 
 ### Added
