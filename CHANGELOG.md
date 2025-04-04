@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - GitHub Actions Integration for Future Updates
+- Completely Shifted to GitHub Releases for future updates.Hence, reducing Update efforts for user.
+
+### Fixed
+
+- Device Preview configuration for Debug mode.
 
 ## [1.6.7] - 2024-04-04
 
@@ -20,6 +25,7 @@ All notable changes to this project will be documented in this file.
 
 - Task Reassign for advocates
 - Added support for Windows, macOS and Linux for testing
+- Directly download update from GitHub Releases with lesser effort.
 
 ### Fixed
 

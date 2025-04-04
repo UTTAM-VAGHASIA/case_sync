@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:case_sync/check_update.dart';
 import 'package:case_sync/theme_data/app_theme.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
@@ -12,7 +9,7 @@ import 'screens/splash_screen.dart';
 void main() async {
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode,
+      enabled: (!kReleaseMode && !GetPlatform.isIOS && !GetPlatform.isAndroid),
       builder: (context) => CaseSyncApp(),
     ),
   );
@@ -23,11 +20,6 @@ class CaseSyncApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (GetPlatform.isAndroid || Platform.isAndroid) {
-        CheckUpdate.checkForUpdate();
-      }
-    });
     return GetMaterialApp(
       useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),

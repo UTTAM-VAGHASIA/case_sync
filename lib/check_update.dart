@@ -1,279 +1,1096 @@
-import 'dart:convert';
+import 'dart:async'; // Required for Timer/Future.delayed, TimeoutException, Completer
+import 'dart:convert'; // For JSON decoding
+import 'dart:io'; // Required for File operations, Platform checks, HttpException, SocketException
 
-// import 'dart:io'; // Not strictly needed if using GetPlatform elsewhere or just for SystemNavigator
+import 'package:flutter/material.dart'; // Flutter framework
+import 'package:flutter/services.dart'; // Required for SystemNavigator
+import 'package:flutter_markdown/flutter_markdown.dart'; // Renders release notes as Markdown
+import 'package:http/http.dart' as http; // For making network requests
+import 'package:open_file_plus/open_file_plus.dart'; // To trigger APK install prompt
+import 'package:package_info_plus/package_info_plus.dart'; // To get current app version
+import 'package:path_provider/path_provider.dart'; // To get system directory paths (like cache)
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart'; // Import flutter_markdown
-import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
-
+/// Handles checking for application updates via GitHub Releases,
+/// downloading the update package (APK), and prompting the user for installation.
 class CheckUpdate {
   // --- Configuration ---
-  static const String githubOwner = "UT268"; // Your GitHub username/org
-  static const String githubRepo = "case_sync"; // Your GitHub repo name
-  static const String _githubPatKey = 'GITHUB_PAT'; // Key for --dart-define
-  // --- End Configuration ---
+  // TODO: Replace with your actual GitHub username/org and repository name
+  static const String githubOwner = "UT268"; // Your GitHub username or org
+  static const String githubRepo = "case_sync"; // Your repository name
 
-  // --- IMPORTANT SECURITY WARNING ---
-  // This code uses --dart-define to inject a GitHub PAT.
-  // This PAT WILL BE EMBEDDED in your compiled app (APK/IPA).
-  // It can be extracted by decompiling the app.
-  // This is NOT recommended for tokens with wide permissions (like 'repo').
-  // Consider using a backend proxy for better security if possible.
-  // --- End Security Warning ---
+  /// The key used with --dart-define to pass the GitHub Personal Access Token.
+  /// Example build command:
+  /// flutter build apk --release --dart-define=GITHUB_PAT=YOUR_TOKEN_HERE
+  static const String _githubPatKey = 'GITHUB_PAT';
 
-  static const String githubApiUrl =
+  /// The GitHub API endpoint for fetching the latest release information.
+  static String get _githubApiUrl =>
       "https://api.github.com/repos/$githubOwner/$githubRepo/releases/latest";
 
-  static Future<void> checkForUpdate() async {
-    String updateUrl = "";
+  // --- Security Warning ---
+  // Storing PAT via --dart-define is convenient but NOT secure for production apps
+  // with sensitive PATs. It can be extracted from the app package.
+  // For higher security, consider using a backend proxy service to handle
+  // GitHub API requests and authentication.
+  // --- End Warning ---
+
+  /// Checks for updates via GitHub Releases. Should be called early in app startup.
+  ///
+  /// Requires a [BuildContext] to show dialogs.
+  /// Returns `true` to indicate the app can proceed with normal startup,
+  /// or `false` if a mandatory update requires the app to halt (or exit).
+  static Future<bool> checkForUpdate(BuildContext context) async {
+    String? assetApiUrl;
     String latestVersion = "";
     bool forceUpdate = false;
-    String releaseNotesBody = ""; // Variable to hold release notes
+    String releaseNotesBody = "No release notes available.";
 
+    // Retrieve the GitHub PAT from dart-define environment variables
     const String githubPat =
         String.fromEnvironment(_githubPatKey, defaultValue: '');
 
-    // Debug logging (Consider removing PAT presence log in production builds)
-    if (githubPat.isNotEmpty) {
-      print("GitHub PAT found via environment variable.");
-    } else {
+    // --- PAT Handling & Logging ---
+    if (githubPat.isEmpty && !_isPublicRepo()) {
+      // Heuristic check if repo is likely private
       print(
-          "GitHub PAT NOT found via environment variable. Private repo access will likely fail.");
+          "CheckUpdate: WARNING - GitHub PAT not found via --dart-define '$_githubPatKey'. "
+          "Update check for private repo '$githubOwner/$githubRepo' will likely fail due to missing authentication.");
+      // Decide whether to block or allow startup without update check.
+      // Failing open allows the app to run even if the update check fails.
+      return true; // Fail open - allow app to run
+    } else if (githubPat.isNotEmpty) {
+      print(
+          "CheckUpdate: GitHub PAT found (using for API requests). NOTE: See security warning about --dart-define.");
+    } else {
+      // PAT is empty, and repo is assumed public (or _isPublicRepo returned true)
+      print(
+          "CheckUpdate: GitHub PAT not found, assuming public repository or PAT not needed.");
     }
 
-    print("Checking for updates using GitHub Releases API: $githubApiUrl");
+    print("CheckUpdate: Checking for updates at $_githubApiUrl");
 
+    // --- Fetch Latest Release Info ---
     try {
       final response = await http.get(
-        Uri.parse(githubApiUrl),
+        Uri.parse(_githubApiUrl),
         headers: {
           "Accept": "application/vnd.github.v3+json",
+          // Only include the Authorization header if a PAT is available
           if (githubPat.isNotEmpty) "Authorization": "Bearer $githubPat",
         },
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(
+          const Duration(seconds: 20)); // Network timeout for the API call
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
+        // Extract tag name (required)
         final String tagName = data['tag_name'] ?? '';
         if (tagName.isEmpty) {
-          /* ... error handling ... */ return;
+          print(
+              "CheckUpdate: Error - 'tag_name' missing in GitHub API response. Cannot determine latest version.");
+          return true; // Proceed with app startup if tag is missing
         }
-        print("Latest release tag: $tagName");
+        print("CheckUpdate: Latest release tag found: $tagName");
 
-        // --- Extract Release Notes Body ---
-        releaseNotesBody =
-            data['body'] ?? 'No release notes provided.'; // Get the body
-        // ---------------------------------
+        // Extract release notes
+        releaseNotesBody = data['body'] ?? 'No release notes available.';
 
-        latestVersion = /* ... derive latestVersion ... */
+        // Extract and clean version number from tag (e.g., "v1.2.3-beta" -> "1.2.3")
+        latestVersion =
             (tagName.startsWith('v') ? tagName.substring(1) : tagName)
-                .replaceAll('-force', '');
-        forceUpdate = /* ... determine forceUpdate ... */
-            tagName.endsWith('-force');
+                    .split('-')[
+                0]; // Remove 'v' prefix and suffixes like '-beta', '-force'
+
+        // Determine if update is mandatory (simple check for suffix)
+        forceUpdate = tagName.toLowerCase().endsWith('-force');
+
+        // Find the APK asset URL within the release assets
         final List<dynamic> assets = data['assets'] ?? [];
-        String? apkDownloadUrl;
         for (var asset in assets) {
-          /* ... find APK URL ... */
           final String? assetName = asset['name'];
-          if (assetName != null && assetName.endsWith('.apk')) {
-            apkDownloadUrl = asset['browser_download_url'];
-            break;
+          // Ensure the asset has a name and ends with '.apk' (case-insensitive)
+          if (assetName != null && assetName.toLowerCase().endsWith('.apk')) {
+            // Use 'url' for the API asset endpoint, not 'browser_download_url' directly here
+            // as we need headers (like Authorization) for the download request.
+            assetApiUrl = asset['url'];
+            print(
+                "CheckUpdate: Found APK asset: $assetName, API URL: $assetApiUrl");
+            break; // Found the first APK, stop searching
           }
         }
-        if (apkDownloadUrl == null) {
-          /* ... error handling ... */ return;
-        }
-        updateUrl = apkDownloadUrl;
 
-        print("Derived latest version: $latestVersion");
-        print("Force update: $forceUpdate");
-        print("Update URL: $updateUrl");
-        // Optional: print("Release Notes: $releaseNotesBody"); // Careful if notes are long
-      } else if (response.statusCode >= 400 && response.statusCode < 500) {
+        // Handle case where no APK asset was found in the release
+        if (assetApiUrl == null) {
+          print(
+              "CheckUpdate: Error - No '.apk' asset found in the latest release ('$tagName'). Cannot perform update.");
+          return true; // Proceed with app startup if APK is missing
+        }
+
         print(
-            "Client Error fetching update info: ${response.statusCode}. Check PAT, repo name, permissions, or internet connection.");
-        print("Response body: ${response.body}");
-        return;
+            "CheckUpdate: Derived Version: $latestVersion, Force Update: $forceUpdate");
       } else {
+        // Handle non-200 HTTP status codes from GitHub API
         print(
-            "Server Error fetching update info from GitHub: ${response.statusCode}");
-        print("Response body: ${response.body}");
-        return;
+            "CheckUpdate: Error fetching update info. Status: ${response.statusCode}, Body: ${response.body}");
+        // Provide hints for common errors
+        if (response.statusCode == 401) {
+          print(
+              "CheckUpdate: Hint: GitHub API returned 401 Unauthorized. Check if the GitHub PAT is valid and has the necessary scope (e.g., 'repo' for private repositories).");
+        } else if (response.statusCode == 403) {
+          print(
+              "CheckUpdate: Hint: GitHub API returned 403 Forbidden. This might be due to API rate limiting or the PAT missing required permissions.");
+        } else if (response.statusCode == 404) {
+          print(
+              "CheckUpdate: Hint: GitHub API returned 404 Not Found. Check if the 'githubOwner' ($githubOwner) and 'githubRepo' ($githubRepo) are correct.");
+        }
+        return true; // Proceed with app startup on API errors (fail open)
       }
     } catch (e) {
-      print("Error during update check: $e");
-      return;
+      // Handle network exceptions (timeouts, socket errors, etc.)
+      print("CheckUpdate: Exception during update check: $e");
+      if (e is TimeoutException) {
+        print(
+            "CheckUpdate: Hint: Network connection timed out while fetching release info.");
+      } else if (e is SocketException) {
+        print(
+            "CheckUpdate: Hint: Network connection error (e.g., no internet, DNS issue).");
+      } else if (e is FormatException) {
+        print(
+            "CheckUpdate: Hint: Failed to parse JSON response from GitHub API.");
+      }
+      return true; // Proceed with app startup on exceptions (fail open)
     }
 
+    // --- Compare Versions ---
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     String currentVersion = packageInfo.version;
-    print("Current app version: $currentVersion");
+    print("CheckUpdate: Current app version: $currentVersion");
 
-    // Consider using pub_semver for more robust comparison if needed:
-    // final currentSemVer = Version.parse(currentVersion);
-    // final latestSemVer = Version.parse(latestVersion);
-    // if (latestSemVer > currentSemVer) { ... }
-    if (latestVersion.isNotEmpty && currentVersion != latestVersion) {
-      print("Update available. Showing dialog.");
-      // --- Pass releaseNotesBody to the dialog ---
-      showUpdateDialog(Get.context!, updateUrl, forceUpdate, latestVersion,
-          releaseNotesBody);
-      // -------------------------------------------
+    // Use the helper function to compare versions
+    if (latestVersion.isNotEmpty &&
+        _isNewerVersion(latestVersion, currentVersion)) {
+      print(
+          "CheckUpdate: Update available (Current: $currentVersion -> Latest: $latestVersion). Showing update dialog.");
+
+      // Show the update dialog and wait for it to be dismissed.
+      // The dialog handles the download and install initiation.
+      await showUpdateDialog(
+        context,
+        assetApiUrl, // Known to be non-null if we reached here
+        forceUpdate,
+        latestVersion,
+        releaseNotesBody,
+        githubPat, // Pass PAT for authenticated download if needed
+      );
+
+      // --- Handle Mandatory Update ---
+      // If the update is mandatory, the dialog's PopScope or the user action
+      // might have already exited the app.
+      // If we reach here after the dialog is dismissed (e.g., user pressed "Later"),
+      // we block further app startup *only* if the update was mandatory.
+      if (forceUpdate) {
+        print(
+            "CheckUpdate: Mandatory update flow finished. Preventing further app startup.");
+        // Optionally, ensure exit if somehow the dialog didn't handle it
+        // SystemNavigator.pop();
+        return false; // Block startup
+      } else {
+        print(
+            "CheckUpdate: Optional update dialog dismissed. Proceeding with app startup.");
+        return true; // Allow startup for optional updates or if update was installed
+      }
     } else {
-      print("App is up to date or no new version found.");
+      // No newer version found or versions couldn't be compared reliably
+      print(
+          "CheckUpdate: App is up to date (Current: $currentVersion, Latest: $latestVersion) or no valid newer version identified.");
+      return true; // Proceed with normal app startup
     }
   }
 
-  // Modified to accept and display release notes
-  static void showUpdateDialog(
+  /// Simple version comparison. Returns true if `latestVersion` is newer than `currentVersion`.
+  /// Assumes versions like "1.2.3". Not fully SemVer compliant.
+  /// Consider using the `pub_semver` package for robust Semantic Versioning comparison.
+  static bool _isNewerVersion(String latestVersion, String currentVersion) {
+    try {
+      // Split versions into components
+      List<int> latestParts = latestVersion.split('.').map(int.parse).toList();
+      List<int> currentParts =
+          currentVersion.split('.').map(int.parse).toList();
+
+      // Compare parts numerically
+      int len = latestParts.length > currentParts.length
+          ? latestParts.length
+          : currentParts.length;
+      for (int i = 0; i < len; i++) {
+        int latestPart = (i < latestParts.length)
+            ? latestParts[i]
+            : 0; // Pad with 0 if shorter
+        int currentPart = (i < currentParts.length)
+            ? currentParts[i]
+            : 0; // Pad with 0 if shorter
+
+        if (latestPart > currentPart) return true;
+        if (latestPart < currentPart) return false;
+      }
+      // Versions are identical
+      return false;
+    } catch (e) {
+      // Error parsing version strings (e.g., non-numeric parts)
+      print(
+          "CheckUpdate: Error comparing versions '$latestVersion' and '$currentVersion': $e");
+      // Fallback: Treat parse errors as not newer to avoid unnecessary update prompts.
+      // A simple string comparison could be used as a less reliable fallback:
+      // return latestVersion.compareTo(currentVersion) > 0;
+      return false;
+    }
+  }
+
+  /// Heuristic check if the repo *might* be public.
+  /// This is only used for a console warning message if PAT is missing.
+  /// It's generally safer to assume a repository is private if you intend to use a PAT.
+  static bool _isPublicRepo() {
+    // Basic heuristic: Assume private by default if PAT usage is intended.
+    // You could add specific owner/repo names known to be public if desired.
+    // Example: if (githubOwner == 'flutter' && githubRepo == 'flutter') return true;
+    return false; // Default to assuming private for the warning logic
+  }
+
+  // =========================================================================
+  // ================== UI: showUpdateDialog (Modern B&W) ====================
+  // =========================================================================
+
+  /// Displays the update dialog with download/install functionality (Modern B&W Theme).
+  static Future<void> showUpdateDialog(
     BuildContext context,
-    String updateUrl,
+    String assetApiUrl,
     bool forceUpdate,
     String latestVersion,
-    String releaseNotesBody, // Added parameter for release notes
-  ) {
-    showDialog(
+    String releaseNotesBody,
+    String githubPat, // PAT needed for downloading the asset
+  ) async {
+    // State variables managed by StatefulBuilder for dialog UI updates
+    double? downloadProgress; // Null=indeterminate, 0.0-1.0=determinate
+    bool isDownloading = false;
+    String? downloadError;
+    String? downloadedFilePath;
+
+    // Use await to pause execution until the dialog is dismissed
+    await showDialog<void>(
       context: context,
-      barrierDismissible: !forceUpdate,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          // Use a SingleChildScrollView to prevent overflow if notes are long
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start, // Align notes left
-              children: [
-                // --- Top Section (Icon, Title) ---
-                Center(
-                  // Center the top icon and title
+      // Prevent dismissing by tapping outside if update is forced or download in progress
+      barrierDismissible: !forceUpdate && !isDownloading,
+      builder: (BuildContext dialogContext) {
+        // StatefulBuilder allows the dialog's content to rebuild when state changes
+        return StatefulBuilder(
+          builder: (stfContext, stfSetState) {
+            // Helper to safely update dialog state only if it's still mounted
+            void setDialogState(Function() fn) {
+              if (stfContext.mounted) {
+                stfSetState(fn);
+              }
+            }
+
+            // --- Theme Colors (Derived for B&W aesthetic) ---
+            final Color surfaceColor =
+                Theme.of(stfContext).colorScheme.surface; // Dialog background
+            final Color onSurfaceColor = Theme.of(stfContext)
+                .colorScheme
+                .onSurface; // Primary text/icons
+            final Color onSurfaceVariantColor =
+                onSurfaceColor.withValues(alpha: 0.65); // Secondary/muted text
+            final Color disabledColor =
+                Colors.grey.shade300; // Disabled elements background
+            final Color disabledTextColor =
+                onSurfaceColor.withValues(alpha: 0.4); // Disabled text
+            final Color primaryButtonColor =
+                Colors.black87; // Primary button background
+            final Color buttonTextColor =
+                Colors.white; // Text on primary button
+            final Color progressBackgroundColor =
+                Colors.grey.shade200; // Progress bar background
+            final Color progressIndicatorColor =
+                Colors.black87; // Progress bar indicator
+
+            // --- Dialog Structure ---
+            return PopScope(
+              // Handle back button press / system pop gesture
+              canPop: !forceUpdate && !isDownloading,
+              // Allow pop only if not forced and not downloading
+              onPopInvokedWithResult: (didPop, _) {
+                if (didPop) return; // Already popped (e.g., by "Later" button)
+
+                // If pop was attempted but prevented (e.g., back button on forced update)
+                if (forceUpdate &&
+                    !isDownloading &&
+                    downloadedFilePath == null) {
+                  // If update is mandatory, not downloading, not finished, and user tried to dismiss
+                  print(
+                      "CheckUpdate: Mandatory update dialog dismissed via back button/gesture. Exiting app.");
+                  SystemNavigator.pop(); // Exit the application
+                }
+                // If pop was attempted but prevented because download was in progress, do nothing.
+                // If pop was allowed (!forceUpdate && !isDownloading), Navigator.pop() will be called below.
+                else if (!isDownloading && !forceUpdate) {
+                  // Should have been handled by canPop=true, but as a safeguard:
+                  if (Navigator.of(dialogContext).canPop()) {
+                    Navigator.of(dialogContext).pop();
+                  }
+                }
+              },
+              child: AlertDialog(
+                backgroundColor: surfaceColor,
+                elevation: 6.0,
+                // Moderate elevation
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0) // Rounded corners
+                    ),
+                titlePadding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 12.0),
+                contentPadding:
+                    const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
+                actionsPadding:
+                    const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 16.0),
+                // Provide space for actions
+
+                // --- Dialog Title ---
+                title: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.system_update,
-                          size: 50,
-                          color: Colors.black), // Slightly smaller icon
-                      SizedBox(height: 10),
-                      Text(
-                        "Update Available",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Version $latestVersion", // Show version clearly
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
+                      Icon(Icons.system_update_alt,
+                          size: 40,
+                          color: onSurfaceColor.withValues(alpha: 0.8)),
+                      SizedBox(height: 16),
+                      Text("Update Available",
+                          textAlign: TextAlign.center,
+                          style: Theme.of(stfContext)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                  color: onSurfaceColor,
+                                  fontWeight: FontWeight.w600)),
+                      SizedBox(height: 6),
+                      Text("Version $latestVersion",
+                          textAlign: TextAlign.center,
+                          style: Theme.of(stfContext)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                  color: onSurfaceVariantColor,
+                                  fontWeight: FontWeight.normal)),
                     ],
                   ),
                 ),
-                SizedBox(height: 15),
 
-                // --- Release Notes Section ---
-                Text(
-                  "What's New:", // Section title for notes
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black87),
-                ),
-                SizedBox(height: 8),
-                // ConstrainedBox to limit the height of the markdown view
-                // Adjust maxHeight as needed
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height *
-                        0.3, // Limit to 30% of screen height
-                  ),
-                  // Use MarkdownBody to render the notes
-                  child: MarkdownBody(
-                    data: releaseNotesBody,
-                    styleSheet: MarkdownStyleSheet(
-                      // Optional: Customize markdown style
-                      p: TextStyle(fontSize: 14, color: Colors.black87),
-                      // Add other styles for h1, h2, list, etc. if needed
-                    ),
-                    selectable: true, // Allow selecting text in notes
-                  ),
-                ),
-                SizedBox(height: 20),
+                // --- Dialog Content ---
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    // Take only needed vertical space
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Divider(
+                          height: 24, thickness: 1, color: Colors.grey[300]),
+                      // Visual separator
+                      Text("What's New:",
+                          style: Theme.of(stfContext)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: onSurfaceColor)),
+                      SizedBox(height: 10),
+                      // --- Release Notes (Markdown) ---
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(stfContext).size.height *
+                                0.25 // Limit height
+                            ),
+                        child: Material(
+                          // Required for selectable text background/gestures
+                          color: Colors.transparent,
+                          child: MarkdownBody(
+                            data: releaseNotesBody.isEmpty
+                                ? "*No release notes provided.*"
+                                : releaseNotesBody,
+                            selectable: true, // Allow text selection
+                            styleSheet: MarkdownStyleSheet.fromTheme(
+                                    Theme.of(stfContext))
+                                .copyWith(
+                              p: Theme.of(stfContext)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                      fontSize: 14,
+                                      color: onSurfaceColor.withValues(
+                                          alpha: 0.85),
+                                      height: 1.4),
+                              listBullet: Theme.of(stfContext)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                      color: onSurfaceColor.withValues(
+                                          alpha: 0.85)),
+                              // Add styles for h1, h2, code, etc. if needed for your markdown
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                      // Spacing before status/actions
 
-                // --- Button Section ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (!forceUpdate)
+                      // --- Dynamic Status/Install Area ---
+                      AnimatedSwitcher(
+                        // Smoothly transition between states
+                        duration: const Duration(milliseconds: 300),
+                        child: _buildStatusSection(
+                          // Use helper widget
+                          stfContext,
+                          isDownloading,
+                          downloadProgress,
+                          downloadError,
+                          downloadedFilePath,
+                          () => _installApk(downloadedFilePath!, stfContext),
+                          // Install action callback
+                          // Pass theme colors:
+                          onSurfaceColor,
+                          onSurfaceVariantColor,
+                          progressBackgroundColor,
+                          progressIndicatorColor,
+                          primaryButtonColor,
+                          buttonTextColor,
+                          disabledTextColor, // Pass disabled text color
+                        ),
+                      ),
+                      // --- End Dynamic Status Area ---
+                    ],
+                  ),
+                ),
+
+                // --- Dialog Action Buttons ---
+                actions: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    // Align buttons to the right
+                    children: [
+                      // "Later" button: Shows only if update is optional AND not downloading/finished/errored
+                      if (!forceUpdate &&
+                          !isDownloading &&
+                          downloadedFilePath == null &&
+                          downloadError == null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          // Space between buttons
+                          child: Expanded(
+                            child: TextButton(
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(),
+                              // Dismiss dialog
+                              style: TextButton.styleFrom(
+                                foregroundColor: onSurfaceVariantColor,
+                                // Muted color for secondary action
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 10.0),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.0)),
+                              ),
+                              child: Text("Later"),
+                            ),
+                          ),
+                        ),
+
+                      // Main action button: "Update Now" / "Retry" / "Downloading..." / (Disabled "Downloaded")
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
                           style: ElevatedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.grey[600],
+                            backgroundColor: isDownloading ||
+                                    downloadedFilePath != null
+                                ? disabledColor // Greyed out if downloading or complete
+                                : primaryButtonColor,
+                            // Dark primary color
+                            foregroundColor: isDownloading ||
+                                    downloadedFilePath != null
+                                ? disabledTextColor // Muted text when disabled
+                                : buttonTextColor,
+                            // White text on primary button
+                            disabledBackgroundColor: disabledColor,
+                            // Explicit disabled background
+                            disabledForegroundColor: disabledTextColor,
+                            // Explicit disabled text color
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20.0, vertical: 12.0),
+                            textStyle: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(
+                                  12.0), // Match dialog/other elements
                             ),
-                            padding: EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: Text("Later"),
+                          // Disable button while downloading or if download is complete
+                          // (the "Install Now" button in the status section takes over)
+                          onPressed: isDownloading || downloadedFilePath != null
+                              ? null // Button is disabled
+                              : () {
+                                  // Action: Start or Retry Download
+                                  _startDownload(
+                                    stfContext,
+                                    // Pass context for potential UI feedback (though not used currently)
+                                    setDialogState,
+                                    // Crucial: Function to update the dialog's UI state
+                                    assetApiUrl,
+                                    latestVersion,
+                                    githubPat,
+                                    // Callbacks to update dialog state variables:
+                                    onProgress: (progress) => setDialogState(
+                                        () => downloadProgress = progress),
+                                    onError: (error) => setDialogState(
+                                        () => downloadError = error),
+                                    onComplete: (path) => setDialogState(
+                                        () => downloadedFilePath = path),
+                                    onDownloadingStateChange: (downloading) =>
+                                        setDialogState(
+                                            () => isDownloading = downloading),
+                                  );
+                                },
+                          // Dynamically set button text based on state
+                          child: Text(
+                            isDownloading
+                                ? "Downloading..."
+                                : downloadError != null
+                                    ? "Retry Download"
+                                    : downloadedFilePath != null
+                                        ? "Downloaded" // Button inactive; Install button shown elsewhere
+                                        : "Update Now",
+                          ),
                         ),
                       ),
-                    if (!forceUpdate) SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final Uri uri = Uri.parse(updateUrl);
-                          if (!await launchUrl(uri,
-                              mode: LaunchMode.externalApplication)) {
-                            print('Could not launch $updateUrl');
-                            // Optionally show a SnackBar error to the user
-                            if (context.mounted) {
-                              // Check if context is still valid
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text('Could not open update link.')),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text("Update Now"),
-                      ),
-                    ),
-                  ],
+                    ],
+                  )
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ); // showDialog Completes Here
+
+    // --- Post-Dialog Logic ---
+    // Handled by the return value of checkForUpdate based on forceUpdate flag
+    // and whether the dialog was dismissed or resulted in an exit.
+  }
+
+  // =========================================================================
+  // ============= UI HELPER: _buildStatusSection (Modern B&W) ===============
+  // =========================================================================
+
+  /// Builds the dynamic section showing download progress, errors, or the install button.
+  /// Includes the `Expanded` widget within the error state's `Row`.
+  static Widget _buildStatusSection(
+    BuildContext context,
+    bool isDownloading,
+    double? downloadProgress,
+    String? downloadError,
+    String? downloadedFilePath,
+    VoidCallback onInstallPressed,
+    // Theme colors passed from showUpdateDialog:
+    Color onSurfaceColor,
+    Color onSurfaceVariantColor,
+    Color progressBackgroundColor,
+    Color progressIndicatorColor,
+    Color primaryButtonColor,
+    Color buttonTextColor,
+    Color disabledTextColor, // Added for consistency
+  ) {
+    // Unique keys help AnimatedSwitcher differentiate between states
+    if (isDownloading) {
+      // --- Downloading State ---
+      return Container(
+        key: ValueKey('downloading'),
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Column(
+          children: [
+            Text(
+                downloadError ==
+                        null // Show specific retry message if applicable
+                    ? "Downloading update..."
+                    : downloadError.startsWith("Download failed. Retrying")
+                        ? downloadError // Show the retry message set by _startDownload
+                        : "Downloading update...", // Default text
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: onSurfaceVariantColor // Muted color for status text
+                    )),
+            SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: downloadProgress,
+              // Null value shows indeterminate animation
+              backgroundColor: progressBackgroundColor,
+              valueColor: AlwaysStoppedAnimation<Color>(progressIndicatorColor),
+              minHeight: 6,
+              // Make the bar slightly thicker
+              borderRadius: BorderRadius.circular(3), // Rounded ends
+            ),
+            SizedBox(height: 6),
+            // Show percentage only if progress is determinate
+            if (downloadProgress != null)
+              Text("${(downloadProgress * 100).toStringAsFixed(0)}%",
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelSmall
+                      ?.copyWith(color: onSurfaceVariantColor)),
+            SizedBox(height: 8),
+          ],
+        ),
+      );
+    } else if (downloadedFilePath != null) {
+      // --- Download Complete State ---
+      return Center(
+        // Center the content for this state
+        key: ValueKey('complete'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Expanded(
+            child: Column(
+              children: [
+                Icon(Icons.check_circle_outline,
+                    color: progressIndicatorColor,
+                    size: 32), // Clear success icon
+                SizedBox(height: 8),
+                Text("Download complete!",
+                    style: TextStyle(
+                        color: onSurfaceColor, fontWeight: FontWeight.w500)),
+                SizedBox(height: 16),
+                // "Install Now" button appears here when download finishes
+                ElevatedButton.icon(
+                  icon: Icon(Icons.install_mobile,
+                      size: 18, color: buttonTextColor),
+                  label: Text("Install Now"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryButtonColor,
+                    // Use primary color for install action
+                    foregroundColor: buttonTextColor,
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                    textStyle: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(12.0)), // Consistent shape
+                  ),
+                  onPressed:
+                      onInstallPressed, // Trigger the _installApk function
                 ),
               ],
             ),
           ),
-        );
-      },
-    ).then((_) {
-      if (forceUpdate && Navigator.canPop(context)) {
-        // Check if dialog context is still valid
-        // Improved check: Only exit if update is mandatory AND the dialog was dismissed (not by Update Now)
-        // This logic is still imperfect for determined users, but better.
-        print("Force update dialog dismissed, exiting app.");
-        SystemNavigator.pop();
-      }
-    });
+        ),
+      );
+    } else if (downloadError != null) {
+      // --- Error State ---
+      return Container(
+        key: ValueKey('error'),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+        // More padding for error block
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          // Subtle background to highlight the error area
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Row(
+          // Layout icon and text horizontally
+          crossAxisAlignment: CrossAxisAlignment.start,
+          // Align icon and text top
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0, top: 2.0),
+              child: Icon(Icons.error_outline,
+                  color: onSurfaceColor.withValues(alpha: 0.7),
+                  size: 20), // Muted error icon
+            ),
+            // Use Expanded to allow error text to take remaining width and wrap
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Download Failed",
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: onSurfaceColor,
+                          // Standard text color, icon indicates error
+                          fontWeight: FontWeight.bold)),
+                  SizedBox(height: 4),
+                  // The actual error message from _startDownload
+                  Text(downloadError,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: onSurfaceVariantColor,
+                          // Muted color for details
+                          height: 1.3 // Improve line spacing for readability
+                          )),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // --- Idle State (before download starts) ---
+      // No status needs to be shown initially
+      return SizedBox.shrink(key: ValueKey('idle'));
+    }
   }
-}
+
+  // =========================================================================
+  // ==================== Core Logic: Download & Install =====================
+  // =========================================================================
+
+  /// Handles the APK download process from GitHub Releases asset URL.
+  /// Includes retries, progress reporting, and state updates via callbacks.
+  static Future<void> _startDownload(
+    BuildContext context,
+    // Keep for potential future use (e.g., Snackbars)
+    StateSetter setState, // Function to update the dialog's UI state
+    String assetApiUrl,
+    // The API URL for the asset (requires auth header for private)
+    String latestVersion, // Used for filename generation
+    String githubPat, // The GitHub PAT for authentication
+    // Callbacks to update state variables in the dialog:
+    {
+    required Function(double?)
+        onProgress, // Reports download progress (null=indeterminate)
+    required Function(String) onError, // Reports error messages
+    required Function(String) onComplete, // Reports success with file path
+    required Function(bool)
+        onDownloadingStateChange, // Reports if download is active
+  }) async {
+    // --- Initial State Setup ---
+    onDownloadingStateChange(true); // Signal download start
+    onError(''); // Clear any previous error messages
+    onProgress(null); // Set progress to indeterminate initially
+    setState(() {}); // Update dialog UI immediately to show "Downloading..."
+
+    // --- Permissions (Android Specific - handled by open_file_plus/installer) ---
+    // Modern Android versions handle install permissions via the installer prompt.
+    // `requestLegacyExternalStorage` might be needed for older Android versions
+    // if saving outside cache, but saving to cache is generally preferred.
+
+    // --- Prepare for Download ---
+    File? downloadedFile; // Holds the file object
+    String targetFilePath = ''; // Path where the APK will be saved
+
+    try {
+      final directory =
+          await getApplicationCacheDirectory(); // Use app's cache directory
+      String apkFileName = "app-update-v$latestVersion.apk"; // Default filename
+
+      // Attempt to create a more specific filename (optional)
+      try {
+        final uri = Uri.parse(assetApiUrl);
+        // Example: Extract filename from the end of the API URL path if it ends with .apk
+        if (uri.pathSegments.isNotEmpty &&
+            uri.pathSegments.last.toLowerCase().endsWith('.apk')) {
+          // Basic sanitization: Replace characters not suitable for filenames
+          apkFileName =
+              uri.pathSegments.last.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+        }
+      } catch (e) {
+        print(
+            "CheckUpdate: Warning - Could not parse filename from asset URL ($assetApiUrl): $e. Using default: $apkFileName");
+      }
+
+      targetFilePath = '${directory.path}/$apkFileName';
+      downloadedFile = File(targetFilePath);
+
+      print("CheckUpdate: Target download path: $targetFilePath");
+    } catch (e) {
+      print(
+          "CheckUpdate: Error getting cache directory or creating file object: $e");
+      onError("Failed to prepare download location.");
+      onDownloadingStateChange(false);
+      setState(() {}); // Update UI
+      return;
+    }
+
+    // --- Download Retry Loop ---
+    const int maxRetries = 2; // Number of retries (total 3 attempts)
+    const Duration retryDelay = Duration(seconds: 5); // Delay between retries
+
+    for (int attempt = 0; attempt <= maxRetries; attempt++) {
+      http.Client? client; // Create a new client for each attempt
+      IOSink? sink; // File writer stream
+
+      try {
+        // --- Pre-Attempt Cleanup & UI Update ---
+        if (attempt > 0) {
+          // If retrying, delete potentially incomplete file from previous attempt
+          if (await downloadedFile.exists()) {
+            print(
+                "CheckUpdate: Deleting potentially partial file before retry: $targetFilePath");
+            try {
+              await downloadedFile.delete();
+            } catch (e) {
+              print(
+                  "CheckUpdate: Warning - Failed to delete partial file before retry: $e");
+            }
+          }
+          // Update UI to show retry attempt message
+          print(
+              "CheckUpdate: Download attempt ${attempt + 1} failed. Retrying in $retryDelay...");
+          onError(
+              "Download failed. Retrying (${attempt + 1}/${maxRetries + 1})...");
+          onProgress(null); // Reset progress visually for retry
+          setState(() {}); // Update dialog UI
+          await Future.delayed(retryDelay); // Wait before next attempt
+          onError(''); // Clear retry message before starting new attempt
+          setState(() {});
+        } else {
+          // First attempt, ensure progress is indeterminate and no error message
+          onError('');
+          onProgress(null);
+          setState(() {});
+        }
+
+        print(
+            "CheckUpdate: Starting download attempt ${attempt + 1}/${maxRetries + 1}...");
+
+        // --- Make HTTP Request ---
+        client = http.Client();
+        final request = http.Request('GET', Uri.parse(assetApiUrl));
+        // Crucial headers for GitHub asset download:
+        request.headers['Accept'] =
+            'application/octet-stream'; // Request binary file data
+        if (githubPat.isNotEmpty) {
+          request.headers['Authorization'] =
+              'Bearer $githubPat'; // Authentication for private repos
+        }
+
+        // Send the request and get the streamed response
+        final response = await client.send(request).timeout(
+              const Duration(seconds: 30),
+              // Timeout for establishing connection & getting headers
+              onTimeout: () => throw TimeoutException(
+                  'Connection timed out while initiating download.'),
+            );
+
+        // --- Handle Response ---
+        if (response.statusCode == 200) {
+          // Success: Start streaming the download
+          final totalBytes =
+              response.contentLength ?? -1; // Get total size if available
+          int receivedBytes = 0;
+          sink = downloadedFile.openWrite(); // Open file sink
+          final completer =
+              Completer<void>(); // To signal stream completion/error
+          late StreamSubscription<List<int>>
+              subscription; // To manage the stream listener
+
+          // Download stream timeout (long duration for inactivity between chunks)
+          const Duration streamTimeoutDuration = Duration(minutes: 3);
+          Timer? inactivityTimer;
+
+          void resetInactivityTimer() {
+            inactivityTimer?.cancel();
+            inactivityTimer = Timer(streamTimeoutDuration, () {
+              print(
+                  "CheckUpdate: Download stream timed out due to inactivity.");
+              subscription.cancel(); // Cancel the stream subscription
+              if (!completer.isCompleted) {
+                completer.completeError(TimeoutException(
+                    'Download timed out due to inactivity (no data received for ${streamTimeoutDuration.inSeconds} seconds).'));
+              }
+            });
+          }
+
+          subscription = response.stream.listen(
+            (chunk) {
+              if (completer.isCompleted)
+                return; // Avoid processing after completion/error
+              try {
+                resetInactivityTimer(); // Reset timer on receiving data
+                sink?.add(chunk); // Write chunk to file
+                receivedBytes += chunk.length;
+                if (totalBytes > 0) {
+                  // Calculate and report determinate progress
+                  final progress = (receivedBytes / totalBytes).clamp(0.0, 1.0);
+                  onProgress(progress);
+                } else {
+                  // Total size unknown, report indeterminate progress
+                  onProgress(null);
+                }
+                setState(() {}); // Update UI with progress
+              } catch (e) {
+                // Error during chunk processing or writing
+                if (!completer.isCompleted) completer.completeError(e);
+              }
+            },
+            onDone: () {
+              // Stream finished successfully
+              inactivityTimer?.cancel();
+              if (!completer.isCompleted) completer.complete();
+            },
+            onError: (e) {
+              // Error occurred in the stream itself
+              inactivityTimer?.cancel();
+              if (!completer.isCompleted) completer.completeError(e);
+            },
+            cancelOnError: true, // Cancel subscription automatically on error
+          );
+
+          // Wait for the stream completer to finish (or timeout)
+          await completer.future; // Throws if completer finishes with an error
+
+          // --- Download Completion ---
+          await sink.flush();
+          await sink.close(); // Ensure file is fully written and closed
+          sink = null; // Clear sink variable
+
+          print(
+              "CheckUpdate: Download successful: $targetFilePath ($receivedBytes bytes)");
+          onError(''); // Clear any lingering error/retry messages
+          onComplete(targetFilePath); // Signal success with the file path
+          onDownloadingStateChange(false); // Signal download end
+          setState(() {}); // Update UI to show "Complete" / "Install"
+          client.close(); // Close the client
+          return; // Exit retry loop successfully
+        } else {
+          // Handle non-200 status codes for this download attempt
+          final body = await response.stream
+              .bytesToString()
+              .catchError((_) => "<Failed to read response body>");
+          client.close(); // Close client before throwing
+          // Throw specific error for non-200 status
+          throw HttpException(
+              'Download attempt ${attempt + 1} failed with Status ${response.statusCode}. '
+              '${response.reasonPhrase ?? ""}. Body: ${body.substring(0, body.length > 500 ? 500 : body.length)}',
+              // Limit body length in error
+              uri: Uri.parse(assetApiUrl));
+        }
+      } catch (e) {
+        // --- Handle Exceptions During Download Attempt ---
+        print("CheckUpdate: Download exception (Attempt ${attempt + 1}): $e");
+        await sink?.close().catchError(
+            (_) {}); // Attempt to close sink on error, ignore errors
+        sink = null;
+        client?.close(); // Ensure client is closed
+
+        // Check if this was the last attempt
+        if (attempt == maxRetries) {
+          // Final attempt failed, report definitive error
+          String errorMsg =
+              "Download failed after ${maxRetries + 1} attempts.\n";
+          if (e is TimeoutException) {
+            errorMsg +=
+                "Reason: ${e.message ?? 'Timed out'}. Check network connection.";
+          } else if (e is SocketException) {
+            errorMsg +=
+                "Reason: Network error (${e.osError?.message ?? e.message}). Check connection.";
+          } else if (e is HttpException) {
+            // Try to provide a cleaner message from HttpException
+            String httpError = e.message;
+            // Avoid showing giant HTML bodies or JSON structures in the UI
+            if (httpError.contains('<html>')) {
+              httpError = httpError.substring(0, httpError.indexOf('<html>'));
+            }
+            if (httpError.contains('{')) {
+              httpError = httpError.substring(0, httpError.indexOf('{'));
+            }
+            errorMsg += "Reason: Server error (${httpError.trim()}).";
+          } else {
+            errorMsg +=
+                "Reason: Unexpected error (${e.runtimeType}). See logs for details.";
+            // Consider logging the full e.toString() for debugging
+            print("CheckUpdate: Full error details: ${e.toString()}");
+          }
+
+          onError(errorMsg); // Set final error message
+          onDownloadingStateChange(false); // Signal download end (failed)
+          setState(() {}); // Update UI to show final error
+
+          // Attempt to clean up the potentially corrupted file on final failure
+          try {
+            if (await downloadedFile.exists()) {
+              await downloadedFile.delete();
+              print(
+                  "CheckUpdate: Cleaned up failed download file: $targetFilePath");
+            }
+          } catch (deleteError) {
+            print(
+                "CheckUpdate: Warning - Failed to delete file after final download error: $deleteError");
+          }
+          return; // Exit function after final failure
+        }
+        // else: Not the last attempt, loop will continue after delay (handled at loop start)
+      } finally {
+        // Ensure resources are released even if unexpected errors occur
+        await sink?.close().catchError((_) {});
+        client?.close();
+      }
+    } // --- End Retry Loop ---
+  }
+
+  /// Triggers the native Android APK installation prompt using open_file_plus.
+  static Future<void> _installApk(String filePath, BuildContext context) async {
+    print("CheckUpdate: Attempting to open APK for installation: $filePath");
+
+    // Check if file exists before attempting to open
+    final file = File(filePath);
+    if (!await file.exists()) {
+      print("CheckUpdate: Error - APK file not found at path: $filePath");
+      if (context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+              content: Text('Installation Error: Downloaded file not found.')),
+        );
+      }
+      return;
+    }
+
+    // Use open_file_plus to request the system installer
+    final result = await OpenFile.open(filePath,
+        type: "application/vnd.android.package-archive");
+
+    switch (result.type) {
+      case ResultType.done:
+        print(
+            "CheckUpdate: System installation prompt opened successfully for: $filePath");
+        // Optional: You might want to close the update dialog or exit the app here,
+        // depending on whether the update was mandatory and your desired UX.
+        // Example: If mandatory, you might exit after triggering install.
+        // if (forceUpdate && context.mounted) SystemNavigator.pop();
+        break;
+      case ResultType.noAppToOpen:
+        print(
+            "CheckUpdate: Error opening installer - No application found to handle APK files.");
+        if (context.mounted) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Could not start installation: No app found to open APK files.')),
+          );
+        }
+        break;
+      case ResultType.permissionDenied:
+        print(
+            "CheckUpdate: Error opening installer - Permission denied. User may need to grant install permission.");
+        if (context.mounted) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Installation permission denied. Please allow installation from this app in settings.')),
+          );
+        }
+        // Consider guiding the user to settings if possible/necessary
+        break;
+      case ResultType.error:
+      default:
+        print(
+            "CheckUpdate: Error opening installer: ${result.type} - ${result.message}");
+        if (context.mounted) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(
+                content: Text('Error opening installer: ${result.message}')),
+          );
+        }
+        break;
+    }
+  }
+} // End of CheckUpdate class
