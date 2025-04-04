@@ -1,13 +1,11 @@
 import 'dart:convert';
 
-import 'package:case_sync/check_update.dart';
 import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/screens/cases/case_counter_list.dart';
 import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_new_badger/flutter_new_badger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
@@ -129,9 +127,6 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      CheckUpdate.checkForUpdate(context);
-    });
     allowNotification();
     fetchCaseCounter();
     populateCaseData();
@@ -175,10 +170,10 @@ class HomeScreenState extends State<HomeScreen> {
     double cardHeight = 72;
     double fullCardWidth = screenWidth * 0.93;
 
-    setBadgeNumber(int count) async {
-      await FlutterNewBadger.setBadge(count);
-      print("Badge done: ${await FlutterNewBadger.getBadge()}");
-    }
+    // setBadgeNumber(int count) async {
+    //   await FlutterNewBadger.setBadge(count);
+    //   print("Badge done: ${await FlutterNewBadger.getBadge()}");
+    // }
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
@@ -214,7 +209,6 @@ class HomeScreenState extends State<HomeScreen> {
                 ValueListenableBuilder<List<Notifications>>(
                   valueListenable: notificationList,
                   builder: (context, cases, child) {
-                    setBadgeNumber(cases.length);
                     return Positioned(
                       right: 5,
                       top: -3,

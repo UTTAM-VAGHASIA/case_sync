@@ -1,12 +1,14 @@
 import 'dart:convert';
 
+import 'package:case_sync/screens/interns/reassign_task.dart';
+import 'package:case_sync/services/shared_pref.dart';
+import 'package:case_sync/utils/slideable_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../../components/basic_ui_component.dart';
-import '../../../utils/dismissible_card.dart';
 import '../../constants/constants.dart';
 import '../../interns/adding forms/add_tasks.dart';
 import '../../interns/editing forms/edit_task.dart';
@@ -16,8 +18,8 @@ class TaskHistoryPage extends StatefulWidget {
   final String caseId;
   final String caseNo;
 
-  const TaskHistoryPage({Key? key, required this.caseId, required this.caseNo})
-      : super(key: key);
+  const TaskHistoryPage(
+      {super.key, required this.caseId, required this.caseNo});
 
   @override
   State<TaskHistoryPage> createState() => TaskHistoryPageState();
@@ -28,6 +30,7 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
   bool _isLoading = true;
   List<Map<String, dynamic>> _tasks = [];
   late Map<String, String> caseDetails = {};
+  String? advocateId;
 
   @override
   bool get wantKeepAlive => true;
@@ -39,6 +42,8 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
   }
 
   Future<void> fetchTasks() async {
+    final advocate = await SharedPrefService.getUser();
+    advocateId = advocate!.id;
     try {
       final url = Uri.parse('$baseUrl/get_case_task');
       final request = http.MultipartRequest('POST', url);
@@ -70,6 +75,41 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _handleReassign(task) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      // isScrollControlled allows the sheet to take up more height,
+      // especially needed when the keyboard appears.
+      isScrollControlled: true,
+      // Make corners rounded to match typical modal style
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      // Prevent dismissal by tapping outside if an operation is in progress? (optional)
+      // isDismissible: !_isLoading, // You'd need to pass _isLoading state or manage it differently
+      backgroundColor: Colors.white,
+      // Or your desired sheet background color
+      builder: (BuildContext sheetContext) {
+        // Pass the necessary IDs to the sheet widget
+        return ReAssignTaskSheet(
+          taskId: task['id'],
+          advocateId: advocateId!,
+        );
+      },
+    );
+
+    // Optional: Handle the result after the sheet is closed
+    if (result == true) {
+      // Reassignment was successful (sheet popped with 'true')
+      print('Task reassignment successful. Refreshing list...');
+      fetchTasks();
+      // e.g., call a method passed down via constructor or use a state management solution
+    } else {
+      // Sheet was dismissed without success (e.g., back button, tapped outside)
+      print('Reassign task sheet closed without completing.');
     }
   }
 
@@ -176,8 +216,14 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
                                   borderRadius: BorderRadius.circular(15),
                                   border: Border.all(color: Colors.black),
                                 ),
-                                child: DismissibleCard(
+                                child: SlideableCard(
                                   name: 'this task',
+                                  onEdit: () => _handleEdit(task),
+                                  onDelete: () => _handleDelete(task),
+                                  canReassign:
+                                      (task['alloted_to_id'] == advocateId &&
+                                          task['alloted_by_id'] != advocateId),
+                                  onReassign: () => _handleReassign(task),
                                   child: Container(
                                     color: Color(0xFFF3F3F3),
                                     child: ListTile(
@@ -268,8 +314,6 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
                                       },
                                     ),
                                   ),
-                                  onEdit: () => _handleEdit(task),
-                                  onDelete: () => _handleDelete(task),
                                 ),
                               ),
                             );
