@@ -649,40 +649,37 @@ class CheckUpdate {
         key: ValueKey('complete'),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Expanded(
-            child: Column(
-              children: [
-                Icon(Icons.check_circle_outline,
-                    color: progressIndicatorColor,
-                    size: 32), // Clear success icon
-                SizedBox(height: 8),
-                Text("Download complete!",
-                    style: TextStyle(
-                        color: onSurfaceColor, fontWeight: FontWeight.w500)),
-                SizedBox(height: 16),
-                // "Install Now" button appears here when download finishes
-                ElevatedButton.icon(
-                  icon: Icon(Icons.install_mobile,
-                      size: 18, color: buttonTextColor),
-                  label: Text("Install Now"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryButtonColor,
-                    // Use primary color for install action
-                    foregroundColor: buttonTextColor,
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
-                    textStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5),
-                    shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(12.0)), // Consistent shape
-                  ),
-                  onPressed:
-                      onInstallPressed, // Trigger the _installApk function
+          child: Column(
+            children: [
+              Icon(Icons.check_circle_outline,
+                  color: progressIndicatorColor,
+                  size: 32), // Clear success icon
+              SizedBox(height: 8),
+              Text("Download complete!",
+                  style: TextStyle(
+                      color: onSurfaceColor, fontWeight: FontWeight.w500)),
+              SizedBox(height: 16),
+              // "Install Now" button appears here when download finishes
+              ElevatedButton.icon(
+                icon: Icon(Icons.install_mobile,
+                    size: 18, color: buttonTextColor),
+                label: Text("Install Now"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryButtonColor,
+                  // Use primary color for install action
+                  foregroundColor: buttonTextColor,
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                  textStyle: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5),
+                  shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(12.0)), // Consistent shape
                 ),
-              ],
-            ),
+                onPressed: onInstallPressed, // Trigger the _installApk function
+              ),
+            ],
           ),
         ),
       );
