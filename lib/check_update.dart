@@ -477,10 +477,9 @@ class CheckUpdate {
                           !isDownloading &&
                           downloadedFilePath == null &&
                           downloadError == null)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          // Space between buttons
-                          child: Expanded(
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
                             child: TextButton(
                               onPressed: () =>
                                   Navigator.of(dialogContext).pop(),
