@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -91,9 +92,7 @@ class _NewInternScreenState extends State<NewInternScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(responseBody);
         if (responseData['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Intern registered successfully!')),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, 'Intern registered successfully!');
 
           _formKey.currentState?.reset();
           _nameController.clear();
@@ -103,19 +102,13 @@ class _NewInternScreenState extends State<NewInternScreen> {
 
           Navigator.pop(context, true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: ${responseData['message']}')),
-          );
+          SnackBarUtils.showErrorSnackBar(context, 'Failed: ${responseData['message']}');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Server error: ${response.statusCode}')),
-        );
+        SnackBarUtils.showErrorSnackBar(context, 'Server error: ${response.statusCode}');
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
-      );
+      SnackBarUtils.showErrorSnackBar(context, 'Error: $error');
     }
 
     setState(() {

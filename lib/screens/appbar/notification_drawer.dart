@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,26 +63,30 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
           var ResponseData = await response.stream.bytesToString();
           final Map<String, dynamic> responseData = jsonDecode(ResponseData);
           if (responseData["success"] == true) {
-            if (kDebugMode) {
-              print("Removed: ${caseItem.id}");
-            }
             setState(() {
               caseList.removeWhere((c) => c.id == caseItem.id);
             });
+            SnackBarUtils.showSuccessSnackBar(
+              context,
+              "Notification marked as read",
+            );
           } else {
-            if (kDebugMode) {
-              print("Error: ${responseData['message']}");
-            }
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              responseData['message'] ?? "Failed to mark notification as read",
+            );
           }
         } else {
-          if (kDebugMode) {
-            print("Failed to call API. Status Code: ${response.statusCode}");
-          }
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            "Failed to call API. Status Code: ${response.statusCode}",
+          );
         }
       } catch (e) {
-        if (kDebugMode) {
-          print("Exception: $e");
-        }
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "An error occurred while marking notification as read",
+        );
       }
     }
 

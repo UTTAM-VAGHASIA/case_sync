@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../services/shared_pref.dart';
 import '../../../utils/file_already_exists_dialog.dart';
 
 class DocumentCard extends StatefulWidget {
@@ -132,9 +134,7 @@ class DocumentCardState extends State<DocumentCard> {
       }
       return filePath;
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('Failed to save document.')),
-      );
+      SnackBarUtils.showErrorSnackBar(context, 'Failed to save document.');
     }
 
     return null;
@@ -201,12 +201,9 @@ class DocumentCardState extends State<DocumentCard> {
               title: const Text('Copy Link'),
               onTap: () async {
                 HapticFeedback.mediumImpact();
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
                 await Clipboard.setData(ClipboardData(text: url));
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Link copied to clipboard.')),
-                );
+                SnackBarUtils.showSuccessSnackBar(context, 'Link copied to clipboard.');
               },
             ),
           ],
@@ -277,38 +274,20 @@ class DocumentCardState extends State<DocumentCard> {
           setState(() {
             widget.onEditSuccess;
           });
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text("Document updated successfully!"),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Document updated successfully!");
         } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text("Error: Failed to Edit Document"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtils.showErrorSnackBar(context, "Error: Failed to Edit Document");
           print('Error, failed to update document: ${data['message']}');
         }
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text(
-                "Error: Status Code:${response.statusCode}. Failed to edit document. Try again later!"),
-            backgroundColor: Colors.red,
-          ),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "Error: Status Code:${response.statusCode}. Failed to edit document. Try again later!"
         );
         print('Error hua hai: ${response.statusCode}');
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text("Error: An error occurred: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showErrorSnackBar(context, "Error: An error occurred: $e");
       print('Error: $e');
     } finally {
       setState(() {
@@ -350,38 +329,20 @@ class DocumentCardState extends State<DocumentCard> {
 
         if (data['success']) {
           widget.onEditSuccess;
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text("Document deleted successfully!"),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Document deleted successfully!");
         } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text("Error: Failed to Delete Document"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtils.showErrorSnackBar(context, "Error: Failed to Delete Document");
           print('Error, failed to delete document: ${data['message']}');
         }
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text(
-                "Error: Status Code:${response.statusCode}. Failed to delete document. Try again later!"),
-            backgroundColor: Colors.red,
-          ),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "Error: Status Code:${response.statusCode}. Failed to delete document. Try again later!"
         );
         print('Error hua hai: ${response.statusCode}');
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text("Error: An error occurred: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showErrorSnackBar(context, "Error: An error occurred: $e");
       print('Error: $e');
     } finally {
       setState(() {
@@ -449,8 +410,12 @@ class DocumentCardState extends State<DocumentCard> {
               ),
               child: DismissibleCard(
                 name: getFileNameFromUrl(widget.doc['docs']),
-                onEdit: () => handleEdit(
-                    widget.doc['file_type'], widget.doc['file_id'], "admin"),
+                onEdit: () async {
+                  final advocate = await SharedPrefService.getUser();
+                  final advocateId = advocate!.id;
+                  handleEdit(widget.doc['file_type'], widget.doc['file_id'],
+                      advocateId);
+                },
                 onDelete: () => handleDelete(
                     widget.doc['file_id'], widget.doc['file_type']),
                 child: Padding(

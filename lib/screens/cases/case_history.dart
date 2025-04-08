@@ -3,6 +3,7 @@ import 'package:case_sync/components/list_app_bar.dart';
 import 'package:case_sync/models/case_list.dart';
 import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/services/case_services.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,40 +41,52 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
   }
 
   Future<void> _initializeCaseData() async {
-    // Wait until `caseData` is populated
-    while (caseData.isEmpty) {
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
+    try {
+      // Wait until `caseData` is populated
+      while (caseData.isEmpty) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
 
-    if (years.isNotEmpty) {
-      setState(() {
-        selectedYear = years.last;
-        monthsWithCases = _getMonthsForYear(selectedYear);
+      if (years.isNotEmpty) {
+        setState(() {
+          selectedYear = years.last;
+          monthsWithCases = _getMonthsForYear(selectedYear);
 
-        if (monthsWithCases.isNotEmpty) {
-          _tabController = TabController(
-            length: monthsWithCases.length,
-            vsync: this,
-          );
+          if (monthsWithCases.isNotEmpty) {
+            _tabController = TabController(
+              length: monthsWithCases.length,
+              vsync: this,
+            );
 
-          // Set default tab to current month, or first valid tab
-          final currentMonthIndex = DateTime.now().month - 1;
-          final availableMonths =
-              monthsWithCases.map((month) => months.indexOf(month)).toList();
+            // Set default tab to current month, or first valid tab
+            final currentMonthIndex = DateTime.now().month - 1;
+            final availableMonths =
+                monthsWithCases.map((month) => months.indexOf(month)).toList();
 
-          int initialTabIndex = availableMonths.contains(currentMonthIndex)
-              ? availableMonths.indexOf(currentMonthIndex)
-              : 0;
+            int initialTabIndex = availableMonths.contains(currentMonthIndex)
+                ? availableMonths.indexOf(currentMonthIndex)
+                : 0;
 
-          _tabController.animateTo(initialTabIndex);
+            _tabController.animateTo(initialTabIndex);
 
-          _tabController.addListener(() {
-            if (!_tabController.indexIsChanging) {
-              setState(() {});
-            }
-          });
-        }
-      });
+            _tabController.addListener(() {
+              if (!_tabController.indexIsChanging) {
+                setState(() {});
+              }
+            });
+          }
+        });
+      } else {
+        throw Exception('No years available in case data');
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          'Failed to initialize case data: ${e.toString()}',
+        );
+      }
+      rethrow;
     }
   }
 
@@ -301,9 +314,57 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
         }
 
         if (snapshot.hasError) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              SnackBarUtils.showErrorSnackBar(
+                context,
+                'Error loading case data. Please try again.',
+              );
+            }
+          });
           return Scaffold(
+            appBar: AppBar(
+              surfaceTintColor: Colors.transparent,
+              backgroundColor: const Color.fromRGBO(243, 243, 243, 1),
+              elevation: 0,
+              leading: IconButton(
+                icon: SvgPicture.asset(
+                  'assets/icons/back_arrow.svg',
+                  width: 32,
+                  height: 32,
+                ),
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.pop(context);
+                },
+              ),
+              title: const Text("Case History"),
+            ),
             body: Center(
-              child: Text('Error: ${snapshot.error}'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Failed to load case data",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _caseDataFuture = _initializeCaseData();
+                      });
+                    },
+                    child: const Text("Retry"),
+                  ),
+                ],
+              ),
             ),
           );
         }

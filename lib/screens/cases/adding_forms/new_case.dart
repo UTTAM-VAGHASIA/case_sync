@@ -11,6 +11,7 @@ import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import '../../../models/advocate.dart';
 import '../../../services/shared_pref.dart';
+import '../../../utils/snackbar_utils.dart';
 import '../../constants/constants.dart';
 
 class NewCaseScreen extends StatefulWidget {
@@ -408,39 +409,29 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         var data = json.decode(responseData);
 
         if (data['success']) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                  "Case with case no: ${_caseNumberController.text} Added successfully!"),
-              backgroundColor: Colors.green,
-            ),
+          SnackBarUtils.showSuccessSnackBar(
+            context,
+            "Case with case no: ${_caseNumberController.text} Added successfully!",
           );
           Navigator.pop(context);
         } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text("Error: Failed to submit case: ${data['message']}"),
-              backgroundColor: Colors.red,
-            ),
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            "Failed to submit case: ${data['message']}",
           );
           print('Error, failed to submit case: ${data['message']}');
         }
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text(
-                "Error: Status Code:${response.statusCode}. Failed to submit case. Try again later!"),
-            backgroundColor: Colors.red,
-          ),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "Status Code:${response.statusCode}. Failed to submit case. Try again later!",
         );
         print('Error hua hai: ${response.statusCode}');
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text("Error: An error occurred: $e"),
-          backgroundColor: Colors.red,
-        ),
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "An error occurred: $e",
       );
       print('Error: $e');
     } finally {

@@ -4,6 +4,7 @@ import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/screens/cases/case_counter_list.dart';
 import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -111,17 +112,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: Colors.black,
-      ),
-    );
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   @override

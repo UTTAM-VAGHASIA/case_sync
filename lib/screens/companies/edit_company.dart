@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import '../../utils/snackbar_utils.dart';
 import '../../utils/validator.dart';
 
 class EditCompanyScreen extends StatefulWidget {
@@ -89,8 +90,9 @@ class EditCompanyScreenState extends State<EditCompanyScreen> {
         final responseData = jsonDecode(responseBody);
         print(responseData['success']);
         if (responseData['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['response'])),
+          SnackBarUtils.showSuccessSnackBar(
+            context,
+            responseData['response'],
           );
 
           _companyNameController.clear();
@@ -100,18 +102,21 @@ class EditCompanyScreenState extends State<EditCompanyScreen> {
           // Pass true back to the previous screen
           Navigator.pop(context, true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: ${responseData['response']}')),
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            'Failed: ${responseData['response']}',
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Server error: ${response.statusCode}')),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          'Server error: ${response.statusCode}',
         );
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        'Error: $error',
       );
     } finally {
       setState(() {

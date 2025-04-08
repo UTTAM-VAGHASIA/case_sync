@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -125,12 +126,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   Future<void> _selectDate(BuildContext context, bool isEndDate) async {
@@ -165,12 +161,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     if (_advocateName == null ||
         _assignedTo == null ||
         validateTaskInstruction(_taskInstructionController.text) != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill out all fields"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showErrorSnackBar(context, "Please fill out all fields");
 
       setState(() {
         isLoading = false;
@@ -203,12 +194,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       print("API Response: $decodedResponse");
 
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Task added successfully!"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackBarUtils.showSuccessSnackBar(context, "Task added successfully!");
         Navigator.pop(context, true);
       } else {
         _showErrorSnackBar(

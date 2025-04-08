@@ -5,6 +5,7 @@ import 'package:case_sync/screens/interns/adding%20forms/add_tasks.dart';
 import 'package:case_sync/screens/interns/editing%20forms/edit_task.dart';
 import 'package:case_sync/screens/interns/task_info.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -130,9 +131,7 @@ class _TasksPageState extends State<TasksPage> {
           setState(() {
             _tasks.removeWhere((task) => task['id'] == taskId);
           });
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text("Task deleted successfully.")),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Task deleted successfully.");
         } else {
           _showError(data['message'] ?? "Failed to delete task.");
         }
@@ -145,8 +144,7 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   Future<void> _handleEdit(Map<String, dynamic> task) async {

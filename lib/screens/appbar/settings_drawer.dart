@@ -1,5 +1,6 @@
 import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/services/shared_pref.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -109,14 +110,12 @@ class _SettingsDrawerState extends State<SettingsDrawer> {
               Center(
                 child: ElevatedButton(
                   onPressed: () async {
-                    final scaffoldMessenger = ScaffoldMessenger.of(context);
                     HapticFeedback.mediumImpact();
                     await SharedPrefService.clearUser();
 
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('You have been logged out successfully.'),
-                      ),
+                    SnackBarUtils.showSuccessSnackBar(
+                      context,
+                      'You have been logged out successfully.',
                     );
 
                     Navigator.pushAndRemoveUntil(

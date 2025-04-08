@@ -2,6 +2,7 @@ import 'dart:async'; // Required for Timer/Future.delayed, TimeoutException, Com
 import 'dart:convert'; // For JSON decoding
 import 'dart:io'; // Required for File operations, Platform checks, HttpException, SocketException
 
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart'; // Flutter framework
 import 'package:flutter/services.dart'; // Required for SystemNavigator
 import 'package:flutter_markdown/flutter_markdown.dart'; // Renders release notes as Markdown
@@ -52,19 +53,16 @@ class CheckUpdate {
     // --- PAT Handling & Logging ---
     if (githubPat.isEmpty && !_isPublicRepo()) {
       // Heuristic check if repo is likely private
-      print(
-          "CheckUpdate: WARNING - GitHub PAT not found via --dart-define '$_githubPatKey'. "
-          "Update check for private repo '$githubOwner/$githubRepo' will likely fail due to missing authentication.");
-      // Decide whether to block or allow startup without update check.
-      // Failing open allows the app to run even if the update check fails.
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "GitHub PAT not found. Update check may fail due to missing authentication.",
+      );
       return true; // Fail open - allow app to run
     } else if (githubPat.isNotEmpty) {
-      print(
-          "CheckUpdate: GitHub PAT found (using for API requests). NOTE: See security warning about --dart-define.");
-    } else {
-      // PAT is empty, and repo is assumed public (or _isPublicRepo returned true)
-      print(
-          "CheckUpdate: GitHub PAT not found, assuming public repository or PAT not needed.");
+      SnackBarUtils.showInfoSnackBar(
+        context,
+        "GitHub PAT found. Using for API requests.",
+      );
     }
 
     print("CheckUpdate: Checking for updates at $_githubApiUrl");
@@ -87,8 +85,10 @@ class CheckUpdate {
         // Extract tag name (required)
         final String tagName = data['tag_name'] ?? '';
         if (tagName.isEmpty) {
-          print(
-              "CheckUpdate: Error - 'tag_name' missing in GitHub API response. Cannot determine latest version.");
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            "Error: Cannot determine latest version. Tag name missing in response.",
+          );
           return true; // Proceed with app startup if tag is missing
         }
         print("CheckUpdate: Latest release tag found: $tagName");
@@ -122,8 +122,10 @@ class CheckUpdate {
 
         // Handle case where no APK asset was found in the release
         if (assetApiUrl == null) {
-          print(
-              "CheckUpdate: Error - No '.apk' asset found in the latest release ('$tagName'). Cannot perform update.");
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            "Error: No APK found in latest release. Cannot perform update.",
+          );
           return true; // Proceed with app startup if APK is missing
         }
 
@@ -1032,9 +1034,9 @@ class CheckUpdate {
     if (!await file.exists()) {
       print("CheckUpdate: Error - APK file not found at path: $filePath");
       if (context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-              content: Text('Installation Error: Downloaded file not found.')),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          'Installation Error: Downloaded file not found.',
         );
       }
       return;
@@ -1057,10 +1059,9 @@ class CheckUpdate {
         print(
             "CheckUpdate: Error opening installer - No application found to handle APK files.");
         if (context.mounted) {
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Could not start installation: No app found to open APK files.')),
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            'Could not start installation: No app found to open APK files.',
           );
         }
         break;
@@ -1068,10 +1069,9 @@ class CheckUpdate {
         print(
             "CheckUpdate: Error opening installer - Permission denied. User may need to grant install permission.");
         if (context.mounted) {
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Installation permission denied. Please allow installation from this app in settings.')),
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            'Installation permission denied. Please allow installation from this app in settings.',
           );
         }
         // Consider guiding the user to settings if possible/necessary
@@ -1081,9 +1081,9 @@ class CheckUpdate {
         print(
             "CheckUpdate: Error opening installer: ${result.type} - ${result.message}");
         if (context.mounted) {
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(
-                content: Text('Error opening installer: ${result.message}')),
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            'Error opening installer: ${result.message}',
           );
         }
         break;

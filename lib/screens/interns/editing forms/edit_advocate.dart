@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -48,7 +49,6 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
   }
 
   Future<void> _editAdvocate() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -82,26 +82,18 @@ class _EditAdvocateScreenState extends State<EditAdvocateScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(responseBody);
         if (responseData['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['response'])),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, responseData['response']);
           if (mounted) {
             Navigator.pop(context, true);
           }
         } else {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('Failed: ${responseData['response']}')),
-          );
+          SnackBarUtils.showErrorSnackBar(context, 'Failed: ${responseData['response']}');
         }
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Server error: ${response.statusCode}')),
-        );
+        SnackBarUtils.showErrorSnackBar(context, 'Server error: ${response.statusCode}');
       }
     } catch (error) {
-      scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('Error: $error')),
-      );
+      SnackBarUtils.showErrorSnackBar(context, 'Error: $error');
     } finally {
       setState(() {
         _isLoading = false;

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
+import '../../utils/snackbar_utils.dart';
 
 import '../../components/case_card.dart'; // Import your CaseCard component
 import '../../components/list_app_bar.dart';
@@ -117,8 +118,7 @@ class AssignedCasesState extends State<AssignedCases> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   void _updateFilteredCases() {

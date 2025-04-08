@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:case_sync/components/filter_modal.dart';
 import 'package:case_sync/components/upcoming_case_card.dart';
 import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -210,13 +211,13 @@ class UpcomingCasesState extends State<UpcomingCases>
 
           // Extract unique cities and courts from the case data
           if (_cities.isEmpty) {
-            _cities = _casesByDate.values
+            _cities = _originalCasesByDate.values
                 .expand((cases) => cases.map((c) => c.cityName))
                 .toSet()
                 .toList();
           }
           if (_courts.isEmpty) {
-            _courts = _casesByDate.values
+            _courts = _originalCasesByDate.values
                 .expand((cases) => cases.map((c) => c.courtName))
                 .toSet()
                 .toList();
@@ -225,15 +226,19 @@ class UpcomingCasesState extends State<UpcomingCases>
           _isLoading = false;
         });
       } else {
-        throw Exception(
-            'Failed to load cases. Status Code: ${response.statusCode}');
+        throw Exception('Failed to load cases');
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error: $e';
         _isLoading = false;
       });
       log('Error: $e');
+      if (mounted) {
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          'Failed to load cases. Please try again.',
+        );
+      }
     }
   }
 
@@ -290,7 +295,35 @@ class UpcomingCasesState extends State<UpcomingCases>
                   setState(() {
                     _selectedDate = value;
                   });
-                  _fetchCases(_selectedDate);
+                  _fetchCases(_selectedDate).then((_) {
+                    // Get new lists of cities and courts
+                    final newCities = _originalCasesByDate.values
+                        .expand((cases) => cases.map((c) => c.cityName))
+                        .toSet()
+                        .toList();
+                    final newCourts = _originalCasesByDate.values
+                        .expand((cases) => cases.map((c) => c.courtName))
+                        .toSet()
+                        .toList();
+
+                    setState(() {
+                      _cities = newCities;
+                      _courts = newCourts;
+
+                      // Reset selected city if it doesn't exist in new list
+                      if (_selectedCity != null && _selectedCity != "All" && !newCities.contains(_selectedCity)) {
+                        _selectedCity = null;
+                      }
+
+                      // Reset selected court if it doesn't exist in new list
+                      if (_selectedCourt != null && _selectedCourt != "All" && !newCourts.contains(_selectedCourt)) {
+                        _selectedCourt = null;
+                      }
+
+                      // Apply filters with potentially updated selections
+                      _applyFilters();
+                    });
+                  });
                 }
               },
               onApply: () {
@@ -434,9 +467,7 @@ class UpcomingCasesState extends State<UpcomingCases>
                           ? const Center(
                               child: CircularProgressIndicator(
                                   color: Colors.black))
-                          : _errorMessage.isNotEmpty
-                              ? Center(child: Text(_errorMessage))
-                              : (_casesByDate[_selectedTabDate]?.isEmpty ??
+                          : (_casesByDate[_selectedTabDate]?.isEmpty ??
                                       true)
                                   ? const Center(
                                       child: Text(

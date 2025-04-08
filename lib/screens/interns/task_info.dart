@@ -219,7 +219,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
       isScrollControlled: true,
       builder: (context) {
         return AddRemarkModal(
-          currentStage: task['stage'],
+          currentStage: task['stage_name'],
           taskId: task['id'],
           caseId: task['case_id'],
           stageId: task['stage'],

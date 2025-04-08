@@ -3,6 +3,7 @@ import 'dart:convert'; // For JSON decoding
 import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/screens/interns/adding%20forms/new_advocate.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -79,9 +80,7 @@ class AdvocateListScreenState extends State<AdvocateListScreen> {
           setState(() {
             advocates.removeWhere((intern) => intern['id'] == advocateId);
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Advocate deleted successfully.")),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Advocate deleted successfully.");
         } else {
           _showError(data['response']);
         }

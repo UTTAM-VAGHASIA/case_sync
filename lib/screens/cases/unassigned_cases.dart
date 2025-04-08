@@ -10,6 +10,7 @@ import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import '../../components/case_card.dart'; // Import CaseCard widget
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
+import '../../utils/snackbar_utils.dart';
 
 class UnassignedCases extends StatefulWidget {
   const UnassignedCases({super.key});
@@ -114,8 +115,7 @@ class UnassignedCasesState extends State<UnassignedCases> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   void _updateFilteredCases() {

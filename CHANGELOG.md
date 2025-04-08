@@ -4,9 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### To be Added
+
+- Feature to edit any case details.
+- Feature to add remark along with the current priority sequence number in today's case list of upcoming cases.
+
+## [1.6.9] - 2024-04-08
+
 ### Added
 
-- New feature work in progress.
+- Proper Snackbar displays throughout the app.
+
+### Fixed
+
+- Fixed Intern List (where edit was not working).
+- Fixed the issue where case type was not showed in the add task modal.
+- Fixed API calls to send advocate id instead of hardcoded "admin".
+- Fixed Filter options of Upcoming Cases.
+- Fixed the sorting in case counter list, now it sorts based on priority.
 
 ## [1.6.8] - 2024-04-04
 

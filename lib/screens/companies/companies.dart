@@ -10,6 +10,7 @@ import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 import 'add_companies.dart';
 import 'edit_company.dart';
+import '../../utils/snackbar_utils.dart';
 
 class CompaniesScreen extends StatefulWidget {
   const CompaniesScreen({super.key});
@@ -65,17 +66,14 @@ class CompaniesScreenState extends State<CompaniesScreen> {
         setState(() {
           isLoading = false;
         });
+        SnackBarUtils.showErrorSnackBar(context, 'Error: ${error.toString()}');
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${error.toString()}')),
-      );
     }
     return 0;
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   Future<void> _deleteCompany(String companyId) async {
@@ -89,9 +87,7 @@ class CompaniesScreenState extends State<CompaniesScreen> {
           setState(() {
             companies.removeWhere((company) => company['id'] == companyId);
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Company deleted successfully.")),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Company deleted successfully.");
         } else {
           _showError(data['response']);
         }

@@ -189,6 +189,7 @@ class _FilterModalContentState extends State<_FilterModalContent> {
                     DateFormat('dd-MM-yyyy').format(pickedDate);
               });
               widget.onDateSelected(pickedDate);
+              Navigator.of(context).pop();
             }
           },
           child: AbsorbPointer(

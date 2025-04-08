@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
+import '../../../utils/snackbar_utils.dart';
 import '../../constants/constants.dart';
 import 'document_card.dart';
 
@@ -23,7 +24,6 @@ class _ViewDocsPageState extends State<ViewDocsPage>
     with AutomaticKeepAliveClientMixin {
   final List<Map<String, dynamic>> _documents = [];
   bool _isLoading = false;
-  String _errorMessage = '';
 
   @override
   bool get wantKeepAlive => true;
@@ -39,7 +39,6 @@ class _ViewDocsPageState extends State<ViewDocsPage>
     if (!mounted) return;
     setState(() {
       _isLoading = true;
-      _errorMessage = '';
     });
 
     try {
@@ -72,16 +71,18 @@ class _ViewDocsPageState extends State<ViewDocsPage>
           });
         } else {
           if (!mounted) return;
-          setState(() => _errorMessage = 'No documents available.');
+          SnackBarUtils.showInfoSnackBar(context, 'No documents available.');
         }
       } else {
         if (!mounted) return;
-        setState(() => _errorMessage =
-            'Failed to fetch documents. Status code: ${response.statusCode}');
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          'Failed to fetch documents. Status code: ${response.statusCode}',
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'An error occurred: $e');
+      SnackBarUtils.showErrorSnackBar(context, 'An error occurred: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -96,23 +97,6 @@ class _ViewDocsPageState extends State<ViewDocsPage>
         children: [
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.black))
-          else if (_errorMessage.isNotEmpty)
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(_errorMessage, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      _fetchDocuments();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
           else
             LiquidPullToRefresh(
               backgroundColor: Colors.black,

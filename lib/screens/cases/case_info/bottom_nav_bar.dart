@@ -15,11 +15,14 @@ class BottomNavBar extends StatefulWidget {
   final String caseNo;
   final bool isUnassigned;
 
+  final String caseType;
+
   const BottomNavBar({
     super.key,
     required this.caseId,
     required this.caseNo,
     this.isUnassigned = false,
+    required this.caseType,
   });
 
   @override
@@ -133,6 +136,7 @@ class BottomNavBarState extends State<BottomNavBar> {
           TaskHistoryPage(
             caseId: widget.caseId,
             caseNo: widget.caseNo,
+            caseType: widget.caseType,
           ),
           ViewDocsPage(caseId: widget.caseId, caseNo: widget.caseNo),
         ],

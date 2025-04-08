@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-import 'ios_alert_dialog.dart'; // Assuming this is your custom dialog
+import 'ios_alert_dialog.dart';
 
 class SlideableCard extends StatelessWidget {
   final Widget child;

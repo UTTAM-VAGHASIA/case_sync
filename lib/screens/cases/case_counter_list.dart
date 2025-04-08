@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
+import '../../utils/snackbar_utils.dart';
 
-import '../../components/case_card.dart'; // Import your CaseCard component
+import '../../components/case_card.dart';
 import '../../components/list_app_bar.dart';
 import '../../models/case_list.dart';
 
@@ -64,7 +65,8 @@ class CounterCasesState extends State<CounterCases> {
           }
           _caseList = (data['data'] as List)
               .map((item) => CaseListData.fromJson(item))
-              .toList();
+              .toList()
+            ..sort((a, b) => a.caseCounter.compareTo(b.caseCounter));
           print(_caseList.length);
           if (isOnPage) {
             setState(() {
@@ -118,8 +120,7 @@ class CounterCasesState extends State<CounterCases> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   void _updateFilteredCases() {

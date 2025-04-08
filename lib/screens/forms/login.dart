@@ -7,6 +7,7 @@ import '../../components/basic_ui_component.dart';
 import '../../models/advocate.dart';
 import '../../services/api_service.dart';
 import '../../services/shared_pref.dart';
+import '../../utils/snackbar_utils.dart';
 import '../../utils/validator.dart';
 import '../home.dart'; // Import your validators
 
@@ -80,16 +81,24 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           print("response['success']${response["success"]}");
           if (response['message'] == false) {
-            Get.snackbar('Error',
-                'Login failed because of no Internet Connection. Check the Internet Connection and try again.');
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              'Login failed because of no Internet Connection. Check the Internet Connection and try again.',
+            );
             return;
           } else {
-            Get.snackbar('Login failed', 'Incorrect Username or Password');
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              'Incorrect Username or Password',
+            );
           }
         }
       } catch (e) {
         print('An error occurred: $e');
-        Get.snackbar('Error', 'Login failed, please try again.');
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          'Login failed, please try again.',
+        );
       } finally {
         setState(() {
           _isLoading = false;

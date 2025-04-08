@@ -10,6 +10,7 @@ import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import '../../../components/basic_ui_component.dart';
 import '../../../models/proceed_history_list.dart';
 import '../../../utils/update_stage_modal.dart';
+import '../../../utils/snackbar_utils.dart';
 import '../../constants/constants.dart';
 import 'proceed_history_item.dart';
 
@@ -109,7 +110,6 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
   Future<void> _deleteProceeding(String proceedingId) async {
     try {
       print(proceedingId);
-      var scaffoldMessenger = ScaffoldMessenger.of(context);
       final url = Uri.parse('$baseUrl/proceed_case_delete');
       final request = http.MultipartRequest('POST', url);
 
@@ -125,9 +125,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
           proceedingList
               .removeWhere((proceeding) => proceeding.id == proceedingId);
         });
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text("Task deleted successfully.")),
-        );
+        SnackBarUtils.showSuccessSnackBar(context, "Task deleted successfully.");
       } else {
         _showError(data['message'] ?? "Failed to delete task.");
       }
@@ -137,11 +135,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   Future<void> _fetchStageList() async {
@@ -176,7 +170,6 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
   }
 
   Future<void> _handleEdit(ProceedHistoryListData proceeding) async {
-    var scaffoldMessenger = ScaffoldMessenger.of(context);
     if (kDebugMode) {
       print("Edit task: ${proceeding.nextStageId}");
     }
@@ -202,17 +195,14 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
 
       fetchProceedings();
     } else {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-              "You don't have permission to edit this stage as the proceeding detail is added by a different user."),
-        ),
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "You don't have permission to edit this stage as the proceeding detail is added by a different user.",
       );
     }
   }
 
   void _handleDelete(ProceedHistoryListData proceeding) {
-    var scaffoldMessenger = ScaffoldMessenger.of(context);
     if (kDebugMode) {
       print("Delete task: ${proceeding.nextStageId}");
     }
@@ -220,11 +210,9 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
         (proceeding.insertedBy != null || proceeding.insertedBy != "")) {
       _deleteProceeding(proceeding.id);
     } else {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-              "You don't have permission to edit this stage as the proceeding detail is added by a different user."),
-        ),
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "You don't have permission to edit this stage as the proceeding detail is added by a different user.",
       );
     }
   }

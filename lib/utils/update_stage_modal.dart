@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 
 import '../screens/constants/constants.dart';
 
@@ -59,6 +61,8 @@ class UpdateStageModalState extends State<UpdateStageModal> {
   }
 
   Future<void> _updateNextStage(DateTime nextDate, String nextStage) async {
+    final advocate = await SharedPrefService.getUser();
+    final advocateId = advocate!.id;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       final url = Uri.parse('$baseUrl/proceed_case_add');
@@ -68,7 +72,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
         "next_stage": nextStage,
         "remark": _remarkController.text,
-        "inserted_by": "admin",
+        "inserted_by": advocateId,
       });
 
       print(request.fields['data']);
@@ -78,23 +82,28 @@ class UpdateStageModalState extends State<UpdateStageModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text("Stage updated successfully!")),
+        SnackBarUtils.showSuccessSnackBar(
+          context,
+          "Stage updated successfully!",
         );
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(data['message'] ?? "Failed to update.")),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          data['message'] ?? "Failed to update.",
         );
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text("An error occurred.")),
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "An error occurred.",
       );
     }
   }
 
   Future<void> _editProceeding(String proceedingId, String caseId,
       DateTime nextDate, String nextStage, String advocateId) async {
+    final advocate = await SharedPrefService.getUser();
+    final advocateId = advocate!.id;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       final url = Uri.parse('$baseUrl/proceed_case_edit');
@@ -105,7 +114,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
         "next_stage": nextStage,
         "remark": _remarkController.text,
-        "inserted_by": "admin",
+        "inserted_by": advocateId,
       });
 
       print(request.fields['data']);
@@ -115,17 +124,20 @@ class UpdateStageModalState extends State<UpdateStageModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text("Stage updated successfully!")),
+        SnackBarUtils.showSuccessSnackBar(
+          context,
+          "Stage updated successfully!",
         );
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(data['message'] ?? "Failed to update.")),
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          data['message'] ?? "Failed to update.",
         );
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text("An error occurred.")),
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "An error occurred.",
       );
     }
   }

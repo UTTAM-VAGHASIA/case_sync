@@ -1,3 +1,4 @@
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -53,9 +54,7 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
       print("$response");
 
       if (response['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Advocate registered successfully!')),
-        );
+        SnackBarUtils.showSuccessSnackBar(context, 'Advocate registered successfully!');
         Navigator.pop(context, true);
       } else {
         setState(() {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -123,12 +124,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   Future<void> _selectDate(BuildContext context, bool isEndDate) async {
@@ -168,12 +164,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     if (_advocateName == null ||
         _assignedTo == null ||
         validateTaskInstruction(_taskInstructionController.text) != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill out all fields"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showErrorSnackBar(context, "Please fill out all fields");
       setState(() {
         isLoading = false;
       });
@@ -203,12 +194,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       final decodedResponse = jsonDecode(responseBody);
 
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Task updated successfully!"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackBarUtils.showSuccessSnackBar(context, "Task updated successfully!");
         Navigator.pop(context, true);
       } else {
         _showErrorSnackBar(
@@ -303,6 +289,8 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
                 items: [
                   'pending',
@@ -313,7 +301,10 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                 ]
                     .map((status) => DropdownMenuItem(
                           value: status,
-                          child: Text(status),
+                          child: Text(
+                            status.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' '),
+                            style: const TextStyle(fontSize: 16),
+                          ),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -327,6 +318,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                   }
                   return null;
                 },
+                style: const TextStyle(color: Colors.black, fontSize: 16),
               ),
               const SizedBox(height: 30),
               SizedBox(

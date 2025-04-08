@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/services/shared_pref.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -88,41 +89,19 @@ class AddRemarkModalState extends State<AddRemarkModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Remark Added successfully!",
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
+        SnackBarUtils.showSuccessSnackBar(context, "Remark Added successfully!");
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              data['message'] ?? "Failed to add remark.",
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        SnackBarUtils.showErrorSnackBar(context, data['message'] ?? "Failed to add remark.");
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            "An error occurred.",
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showErrorSnackBar(context, "An error occurred.");
     }
   }
 
   Future<void> _editRemark(String proceedingId, String caseId,
       DateTime nextDate, String nextStage, String advocateId) async {
+    final advocate = await SharedPrefService.getUser();
+    final advocateId = advocate!.id;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       final url = Uri.parse('$baseUrl/proceed_case_edit');
@@ -133,7 +112,7 @@ class AddRemarkModalState extends State<AddRemarkModal> {
         "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
         "next_stage": nextStage,
         "remark": _remarkController.text,
-        "inserted_by": "admin",
+        "inserted_by": advocateId,
       });
 
       // print(request.fields['data']);
@@ -143,18 +122,12 @@ class AddRemarkModalState extends State<AddRemarkModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text("Stage updated successfully!")),
-        );
+        SnackBarUtils.showSuccessSnackBar(context, "Stage updated successfully!");
       } else {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(data['message'] ?? "Failed to update.")),
-        );
+        SnackBarUtils.showErrorSnackBar(context, data['message'] ?? "Failed to update.");
       }
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text("An error occurred.")),
-      );
+      SnackBarUtils.showErrorSnackBar(context, "An error occurred.");
     }
   }
 

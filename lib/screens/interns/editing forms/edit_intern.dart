@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -22,7 +23,7 @@ class _EditInternScreenState extends State<EditInternScreen> {
   final _contactNumberController = TextEditingController();
   final _emailController = TextEditingController();
 
-  late String _selectedStatus;
+  String? _selectedStatus;
   bool _isLoading = false;
 
   @override
@@ -31,12 +32,10 @@ class _EditInternScreenState extends State<EditInternScreen> {
     _nameController.text = widget.intern['name'] ?? '';
     _contactNumberController.text = widget.intern['contact'] ?? '';
     _emailController.text = widget.intern['email'] ?? '';
-    _selectedStatus = (widget.intern['status'] != 'enable' ||
-            widget.intern['status'] != 'disable' ||
-            widget.intern['status'] == null ||
-            widget.intern['status'] == '')
-        ? 'enable'
-        : widget.intern['status'];
+    _selectedStatus =
+        (widget.intern['status'] == null || widget.intern['status'] == '')
+            ? 'enable'
+            : widget.intern['status'];
   }
 
   @override
@@ -81,26 +80,18 @@ class _EditInternScreenState extends State<EditInternScreen> {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(responseBody);
         if (responseData['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(responseData['response'])),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, responseData['response']);
           Navigator.pop(context, true);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: ${responseData['response']}')),
-          );
+          SnackBarUtils.showErrorSnackBar(context, 'Failed: ${responseData['response']}');
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Server error: ${response.statusCode}, ${response.reasonPhrase}')),
-        );
+          SnackBarUtils.showErrorSnackBar(
+              context,
+              'Server error: ${response.statusCode}, ${response.reasonPhrase}');
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
-      );
+      SnackBarUtils.showErrorSnackBar(context, 'Error: $error');
     } finally {
       setState(() {
         _isLoading = false;

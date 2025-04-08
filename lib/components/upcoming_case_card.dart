@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:case_sync/screens/cases/case_info/bottom_nav_bar.dart';
 import 'package:case_sync/screens/constants/constants.dart';
+import 'package:case_sync/services/shared_pref.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -38,9 +39,11 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
   }
 
   Future<void> updatePriority(int? priority) async {
+    final advocate = await SharedPrefService.getUser();
+    final advocateId = advocate!.id;
     if (widget.caseItem.priorityNumber == null && priority != null) {
       // print("###################### ADDING ########################");
-      await addPrioritySequence(widget.caseItem.id, priority, "admin");
+      await addPrioritySequence(widget.caseItem.id, priority, advocateId);
     } else if (widget.caseItem.priorityNumber != null && priority == null) {
       // print("###################### DELETING ########################");
       await deletePrioritySequence(widget.caseItem.priorityId);
@@ -50,7 +53,7 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
         widget.caseItem.id,
         widget.caseItem.priorityId,
         priority,
-        "admin",
+        advocateId,
       );
     }
   }
@@ -165,6 +168,7 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
               caseId: widget.caseItem.id,
               caseNo: widget.caseItem.caseNo,
               isUnassigned: true,
+              caseType: widget.caseItem.caseType,
             ),
           ),
         );

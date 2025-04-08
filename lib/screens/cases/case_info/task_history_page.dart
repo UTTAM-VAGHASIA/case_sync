@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:case_sync/screens/interns/reassign_task.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:case_sync/utils/slideable_card.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -18,8 +19,14 @@ class TaskHistoryPage extends StatefulWidget {
   final String caseId;
   final String caseNo;
 
-  const TaskHistoryPage(
-      {super.key, required this.caseId, required this.caseNo});
+  final String caseType;
+
+  const TaskHistoryPage({
+    super.key,
+    required this.caseId,
+    required this.caseNo,
+    required this.caseType,
+  });
 
   @override
   State<TaskHistoryPage> createState() => TaskHistoryPageState();
@@ -29,7 +36,6 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
     with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   List<Map<String, dynamic>> _tasks = [];
-  late Map<String, String> caseDetails = {};
   String? advocateId;
 
   @override
@@ -113,20 +119,22 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
     }
   }
 
+  void _showError(String message) {
+    SnackBarUtils.showErrorSnackBar(context, message);
+  }
+
   Future<void> _deleteTask(String taskId) async {
     try {
       final url = Uri.parse('$baseUrl/delete_task');
       final response = await http.post(url, body: {'task_id': taskId});
-
+  
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
           setState(() {
             _tasks.removeWhere((task) => task['id'] == taskId);
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Task deleted successfully.")),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Task deleted successfully.");
         } else {
           _showError(data['message'] ?? "Failed to delete task.");
         }
@@ -136,11 +144,6 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
     } catch (e) {
       _showError("An error occurred: $e");
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _handleEdit(Map<String, dynamic> task) async {
@@ -331,7 +334,7 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
             context,
             MaterialPageRoute(
               builder: (context) => AddTaskScreen(
-                caseType: caseDetails['case_type'].toString(),
+                caseType: widget.caseType,
                 caseNumber: widget.caseNo,
                 caseId: widget.caseId,
               ),

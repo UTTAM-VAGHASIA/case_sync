@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -255,9 +256,7 @@ class DocumentCardState extends State<DocumentCard> {
       }
       return filePath;
     } catch (e) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('Failed to save document.')),
-      );
+      SnackBarUtils.showErrorSnackBar(context, 'Failed to save document.');
     }
 
     return null;
@@ -327,9 +326,7 @@ class DocumentCardState extends State<DocumentCard> {
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
                 await Clipboard.setData(ClipboardData(text: url));
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Link copied to clipboard.')),
-                );
+                SnackBarUtils.showSuccessSnackBar(context, 'Link copied to clipboard.');
               },
             ),
           ],

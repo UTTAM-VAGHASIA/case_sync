@@ -2,6 +2,7 @@ import 'dart:convert'; // For JSON decoding
 
 import 'package:case_sync/screens/constants/constants.dart';
 import 'package:case_sync/utils/dismissible_card.dart';
+import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -76,8 +77,7 @@ class InternListScreenState extends State<InternListScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    SnackBarUtils.showErrorSnackBar(context, message);
   }
 
   Future<void> _deleteIntern(String internId) async {
@@ -91,9 +91,7 @@ class InternListScreenState extends State<InternListScreen> {
           setState(() {
             interns.removeWhere((intern) => intern['id'] == internId);
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Intern deleted successfully.")),
-          );
+          SnackBarUtils.showSuccessSnackBar(context, "Intern deleted successfully.");
         } else {
           _showError(data['response']);
         }
@@ -113,9 +111,7 @@ class InternListScreenState extends State<InternListScreen> {
         builder: (context) => EditInternScreen(intern: intern),
       ),
     );
-    if (result) {
-      fetchInterns();
-    }
+    fetchInterns();
   }
 
   void _handleDelete(String internId) {
