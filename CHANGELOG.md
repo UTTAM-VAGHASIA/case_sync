@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- GitHub Actions Integration for Future Updates
+- GitHub Actions Integration for Future Updates.
 - Completely Shifted to GitHub Releases for future updates.Hence, reducing Update efforts for user.
 
 ### Fixed
