@@ -54,8 +54,19 @@ jobs:
           echo "NOTES_PATH=release_notes.md" >> $GITHUB_ENV # Path for extracted notes
         shell: bash
 
+      # --- Setup Signing ---
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+        shell: bash
+        
       # --- Build APK ---
       - name: Build Release APK
+        env:
+          KEYSTORE_FILE: android/app/upload-keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
 
       # --- Prepare version.json (with Dynamic Force Update) ---

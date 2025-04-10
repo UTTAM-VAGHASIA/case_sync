@@ -1,4 +1,4 @@
-package com.example.case_sync
+package com.casesync.app
 
 import io.flutter.embedding.android.FlutterActivity
 

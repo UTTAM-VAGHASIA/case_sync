@@ -504,9 +504,7 @@ class HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (context) => destinationScreen),
             );
 
-            if (result == false) {
-              fetchCaseCounter();
-            }
+            fetchCaseCounter();
           },
           child: Stack(
             children: [

@@ -8,7 +8,7 @@
 PRODUCT_NAME = case_sync
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.caseSync
+PRODUCT_BUNDLE_IDENTIFIER = com.casesync.app
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.casesync.app. All rights reserved.

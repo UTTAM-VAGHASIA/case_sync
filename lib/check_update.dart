@@ -3,6 +3,7 @@ import 'dart:convert'; // For JSON decoding
 import 'dart:io'; // Required for File operations, Platform checks, HttpException, SocketException
 
 import 'package:case_sync/utils/snackbar_utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'; // Flutter framework
 import 'package:flutter/services.dart'; // Required for SystemNavigator
 import 'package:flutter_markdown/flutter_markdown.dart'; // Renders release notes as Markdown
@@ -53,16 +54,20 @@ class CheckUpdate {
     // --- PAT Handling & Logging ---
     if (githubPat.isEmpty && !_isPublicRepo()) {
       // Heuristic check if repo is likely private
-      SnackBarUtils.showErrorSnackBar(
-        context,
-        "GitHub PAT not found. Update check may fail due to missing authentication.",
-      );
+      if (!kReleaseMode) {
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "GitHub PAT not found. Update check may fail due to missing authentication.",
+        );
+      }
       return true; // Fail open - allow app to run
     } else if (githubPat.isNotEmpty) {
-      SnackBarUtils.showInfoSnackBar(
-        context,
-        "GitHub PAT found. Using for API requests.",
-      );
+      if (!kReleaseMode) {
+        SnackBarUtils.showInfoSnackBar(
+          context,
+          "GitHub PAT found. Using for API requests.",
+        );
+      }
     }
 
     print("CheckUpdate: Checking for updates at $_githubApiUrl");
@@ -384,64 +389,74 @@ class CheckUpdate {
                 ),
 
                 // --- Dialog Content ---
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    // Take only needed vertical space
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Divider(
-                          height: 24, thickness: 1, color: Colors.grey[300]),
-                      // Visual separator
-                      Text("What's New:",
-                          style: Theme.of(stfContext)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: onSurfaceColor)),
-                      SizedBox(height: 10),
-                      // --- Release Notes (Markdown) ---
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(stfContext).size.height *
-                                0.25 // Limit height
-                            ),
-                        child: Material(
-                          // Required for selectable text background/gestures
-                          color: Colors.transparent,
-                          child: MarkdownBody(
-                            data: releaseNotesBody.isEmpty
-                                ? "*No release notes provided.*"
-                                : releaseNotesBody,
-                            selectable: true, // Allow text selection
-                            styleSheet: MarkdownStyleSheet.fromTheme(
-                                    Theme.of(stfContext))
-                                .copyWith(
-                              p: Theme.of(stfContext)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      fontSize: 14,
-                                      color: onSurfaceColor.withValues(
-                                          alpha: 0.85),
-                                      height: 1.4),
-                              listBullet: Theme.of(stfContext)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      color: onSurfaceColor.withValues(
-                                          alpha: 0.85)),
-                              // Add styles for h1, h2, code, etc. if needed for your markdown
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- What's New Section ---
+                    Divider(height: 24, thickness: 1, color: Colors.grey[300]),
+                    Text("What's New:",
+                        style: Theme.of(stfContext)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: onSurfaceColor)),
+                    SizedBox(height: 10),
+                    
+                    // --- Release Notes (Markdown) in a fixed-height scrollable container ---
+                    Container(
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      height: MediaQuery.of(stfContext).size.height * 0.2, // Fixed height
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Material(
+                            // Required for selectable text background/gestures
+                            color: surfaceColor,
+                            child: MarkdownBody(
+                              data: releaseNotesBody.isEmpty
+                                  ? "*No release notes provided.*"
+                                  : releaseNotesBody,
+                              selectable: true, // Allow text selection
+                              styleSheet: MarkdownStyleSheet.fromTheme(
+                                      Theme.of(stfContext))
+                                  .copyWith(
+                                p: Theme.of(stfContext)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                        fontSize: 14,
+                                        color: onSurfaceColor.withValues(
+                                            alpha: 0.85),
+                                        height: 1.4),
+                                listBullet: Theme.of(stfContext)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                        color: onSurfaceColor.withValues(
+                                            alpha: 0.85)),
+                                // Add styles for h1, h2, code, etc. if needed for your markdown
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      SizedBox(height: 24),
-                      // Spacing before status/actions
-
-                      // --- Dynamic Status/Install Area ---
-                      AnimatedSwitcher(
+                    ),
+                    
+                    // --- Download/Install Status Section ---
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      margin: const EdgeInsets.only(top: 8.0),
+                      child: AnimatedSwitcher(
                         // Smoothly transition between states
                         duration: const Duration(milliseconds: 300),
                         child: _buildStatusSection(
@@ -463,15 +478,14 @@ class CheckUpdate {
                           disabledTextColor, // Pass disabled text color
                         ),
                       ),
-                      // --- End Dynamic Status Area ---
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
                 // --- Dialog Action Buttons ---
                 actions: <Widget>[
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     // Align buttons to the right
                     children: [
                       // "Later" button: Shows only if update is optional AND not downloading/finished/errored
@@ -621,7 +635,7 @@ class CheckUpdate {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: onSurfaceVariantColor // Muted color for status text
                     )),
-            SizedBox(height: 12),
+            SizedBox.shrink(),
             LinearProgressIndicator(
               value: downloadProgress,
               // Null value shows indeterminate animation
@@ -631,7 +645,7 @@ class CheckUpdate {
               // Make the bar slightly thicker
               borderRadius: BorderRadius.circular(3), // Rounded ends
             ),
-            SizedBox(height: 6),
+            SizedBox.shrink(),
             // Show percentage only if progress is determinate
             if (downloadProgress != null)
               Text("${(downloadProgress * 100).toStringAsFixed(0)}%",
@@ -639,7 +653,7 @@ class CheckUpdate {
                       .textTheme
                       .labelSmall
                       ?.copyWith(color: onSurfaceVariantColor)),
-            SizedBox(height: 8),
+            SizedBox.shrink(),
           ],
         ),
       );

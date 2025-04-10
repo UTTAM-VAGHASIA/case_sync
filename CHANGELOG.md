@@ -7,7 +7,18 @@ All notable changes to this project will be documented in this file.
 ### To be Added
 
 - Feature to edit any case details.
-- Feature to add remark along with the current priority sequence number in today's case list of upcoming cases.
+- Feature to add remark along with the current priority sequence number in today's case list of
+  upcoming cases.
+
+## [1.6.10] - 2024-04-10
+
+### Added
+
+- Added by field in remark list so that it is easier to know who added the remark.
+
+### Fixed
+
+- Home screen counters refreshes when the user gets back to it.
 
 ## [1.6.9] - 2024-04-08
 

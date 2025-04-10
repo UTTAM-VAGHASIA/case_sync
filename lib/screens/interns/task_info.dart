@@ -127,6 +127,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
         if (data['success'] == true && data['data'].isNotEmpty) {
           setState(() {
             sampleTaskHistory = List<Map<String, dynamic>>.from(data['data']);
+            print("Task History: $sampleTaskHistory");
             errorMessage = null;
             isLoading = false;
           });
@@ -389,6 +390,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                               const Divider(thickness: 2, color: Colors.black),
                               const SizedBox(height: 8),
                               _buildKeyValueRow('Stage', entry['stage_name']),
+                              _buildKeyValueRow('Added by', entry['added_by']),
                               _buildKeyValueRow('Date of Submission',
                                   _formatDate(entry['fdos'])),
                               _buildKeyValueRow(

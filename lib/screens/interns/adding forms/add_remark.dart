@@ -81,17 +81,18 @@ class AddRemarkModalState extends State<AddRemarkModal> {
             .add(await http.MultipartFile.fromPath('task_image', file[1]!));
       }
 
-      // print(request.fields['data']);
-      // print(request.files.first.filename);
+      print("Remark data: ${request.fields['data']!}");
 
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(context, "Remark Added successfully!");
+        SnackBarUtils.showSuccessSnackBar(
+            context, "Remark Added successfully!");
       } else {
-        SnackBarUtils.showErrorSnackBar(context, data['message'] ?? "Failed to add remark.");
+        SnackBarUtils.showErrorSnackBar(
+            context, data['message'] ?? "Failed to add remark.");
       }
     } catch (e) {
       SnackBarUtils.showErrorSnackBar(context, "An error occurred.");
@@ -122,9 +123,11 @@ class AddRemarkModalState extends State<AddRemarkModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(context, "Stage updated successfully!");
+        SnackBarUtils.showSuccessSnackBar(
+            context, "Stage updated successfully!");
       } else {
-        SnackBarUtils.showErrorSnackBar(context, data['message'] ?? "Failed to update.");
+        SnackBarUtils.showErrorSnackBar(
+            context, data['message'] ?? "Failed to update.");
       }
     } catch (e) {
       SnackBarUtils.showErrorSnackBar(context, "An error occurred.");
