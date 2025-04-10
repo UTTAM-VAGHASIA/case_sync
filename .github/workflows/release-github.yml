@@ -58,6 +58,10 @@ jobs:
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          # Verify the keystore file was created
+          ls -la android/app/upload-keystore.jks
+          # Set permissions
+          chmod 644 android/app/upload-keystore.jks
         shell: bash
         
       # --- Build APK ---
