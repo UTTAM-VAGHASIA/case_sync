@@ -9,7 +9,6 @@
 .history
 .svn/
 migrate_working_dir/
-.build_release.bat
 
 # IntelliJ related
 *.iml
@@ -47,3 +46,6 @@ pubspec.lock
 
 # FVM Version Cache
 .fvm/
+
+build_release.bat
+build_debug.bat
