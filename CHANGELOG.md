@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.6.11] - 2024-04-10
+## [1.6.11] - 2025-04-11
 
 ### Added
 
@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Fixed dismiss button not working in snackbars.
 - Fixed UI of Slideable Widget.
 
-## [1.6.10] - 2024-04-10
+## [1.6.10] - 2025-04-10
 
 ### Added
 
