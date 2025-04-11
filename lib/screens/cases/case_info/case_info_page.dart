@@ -16,21 +16,19 @@ class CaseInfoPage extends StatefulWidget {
   final Function(Map<String, dynamic>) onCaseItemFetched;
 
   const CaseInfoPage({
-    Key? key,
+    super.key,
     required this.caseId,
     required this.caseNo,
     this.isUnassigned = false,
     required this.onCaseItemFetched,
-  }) : super(key: key);
+  });
 
   @override
-  State<CaseInfoPage> createState() => _CaseInfoPageState();
+  State<CaseInfoPage> createState() => CaseInfoPageState();
 }
 
-class _CaseInfoPageState extends State<CaseInfoPage>
+class CaseInfoPageState extends State<CaseInfoPage>
     with AutomaticKeepAliveClientMixin {
-  ScaffoldFeatureController<SnackBar, SnackBarClosedReason>?
-      _snackbarController;
   bool _isLoading = true;
   Map<String, dynamic> _caseDetails = {};
   String? selectedStage;
@@ -41,9 +39,10 @@ class _CaseInfoPageState extends State<CaseInfoPage>
 
   @override
   void initState() {
+    print('Calling Init Method');
     super.initState();
     fetchCaseInfo();
-    _fetchStageList();
+    fetchStageList();
   }
 
   Future<void> fetchCaseInfo() async {
@@ -137,7 +136,7 @@ class _CaseInfoPageState extends State<CaseInfoPage>
     }
   }
 
-  Future<void> _fetchStageList() async {
+  Future<void> fetchStageList() async {
     try {
       final url = Uri.parse('$baseUrl/stage_list');
       var request = http.MultipartRequest("POST", url);

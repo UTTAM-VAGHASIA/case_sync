@@ -224,8 +224,7 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
                                   onEdit: () => _handleEdit(task),
                                   onDelete: () => _handleDelete(task),
                                   canReassign:
-                                      (task['alloted_to_id'] == advocateId &&
-                                          task['alloted_by_id'] != advocateId),
+                                      (task['alloted_to_id'] == advocateId),
                                   onReassign: () => _handleReassign(task),
                                   child: Container(
                                     color: Color(0xFFF3F3F3),

@@ -22,8 +22,8 @@ class TaskInfoPage extends StatefulWidget {
 }
 
 class _TaskInfoPageState extends State<TaskInfoPage> {
-  bool _isCollapsed = false;
-  bool _isRemarksCollapsed = true;
+  bool _isCollapsed = true;
+  bool _isRemarksCollapsed = false;
   String? errorMessage;
   bool isLoading = false;
   List<Map<String, dynamic>> stageList = [];
@@ -35,8 +35,12 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
   void initState() {
     super.initState();
     print(widget.taskId);
-    fetchTaskDetails();
-    fetchRemarks();
+    initialiseLists();
+  }
+
+  Future<void> initialiseLists() async {
+    await fetchTaskDetails();
+    await fetchRemarks();
   }
 
   Future<void> _fetchStageList() async {
@@ -204,9 +208,9 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildDetailsCard(details: task),
-                  const SizedBox(height: 16),
                   _buildRemarksCard(),
+                  const SizedBox(height: 16),
+                  _buildDetailsCard(details: task),
                 ],
               ),
             ),
@@ -354,10 +358,12 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                           const SizedBox(height: 8),
                           _buildKeyValueRow(
                               'Stage', sampleTaskHistory.first['stage_name']),
-                          _buildKeyValueRow('Date of Submission',
+                          _buildKeyValueRow(
+                              'Added By', sampleTaskHistory.first['added_by']),
+                          _buildKeyValueRow('Remark Date',
                               _formatDate(sampleTaskHistory.first['fdos'])),
-                          _buildKeyValueRow('Date Time',
-                              _formatDate(sampleTaskHistory.first['fdt'])),
+                          _buildKeyValueRow('Remark Time',
+                              _formatDate(sampleTaskHistory.first['fdt'], false)),
                           _buildKeyValueRow(
                               'Status', sampleTaskHistory.first['status']),
                         ],
@@ -391,10 +397,10 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                               const SizedBox(height: 8),
                               _buildKeyValueRow('Stage', entry['stage_name']),
                               _buildKeyValueRow('Added by', entry['added_by']),
-                              _buildKeyValueRow('Date of Submission',
-                                  _formatDate(entry['fdos'])),
                               _buildKeyValueRow(
-                                  'Date Time', _formatDate(entry['fdt'])),
+                                  'Remark Date', _formatDate(entry['fdos'], true)),
+                              _buildKeyValueRow(
+                                  'Remark Time', _formatDate(entry['fdt'], false)),
                               _buildKeyValueRow('Status', entry['status']),
                             ],
                           ),
@@ -481,9 +487,9 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                           _buildKeyValueRow(
                               'Alloted To', details['alloted_to_name']),
                           _buildKeyValueRow('Alloted Date',
-                              _formatDate(details['alloted_date'])),
+                              _formatDate(details['alloted_date'], true)),
                           _buildKeyValueRow('Expected End Date',
-                              _formatDate(details['expected_end_date'])),
+                              _formatDate(details['expected_end_date'], true)),
                           ...groupedDetails.entries.map((section) {
                             if (section.key != 'Instruction') {
                               return SizedBox.shrink();
@@ -575,7 +581,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                                 // Handle date formatting
                                 if (['alloted_date', 'expected_end_date']
                                     .contains(entry.key)) {
-                                  displayValue = _formatDate(entry.value);
+                                  displayValue = _formatDate(entry.value, true);
                                 } else if (entry.value == null ||
                                     entry.value.toString().isEmpty ||
                                     entry.value == '0000-00-00') {
@@ -696,7 +702,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
         .join(' ');
   }
 
-  String _formatDate(dynamic date) {
+  String _formatDate(dynamic date, [bool isDate = true]) {
     if (date == null || date.toString().isEmpty || date == '0000-00-00') {
       return 'No Date';
     }
@@ -707,7 +713,12 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
       } else {
         parsedDate = DateTime.parse(date.toString());
       }
-      return DateFormat('EEE, MMM dd, yyyy').format(parsedDate);
+
+      if (isDate) {
+        return DateFormat('EEE, MMM dd, yyyy').format(parsedDate);
+      } else {
+        return DateFormat('hh:mm aaa').format(parsedDate);
+      }
     } catch (e) {
       return 'Invalid Date';
     }

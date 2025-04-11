@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io'; // Keep if Platform.isAndroid is used
 
 import 'package:case_sync/check_update.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -31,7 +32,7 @@ class SplashScreenState extends State<SplashScreen> {
     bool canProceed =
         true; // Assume we can proceed unless blocked by update check
     // Use mounted check WITHIN async gaps if possible, definitely before context use
-    if (mounted && (GetPlatform.isAndroid || Platform.isAndroid)) {
+    if (mounted && (GetPlatform.isAndroid || Platform.isAndroid) && kReleaseMode) {
       print("Splash: Starting update check...");
       // Pass the SplashScreen's context, await the result
       canProceed = await CheckUpdate.checkForUpdate(context);

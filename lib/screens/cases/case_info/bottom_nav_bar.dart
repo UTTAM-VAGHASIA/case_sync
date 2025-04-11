@@ -34,6 +34,8 @@ class BottomNavBarState extends State<BottomNavBar> {
   late PageController _pageController;
   late Case caseItem;
   Map<String, dynamic> rawData = {};
+  final GlobalKey<CaseInfoPageState> _caseInfoKey =
+      GlobalKey<CaseInfoPageState>();
 
   @override
   void initState() {
@@ -103,8 +105,8 @@ class BottomNavBarState extends State<BottomNavBar> {
             ? [
                 IconButton(
                   icon: const Icon(Icons.edit_rounded, color: Colors.black),
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    bool? result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => EditCaseScreen(
@@ -112,6 +114,11 @@ class BottomNavBarState extends State<BottomNavBar> {
                         ),
                       ),
                     );
+
+                    if (result != null && result) {
+                      await _caseInfoKey.currentState?.fetchCaseInfo();
+                      await _caseInfoKey.currentState?.fetchStageList();
+                    }
                   },
                 ),
                 Padding(
@@ -125,6 +132,7 @@ class BottomNavBarState extends State<BottomNavBar> {
         onPageChanged: _onPageChanged,
         children: [
           CaseInfoPage(
+            key: _caseInfoKey,
             caseId: widget.caseId,
             caseNo: widget.caseNo,
             onCaseItemFetched: _onCaseItemFetched,

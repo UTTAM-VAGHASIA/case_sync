@@ -59,18 +59,22 @@ class SlideableCard extends StatelessWidget {
           // Reduce the extent ratio - 20% width is often enough for one icon
           extentRatio: 0.20,
           children: [
-            SlidableAction(
-              onPressed: (context) => onEdit?.call(),
-              backgroundColor: editColor,
-              // Use a defined color
-              foregroundColor: Colors.white,
-              // Keep icons white for contrast
-              icon: Icons.edit,
-              // label: 'Edit', // REMOVED Label for cleaner look
-              borderRadius: BorderRadius.zero,
-              // Let the pane handle clipping
-              padding: EdgeInsets.zero, // Reduce padding if needed
-            ),
+            CustomSlidableAction(
+                onPressed: (context) => onEdit?.call(),
+                backgroundColor: editColor,
+                padding: EdgeInsets.zero,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.edit, color: Colors.white), // Icon color
+                    SizedBox(height: 4), // Spacing between icon and text
+                    Text(
+                      'Edit',
+                      style: TextStyle(color: Colors.white), // Text color
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
 
@@ -78,34 +82,46 @@ class SlideableCard extends StatelessWidget {
         endActionPane: ActionPane(
           motion: const BehindMotion(), // Consistent motion
           // Adjust ratio for two icons - 40% should be sufficient
-          extentRatio: (canReassign) ? 0.40 : 0.20,
+          extentRatio: (canReassign) ? 0.50 : 0.20,
           children: [
             // Reassign Action
             if (canReassign)
-              SlidableAction(
+              CustomSlidableAction(
                 onPressed: (context) => onReassign?.call(),
                 backgroundColor: reassignColor,
-                // Use a defined color
-                foregroundColor: Colors.white,
-                icon: Icons.assignment_ind,
-                // Or Icons.person_search, Icons.sync_alt
-                // label: 'Reassign', // REMOVED Label
-                borderRadius: BorderRadius.zero,
+                flex: 4,
                 padding: EdgeInsets.zero,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.sync_alt, color: Colors.white), // Icon color
+                    SizedBox(height: 4), // Spacing between icon and text
+                    Text(
+                      'Reassign',
+                      style: TextStyle(color: Colors.white), // Text color
+                    ),
+                  ],
+                ),
               ),
 
             // Delete Action
-            SlidableAction(
-              onPressed: _showDeleteConfirmation,
-              backgroundColor: deleteColor,
-              // Use theme error color
-              foregroundColor: Colors.white,
-              icon: CupertinoIcons.trash,
-              // Or Icons.delete_outline
-              // label: 'Delete', // REMOVED Label
-              borderRadius: BorderRadius.zero,
-              padding: EdgeInsets.zero,
-            ),
+            CustomSlidableAction(
+                onPressed: _showDeleteConfirmation,
+                backgroundColor: deleteColor,
+                flex: 5,
+                padding: EdgeInsets.zero,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.trash, color: Colors.white), // Icon color
+                    SizedBox(height: 4), // Spacing between icon and text
+                    Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.white), // Text color
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
 

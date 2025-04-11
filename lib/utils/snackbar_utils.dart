@@ -64,7 +64,9 @@ class SnackBarUtils {
           label: 'Dismiss',
           textColor: Colors.white,
           onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).removeCurrentSnackBar();
+            }
           },
         ),
       ),
