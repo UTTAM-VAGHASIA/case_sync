@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.12] - 2025-04-11
+
+### Added
+
+### Fixed
+
+
 ## [1.6.11] - 2025-04-11
 
 ### Added
@@ -16,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Fixed Task Reassign Option visibility issue.
 - Fixed dismiss button not working in snackbars.
 - Fixed UI of Slideable Widget.
+
 
 ## [1.6.10] - 2025-04-10
 

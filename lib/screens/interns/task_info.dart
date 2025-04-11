@@ -396,7 +396,7 @@ class _TaskInfoPageState extends State<TaskInfoPage> {
                               const Divider(thickness: 2, color: Colors.black),
                               const SizedBox(height: 8),
                               _buildKeyValueRow('Stage', entry['stage_name']),
-                              _buildKeyValueRow('Added by', entry['added_by']),
+                              _buildKeyValueRow('Added By', entry['added_by']),
                               _buildKeyValueRow(
                                   'Remark Date', _formatDate(entry['fdos'], true)),
                               _buildKeyValueRow(
