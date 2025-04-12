@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Minor fixes in labels of task info page.
+- Any task can be reassigned by the advocate now instead of only the tasks assigned to the advocate.
+
 
 ## [1.6.11] - 2025-04-11
 
