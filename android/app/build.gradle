@@ -48,9 +48,17 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            manifestPlaceholders = [
+                "appName": "Advocates"
+            ]
         }
         debug {
             signingConfig signingConfigs.debug
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-DEBUG"
+            manifestPlaceholders = [
+                "appName": "Debug" 
+            ]
         }
     }
 }

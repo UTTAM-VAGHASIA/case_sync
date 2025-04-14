@@ -52,9 +52,14 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<List<Notifications>> fetchCaseCounter() async {
     try {
-      final response = await http.post(Uri.parse('$baseUrl/notifications'));
+      final userId = (await SharedPrefService.getUser())!.id.toString();
+      var request =
+          http.MultipartRequest('POST', Uri.parse('$baseUrl/notifications'));
+      request.fields.addAll({'advocate_id': userId});
+      final response = await request.send();
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
+        final responseData = json.decode(await response.stream.bytesToString());
+        print(responseData.toString());
         if (responseData['success']) {
           notificationList.value = (responseData['data'] as List)
               .map((item) => Notifications.fromJson(item))

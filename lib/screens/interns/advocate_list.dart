@@ -80,7 +80,10 @@ class AdvocateListScreenState extends State<AdvocateListScreen> {
           setState(() {
             advocates.removeWhere((intern) => intern['id'] == advocateId);
           });
-          SnackBarUtils.showSuccessSnackBar(context, "Advocate deleted successfully.");
+          if (mounted) {
+            SnackBarUtils.showSuccessSnackBar(
+                context, "Advocate deleted successfully.");
+          }
         } else {
           _showError(data['response']);
         }
@@ -269,7 +272,7 @@ class AdvocateListScreenState extends State<AdvocateListScreen> {
         label: const Text('Add'),
         icon: SvgPicture.asset(
           'assets/icons/new_advocate.svg',
-          color: Colors.white,
+          colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
         ),
       ),
     );

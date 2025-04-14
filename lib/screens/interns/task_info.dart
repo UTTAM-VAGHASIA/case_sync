@@ -18,10 +18,10 @@ class TaskInfoPage extends StatefulWidget {
   const TaskInfoPage({required this.taskId, super.key});
 
   @override
-  _TaskInfoPageState createState() => _TaskInfoPageState();
+  TaskInfoPageState createState() => TaskInfoPageState();
 }
 
-class _TaskInfoPageState extends State<TaskInfoPage> {
+class TaskInfoPageState extends State<TaskInfoPage> {
   bool _isCollapsed = true;
   bool _isRemarksCollapsed = false;
   String? errorMessage;

@@ -23,17 +23,6 @@ class EditCaseScreen extends StatefulWidget {
   EditCaseScreenState createState() => EditCaseScreenState();
 }
 
-// class EditCaseScreenState extends State<EditCaseScreen> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Center(
-//         child: Text("This Functionality will be available soon!"),
-//       ),
-//     );
-//   }
-// }
-
 class EditCaseScreenState extends State<EditCaseScreen> {
   final _formKey = GlobalKey<FormState>();
 

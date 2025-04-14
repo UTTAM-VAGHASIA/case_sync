@@ -14,8 +14,9 @@ class BottomNavBar extends StatefulWidget {
   final String caseId;
   final String caseNo;
   final bool isUnassigned;
-
   final String caseType;
+  final int targetPage;
+  final bool flag;
 
   const BottomNavBar({
     super.key,
@@ -23,6 +24,8 @@ class BottomNavBar extends StatefulWidget {
     required this.caseNo,
     this.isUnassigned = false,
     required this.caseType,
+    this.targetPage = 0,
+    this.flag = false,
   });
 
   @override
@@ -31,16 +34,30 @@ class BottomNavBar extends StatefulWidget {
 
 class BottomNavBarState extends State<BottomNavBar> {
   int _selectedIndex = 0;
-  late PageController _pageController;
+  PageController _pageController = PageController(initialPage: 0);
   late Case caseItem;
+  late String caseNo;
+  late String caseType;
   Map<String, dynamic> rawData = {};
   final GlobalKey<CaseInfoPageState> _caseInfoKey =
       GlobalKey<CaseInfoPageState>();
 
+  late bool flag;
+
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _selectedIndex);
+    flag = widget.flag;
+    caseNo = widget.caseNo;
+    caseType = widget.caseType;
+  }
+
+  void openPage(int index) {
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.ease,
+    );
   }
 
   void _onItemTapped(int index) {
@@ -65,10 +82,21 @@ class BottomNavBarState extends State<BottomNavBar> {
     setState(() {
       rawData = fetchedCaseItem;
       caseItem = Case.fromJson(rawData);
+      setState(() {
+        caseNo = caseItem.caseNo;
+        caseType = caseItem.caseType;
+      });
       if (kDebugMode) {
         print("caseItem: $caseItem");
       }
     });
+    if (widget.targetPage != 0 && flag == true) {
+      setState(() {
+        _selectedIndex = widget.targetPage;
+      });
+      openPage(_selectedIndex);
+      flag = false;
+    }
   }
 
   @override
@@ -94,7 +122,7 @@ class BottomNavBarState extends State<BottomNavBar> {
           },
         ),
         title: Text(
-          widget.caseNo,
+          caseNo,
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w900,
@@ -134,19 +162,22 @@ class BottomNavBarState extends State<BottomNavBar> {
           CaseInfoPage(
             key: _caseInfoKey,
             caseId: widget.caseId,
-            caseNo: widget.caseNo,
+            caseNo: caseNo,
             onCaseItemFetched: _onCaseItemFetched,
           ),
           CaseHistoryPage(
             caseId: widget.caseId,
-            caseNo: widget.caseNo,
+            caseNo: caseNo,
           ),
           TaskHistoryPage(
             caseId: widget.caseId,
-            caseNo: widget.caseNo,
-            caseType: widget.caseType,
+            caseNo: caseNo,
+            caseType: caseType,
           ),
-          ViewDocsPage(caseId: widget.caseId, caseNo: widget.caseNo),
+          ViewDocsPage(
+            caseId: widget.caseId,
+            caseNo: caseNo,
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

@@ -189,6 +189,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
             initialStage: proceeding.nextStageId,
             stageList: stageList,
             insertedBy: proceeding.insertedBy,
+            initialRemark: proceeding.remark,
           );
         },
       );

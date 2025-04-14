@@ -36,6 +36,7 @@ class AddRemarkModalState extends State<AddRemarkModal> {
   late DateTime selectedDate;
   String selectedStatus = "pending";
   String? userId;
+  bool isLoading = false;
 
   String? _fileNames;
   String? _filePaths;
@@ -61,7 +62,9 @@ class AddRemarkModalState extends State<AddRemarkModal> {
     String status,
     List<String?> file,
   ) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    setState(() {
+      isLoading = true;
+    });
     userId = (await SharedPrefService.getUser())!.id;
     try {
       final url = Uri.parse('$baseUrl/add_task_remark');
@@ -88,53 +91,33 @@ class AddRemarkModalState extends State<AddRemarkModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(
-            context, "Remark Added successfully!");
+        if (mounted) {
+          SnackBarUtils.showSuccessSnackBar(
+            context,
+            "Remark Added successfully!",
+          );
+        }
       } else {
-        SnackBarUtils.showErrorSnackBar(
-            context, data['message'] ?? "Failed to add remark.");
+        if (mounted) {
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            data['message'] ?? "Failed to add remark.",
+          );
+        }
       }
     } catch (e) {
-      SnackBarUtils.showErrorSnackBar(context, "An error occurred.");
-    }
-  }
-
-  Future<void> _editRemark(String proceedingId, String caseId,
-      DateTime nextDate, String nextStage, String advocateId) async {
-    final advocate = await SharedPrefService.getUser();
-    final advocateId = advocate!.id;
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    try {
-      final url = Uri.parse('$baseUrl/proceed_case_edit');
-      var request = http.MultipartRequest("POST", url);
-      request.fields['data'] = jsonEncode({
-        "proceed_id": proceedingId,
-        "case_id": caseId,
-        "next_date": DateFormat('yyyy/MM/dd').format(nextDate),
-        "next_stage": nextStage,
-        "remark": _remarkController.text,
-        "inserted_by": advocateId,
+      if (mounted) {
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "An error occurred.",
+        );
+      }
+    } finally {
+      setState(() {
+        isLoading = false;
       });
-
-      // print(request.fields['data']);
-
-      var response = await request.send();
-      var responseData = await response.stream.bytesToString();
-      var data = jsonDecode(responseData);
-
-      if (data['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(
-            context, "Stage updated successfully!");
-      } else {
-        SnackBarUtils.showErrorSnackBar(
-            context, data['message'] ?? "Failed to update.");
-      }
-    } catch (e) {
-      SnackBarUtils.showErrorSnackBar(context, "An error occurred.");
     }
   }
-
-  Future<void> _deleteRemark(String remarkId) async {}
 
   Future<void> _pickDocument() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -341,7 +324,7 @@ class AddRemarkModalState extends State<AddRemarkModal> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed:(isLoading) ? null : () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -362,27 +345,31 @@ class AddRemarkModalState extends State<AddRemarkModal> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () async {
-                        if (!widget.isEditing) {
-                          await _addRemark(
-                            widget.taskId,
-                            _remarkController.text,
-                            widget.stageId,
-                            selectedDate,
-                            widget.caseId,
-                            selectedStatus,
-                            [_fileNames, _filePaths],
-                          );
-                        } else {
-                          // _editProceeding(
-                          //     widget.taskId,
-                          //     widget.caseId,
-                          //     selectedDate,
-                          //     selectedStage ?? widget.currentStage!,
-                          //     userId!);
-                        }
-                        Navigator.pop(context);
-                      },
+                      onPressed: (isLoading)
+                          ? null
+                          : () async {
+                              if (!widget.isEditing) {
+                                await _addRemark(
+                                  widget.taskId,
+                                  _remarkController.text,
+                                  widget.stageId,
+                                  selectedDate,
+                                  widget.caseId,
+                                  selectedStatus,
+                                  [_fileNames, _filePaths],
+                                );
+                              } else {
+                                // _editProceeding(
+                                //     widget.taskId,
+                                //     widget.caseId,
+                                //     selectedDate,
+                                //     selectedStage ?? widget.currentStage!,
+                                //     userId!);
+                              }
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Colors.black,
@@ -390,10 +377,15 @@ class AddRemarkModalState extends State<AddRemarkModal> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        "Save",
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
+                      child: (isLoading)
+                          ? CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : Text(
+                              "Save",
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.white),
+                            ),
                     ),
                   ),
                 ],

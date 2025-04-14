@@ -27,14 +27,18 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   String? _advocateName;
   String? _advocateId;
   String? _assignedTo;
-  late String _assignDateDisplay;
-  late String _expectedEndDateDisplay;
-  late String _assignDateApi;
-  late String _expectedEndDateApi;
+   String _assignDateDisplay = '';
+   String _expectedEndDateDisplay = '';
+   String _assignDateApi = '';
+   String _expectedEndDateApi = '';
   String? _selectedStatus;
   final _taskInstructionController = TextEditingController();
 
   List<Map<String, String>> _internList = [];
+  List<Map<String, String>> _advocateList = [];
+
+  String? selectedRole;
+  List<dynamic> dropdownItems = [];
 
   bool isAssigned = false;
   bool isEnded = false;
@@ -46,9 +50,14 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     setState(() {
       isLoading = true;
     });
-    _fetchInternList();
-    _populateTaskDetails();
+    _fetchBothLists();
     getUsername();
+  }
+
+  Future<void> _fetchBothLists() async {
+    await _fetchInternList();
+    await _fetchAdvocateList();
+    _populateTaskDetails();
     setState(() {
       isLoading = false;
     });
@@ -57,6 +66,13 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   void _populateTaskDetails() {
     final task = widget.taskDetails;
     _assignedTo = task['alloted_to_id'];
+    print(_assignedTo);
+    // Determine the role based on the alloted_to_id
+    if (_assignedTo != null) {
+      bool isIntern = _internList.any((intern) => intern['id'] == _assignedTo);
+      selectedRole = isIntern ? 'Intern' : 'Advocate';
+      print(selectedRole);
+    }
     _taskInstructionController.text = task['instruction'] ?? '';
     if (task['alloted_date'] != null && task['alloted_date'].isNotEmpty) {
       _assignDateDisplay =
@@ -106,6 +122,32 @@ class EditTaskScreenState extends State<EditTaskScreen> {
         if (data['success'] == true) {
           setState(() {
             _internList = (data['data'] as List)
+                .map((intern) => {
+                      'id': intern['id'].toString(),
+                      'name': intern['name'].toString(),
+                    })
+                .toList();
+          });
+        } else {
+          _showErrorSnackBar('Failed to load intern list.');
+        }
+      } else {
+        _showErrorSnackBar('Server error: ${response.statusCode}');
+      }
+    } catch (error) {
+      _showErrorSnackBar('Failed to fetch data: $error');
+    }
+  }
+
+  Future<void> _fetchAdvocateList() async {
+    final url = '$baseUrl/get_advocate_list';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _advocateList = (data['data'] as List)
                 .map((intern) => {
                       'id': intern['id'].toString(),
                       'name': intern['name'].toString(),
@@ -194,7 +236,8 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       final decodedResponse = jsonDecode(responseBody);
 
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(context, "Task updated successfully!");
+        SnackBarUtils.showSuccessSnackBar(
+            context, "Task updated successfully!");
         Navigator.pop(context, true);
       } else {
         _showErrorSnackBar(
@@ -251,13 +294,32 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                 maxLines: null,
               ),
               const SizedBox(height: 20),
-              _buildDropdownField(
-                label: 'Assign to',
-                hint: 'Select Intern',
-                value: _assignedTo,
-                items: _internList,
-                onChanged: (value) => setState(() => _assignedTo = value),
+              Text(
+                'Assign To',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Center buttons
+                children: [
+                  _buildRoleButton('Intern'),
+                  const SizedBox(width: 12),
+                  _buildRoleButton('Advocate'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildDropdownField(
+                  label: 'Assign to',
+                  hint: 'Select $selectedRole',
+                  value: _assignedTo,
+                  items: selectedRole == 'Intern' ? _internList : _advocateList,
+                  onChanged: (value) => setState(() => _assignedTo = value),
+                  isLabeled: false),
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Assign Date',
@@ -292,17 +354,15 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                items: [
-                  'pending',
-                  'completed',
-                  'reassign',
-                  're_alloted',
-                  'allotted'
-                ]
+                items: ['pending', 'completed', 're_alloted', 'allotted']
                     .map((status) => DropdownMenuItem(
                           value: status,
                           child: Text(
-                            status.split('_').map((word) => word[0].toUpperCase() + word.substring(1)).join(' '),
+                            status
+                                .split('_')
+                                .map((word) =>
+                                    word[0].toUpperCase() + word.substring(1))
+                                .join(' '),
                             style: const TextStyle(fontSize: 16),
                           ),
                         ))
@@ -357,43 +417,92 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
+  // Enhanced Role Button
+  Widget _buildRoleButton(String role) {
+    return Expanded(
+      child: ElevatedButton(
+        onPressed: () {
+          setState(() {
+            selectedRole = role;
+            _assignedTo = null;
+            role == 'Intern' ? _fetchInternList() : _fetchAdvocateList();
+          });
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: selectedRole == role ? Colors.black : Colors.white,
+          foregroundColor: selectedRole == role ? Colors.white : Colors.black,
+          elevation: 2,
+          // Subtle shadow
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          side: BorderSide(color: Colors.black, width: 1),
+        ),
+        child: Text(
+          role,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  // Enhanced Dropdown Field
   Widget _buildDropdownField({
     required String label,
     required String hint,
-    required String? value, // Should be the intern's id
+    required String? value,
     required List<Map<String, String>> items,
     required ValueChanged<String?> onChanged,
+    bool isLabeled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 10),
+        if (isLabeled)
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        if (isLabeled) const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(20),
             color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: DropdownButtonFormField<String>(
-            value: items.any((item) => item['id'] == value) ? value : null,
+            value: value,
             decoration: InputDecoration(
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 20,
+                vertical: 14,
+                horizontal: 16,
               ),
-              border: InputBorder.none,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
             ),
-            hint: Text(hint, style: const TextStyle(color: Colors.grey)),
+            hint: Text(hint, style: TextStyle(color: Colors.grey[600])),
             items: items
                 .map((item) => DropdownMenuItem<String>(
-                      value: item['id'], // Use the unique id as the value
-                      child:
-                          Text(item['name']!), // Display the name to the user
+                      value: item['id'],
+                      child: Text(item['name']!),
                     ))
                 .toList(),
             onChanged: onChanged,
+            style: const TextStyle(color: Colors.black, fontSize: 16),
           ),
         ),
       ],

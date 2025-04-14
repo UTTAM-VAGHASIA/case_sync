@@ -319,7 +319,6 @@ class NewCaseScreenState extends State<NewCaseScreen> {
   }
 
   Future<void> _submitCase() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -409,30 +408,38 @@ class NewCaseScreenState extends State<NewCaseScreen> {
         var data = json.decode(responseData);
 
         if (data['success']) {
-          SnackBarUtils.showSuccessSnackBar(
-            context,
-            "Case with case no: ${_caseNumberController.text} Added successfully!",
-          );
-          Navigator.pop(context);
+          if (mounted) {
+            SnackBarUtils.showSuccessSnackBar(
+              context,
+              "Case with case no: ${_caseNumberController.text} Added successfully!",
+            );
+            Navigator.pop(context);
+          }
         } else {
-          SnackBarUtils.showErrorSnackBar(
-            context,
-            "Failed to submit case: ${data['message']}",
-          );
+          if (mounted) {
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              "Failed to submit case: ${data['message']}",
+            );
+          }
           print('Error, failed to submit case: ${data['message']}');
         }
       } else {
-        SnackBarUtils.showErrorSnackBar(
+        if(mounted) {
+          SnackBarUtils.showErrorSnackBar(
           context,
           "Status Code:${response.statusCode}. Failed to submit case. Try again later!",
         );
+        }
         print('Error hua hai: ${response.statusCode}');
       }
     } catch (e) {
-      SnackBarUtils.showErrorSnackBar(
+      if(mounted) {
+        SnackBarUtils.showErrorSnackBar(
         context,
         "An error occurred: $e",
       );
+      }
       print('Error: $e');
     } finally {
       setState(() {

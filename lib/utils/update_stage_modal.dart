@@ -17,6 +17,7 @@ class UpdateStageModal extends StatefulWidget {
   final DateTime initialDate;
   final String? initialStage;
   final List<Map<String, dynamic>> stageList;
+  final String? initialRemark;
 
   const UpdateStageModal({
     super.key,
@@ -27,6 +28,7 @@ class UpdateStageModal extends StatefulWidget {
     required this.caseId,
     this.isEditing = false,
     this.insertedBy,
+    this.initialRemark,
   });
 
   @override
@@ -37,6 +39,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
   final _remarkController = TextEditingController();
   late DateTime selectedDate;
   String? selectedStage;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -46,6 +49,7 @@ class UpdateStageModalState extends State<UpdateStageModal> {
             .any((item) => item['id'].toString() == widget.initialStage)
         ? widget.initialStage
         : null;
+    _remarkController.text = widget.initialRemark ?? "";
 
     print("UpdateStageModal");
     print("Initial date: ${DateFormat('yyyy/MM/dd').format(selectedDate)}");
@@ -61,9 +65,11 @@ class UpdateStageModalState extends State<UpdateStageModal> {
   }
 
   Future<void> _updateNextStage(DateTime nextDate, String nextStage) async {
+    setState(() {
+      isLoading = true;
+    });
     final advocate = await SharedPrefService.getUser();
     final advocateId = advocate!.id;
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       final url = Uri.parse('$baseUrl/proceed_case_add');
       var request = http.MultipartRequest("POST", url);
@@ -82,29 +88,41 @@ class UpdateStageModalState extends State<UpdateStageModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(
-          context,
-          "Stage updated successfully!",
-        );
+        if (mounted) {
+          SnackBarUtils.showSuccessSnackBar(
+            context,
+            "Stage updated successfully!",
+          );
+        }
       } else {
-        SnackBarUtils.showErrorSnackBar(
-          context,
-          data['message'] ?? "Failed to update.",
-        );
+        if (mounted) {
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            data['message'] ?? "Failed to update.",
+          );
+        }
       }
     } catch (e) {
-      SnackBarUtils.showErrorSnackBar(
-        context,
-        "An error occurred.",
-      );
+      if (mounted) {
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "An error occurred.",
+        );
+      }
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   Future<void> _editProceeding(String proceedingId, String caseId,
       DateTime nextDate, String nextStage, String advocateId) async {
+    setState(() {
+      isLoading = true;
+    });
     final advocate = await SharedPrefService.getUser();
     final advocateId = advocate!.id;
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
     try {
       final url = Uri.parse('$baseUrl/proceed_case_edit');
       var request = http.MultipartRequest("POST", url);
@@ -124,21 +142,31 @@ class UpdateStageModalState extends State<UpdateStageModal> {
       var data = jsonDecode(responseData);
 
       if (data['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(
-          context,
-          "Stage updated successfully!",
-        );
+        if (mounted) {
+          SnackBarUtils.showSuccessSnackBar(
+            context,
+            "Stage updated successfully!",
+          );
+        }
       } else {
-        SnackBarUtils.showErrorSnackBar(
-          context,
-          data['message'] ?? "Failed to update.",
-        );
+        if (mounted) {
+          SnackBarUtils.showErrorSnackBar(
+            context,
+            data['message'] ?? "Failed to update.",
+          );
+        }
       }
     } catch (e) {
-      SnackBarUtils.showErrorSnackBar(
-        context,
-        "An error occurred.",
-      );
+      if (mounted) {
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "An error occurred.",
+        );
+      }
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -224,27 +252,38 @@ class UpdateStageModalState extends State<UpdateStageModal> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () async {
+            onPressed: (isLoading) ? null : () async {
               HapticFeedback.mediumImpact();
               if (!widget.isEditing) {
-                _updateNextStage(
+                await _updateNextStage(
                     selectedDate, selectedStage ?? widget.initialStage!);
               } else {
-                _editProceeding(
+                await _editProceeding(
                     widget.proceedingId!,
                     widget.caseId,
                     selectedDate,
                     selectedStage ?? widget.initialStage!,
                     widget.insertedBy!);
               }
-              Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
               minimumSize: const Size(double.infinity, 50),
             ),
-            child: const Text("Update",
-                style: TextStyle(color: Colors.white, fontSize: 18)),
+            child: (isLoading)
+                ? CircularProgressIndicator(
+                  color: Colors.white,
+                )
+                : Text(
+                    "Update",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                  ),
           ),
           const SizedBox(height: 16),
         ],

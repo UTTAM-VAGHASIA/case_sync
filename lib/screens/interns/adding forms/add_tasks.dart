@@ -194,8 +194,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       print("API Response: $decodedResponse");
 
       if (response.statusCode == 200 && decodedResponse['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(context, "Task added successfully!");
-        Navigator.pop(context, true);
+        if(mounted){SnackBarUtils.showSuccessSnackBar(context, "Task added successfully!");
+        Navigator.pop(context, true);}
       } else {
         _showErrorSnackBar(
             "Failed to add task: ${decodedResponse['message'] ?? response.statusCode}");

@@ -42,10 +42,10 @@ class Notifications {
     return {
       'id': id.toString(),
       'task_id': taskId.toString(),
-      'type': type,
+      'type': type.toString(),
       'sender_id': senderId.toString(),
       'receiver_id': receiverId.toString(),
-      'msg': msg,
+      'msg': msg.toString(),
       'status': status.toString(),
       'playstatus': playStatus.toString(),
       'datetime': dateTime?.toIso8601String(),

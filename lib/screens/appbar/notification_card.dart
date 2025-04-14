@@ -1,4 +1,5 @@
 import 'package:case_sync/models/notification.dart';
+import 'package:case_sync/screens/cases/case_info/bottom_nav_bar.dart';
 import 'package:case_sync/screens/interns/task_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,14 +22,32 @@ class NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         print(caseItem.toJson());
         HapticFeedback.mediumImpact();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => TaskInfoPage(taskId: caseItem.taskId)),
-        );
+        if (caseItem.type == 'task_reassigned' ||
+            caseItem.type == 'task_assigned' ||
+            caseItem.type == 'task_completed' ||
+            caseItem.type == 'remark_added') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => TaskInfoPage(taskId: caseItem.taskId)),
+          );
+        } else if (caseItem.type == 'case_proceed') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BottomNavBar(
+                caseId: caseItem.taskId,
+                caseNo: '',
+                caseType: '',
+                targetPage: 1,
+                flag: true,
+              ),
+            ),
+          );
+        }
         onDismiss(caseItem);
       },
       child: Card(

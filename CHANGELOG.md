@@ -2,14 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.6.12] - 2025-04-11
+## [1.6.12] - 2025-04-14
 
 ### Added
+
+- Added appropriate Navigations when user clicks on a notification.
+- Added a different debug configuration for the application.
 
 ### Fixed
 
 - Minor fixes in labels of task info page.
 - Any task can be reassigned by the advocate now instead of only the tasks assigned to the advocate.
+- Fixed the issue where the advocate does not get both intern's and advocate's list to select while editing the task.
+- Fixed all the elevated buttons in the application.
 
 
 ## [1.6.11] - 2025-04-11

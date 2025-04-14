@@ -10,10 +10,10 @@ class NewAdvocateScreen extends StatefulWidget {
   const NewAdvocateScreen({super.key});
 
   @override
-  _NewAdvocateScreenState createState() => _NewAdvocateScreenState();
+  NewAdvocateScreenState createState() => NewAdvocateScreenState();
 }
 
-class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
+class NewAdvocateScreenState extends State<NewAdvocateScreen> {
   bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -54,8 +54,8 @@ class _NewAdvocateScreenState extends State<NewAdvocateScreen> {
       print("$response");
 
       if (response['success'] == true) {
-        SnackBarUtils.showSuccessSnackBar(context, 'Advocate registered successfully!');
-        Navigator.pop(context, true);
+        if(mounted){SnackBarUtils.showSuccessSnackBar(context, 'Advocate registered successfully!');
+        Navigator.pop(context, true);}
       } else {
         setState(() {
           _errorMessage = '${response['message']}\n${response['error']}';
