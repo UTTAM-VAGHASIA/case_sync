@@ -146,7 +146,6 @@ class _PriorityDialogState extends State<PriorityDialog> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(3),
                     ],
                     style: TextStyle(fontSize: 16),
                     decoration: InputDecoration(

@@ -162,8 +162,9 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
   Widget build(BuildContext context) {
     final cardColor = widget.isHighlighted ? Colors.black : Colors.white;
     final textColor = widget.isHighlighted ? Colors.white : Colors.black;
-    final accentColor =
-        widget.isHighlighted ? Colors.white.withOpacity(0.7) : Colors.black54;
+    final accentColor = widget.isHighlighted
+        ? Colors.white.withValues(alpha: 0.7)
+        : Colors.black54;
 
     return GestureDetector(
       onTap: () {
@@ -187,9 +188,7 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: widget.isHighlighted
-                ? Colors.white
-                : Colors.black,
+            color: widget.isHighlighted ? Colors.white : Colors.black,
             width: 1.5,
           ),
         ),
@@ -200,9 +199,8 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
             Container(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 4),
               decoration: BoxDecoration(
-                color: widget.isHighlighted
-                    ? Colors.grey.shade900
-                    : Colors.white,
+                color:
+                    widget.isHighlighted ? Colors.grey.shade900 : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -227,7 +225,8 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
                       onTap: _showPriorityDialog,
                       child: widget.caseItem.priorityNumber == null
                           ? Container(
-                              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 15),
                               decoration: BoxDecoration(
                                 color: widget.isHighlighted
                                     ? Colors.white
@@ -254,34 +253,64 @@ class UpcomingCaseCardState extends State<UpcomingCaseCard> {
                                 ],
                               ),
                             )
-                          : Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: widget.isHighlighted
-                                    ? Colors.white
-                                    : Colors.black,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
+                          : (widget.caseItem.priorityNumber! > 999)
+                              ? Container(
+                                  height: 34,
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.rectangle,
+                                    color: widget.isHighlighted
+                                        ? Colors.white
+                                        : Colors.black,
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '${widget.caseItem.priorityNumber}',
-                                style: TextStyle(
-                                  color: widget.isHighlighted
-                                      ? Colors.black
-                                      : Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${widget.caseItem.priorityNumber}',
+                                    style: TextStyle(
+                                      color: widget.isHighlighted
+                                          ? Colors.black
+                                          : Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: widget.isHighlighted
+                                        ? Colors.white
+                                        : Colors.black,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${widget.caseItem.priorityNumber}',
+                                    style: TextStyle(
+                                      color: widget.isHighlighted
+                                          ? Colors.black
+                                          : Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
                     ),
                 ],
               ),

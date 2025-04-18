@@ -283,9 +283,14 @@ class AddRemarkModalState extends State<AddRemarkModal> {
                     children: [
                       Icon(Icons.attach_file, color: Colors.black45),
                       const SizedBox(width: 8),
-                      Text(
-                        _fileNames ?? "Tap to select files",
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.69,
+                        child: Text(
+                          _fileNames ?? "Tap to select files",
+                          style: TextStyle(fontSize: 16, color: Colors.black54),
+                          overflow: TextOverflow.ellipsis,
+                          textWidthBasis: TextWidthBasis.parent,
+                        ),
                       ),
                     ],
                   ),
@@ -324,7 +329,8 @@ class AddRemarkModalState extends State<AddRemarkModal> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed:(isLoading) ? null : () => Navigator.pop(context),
+                      onPressed:
+                          (isLoading) ? null : () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),

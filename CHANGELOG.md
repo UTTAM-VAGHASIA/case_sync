@@ -17,6 +17,10 @@ All notable changes to this project will be documented in this file.
 - Fixed the issue where the advocate does not get both intern's and advocate's list to select while editing the task.
 - Fixed all the elevated buttons in the application.
 - Fixed Edit Task options that can be edited by the advocate.
+- Case History Refresh now works
+- Text Overflow in add remark modal
+- Priority number no longer needs to be a 3 digit number and can be more than 3 digit number.
+- Fixed the UI of Upcoming Case Card
 
 
 ## [1.6.11] - 2025-04-11

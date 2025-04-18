@@ -570,8 +570,9 @@ class CaseHistoryScreenState extends State<CaseHistoryScreen>
                   color: Colors.transparent,
                   showChildOpacityTransition: false,
                   onRefresh: () async {
+                    await populateCaseData();
+                    await _initializeCaseData();
                     setState(() {
-                      populateCaseData();
                       allCases = getCaseDataForMonth(selectedYear, month);
                     });
                   },
