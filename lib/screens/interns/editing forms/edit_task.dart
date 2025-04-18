@@ -27,10 +27,10 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   String? _advocateName;
   String? _advocateId;
   String? _assignedTo;
-   String _assignDateDisplay = '';
-   String _expectedEndDateDisplay = '';
-   String _assignDateApi = '';
-   String _expectedEndDateApi = '';
+  String _assignDateDisplay = '';
+  String _expectedEndDateDisplay = '';
+  String _assignDateApi = '';
+  String _expectedEndDateApi = '';
   String? _selectedStatus;
   final _taskInstructionController = TextEditingController();
 
@@ -295,7 +295,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Assign To',
+                'Assigned To',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -314,12 +314,14 @@ class EditTaskScreenState extends State<EditTaskScreen> {
               ),
               const SizedBox(height: 12),
               _buildDropdownField(
-                  label: 'Assign to',
-                  hint: 'Select $selectedRole',
-                  value: _assignedTo,
-                  items: selectedRole == 'Intern' ? _internList : _advocateList,
-                  onChanged: (value) => setState(() => _assignedTo = value),
-                  isLabeled: false),
+                label: 'Assigned to',
+                hint: 'Select $selectedRole',
+                value: _assignedTo,
+                items: selectedRole == 'Intern' ? _internList : _advocateList,
+                onChanged: (value) => setState(() => _assignedTo = value),
+                isLabeled: false,
+                isDisabled: true,
+              ),
               const SizedBox(height: 20),
               _buildDateField(
                 label: 'Assign Date',
@@ -343,42 +345,46 @@ class EditTaskScreenState extends State<EditTaskScreen> {
               const SizedBox(height: 20),
               Text('Status', style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                decoration: InputDecoration(
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+              IgnorePointer(
+                ignoring: true,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedStatus,
+                  decoration: InputDecoration(
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
+                  items: ['pending', 'completed', 're_alloted', 'allotted']
+                      .map((status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              status
+                                  .split('_')
+                                  .map((word) =>
+                                      word[0].toUpperCase() + word.substring(1))
+                                  .join(' '),
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedStatus = value!;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a status';
+                    }
+                    return null;
+                  },
+                  iconEnabledColor: Colors.transparent,
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
                 ),
-                items: ['pending', 'completed', 're_alloted', 'allotted']
-                    .map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(
-                            status
-                                .split('_')
-                                .map((word) =>
-                                    word[0].toUpperCase() + word.substring(1))
-                                .join(' '),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedStatus = value!;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a status';
-                  }
-                  return null;
-                },
-                style: const TextStyle(color: Colors.black, fontSize: 16),
               ),
               const SizedBox(height: 30),
               SizedBox(
@@ -423,9 +429,6 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       child: ElevatedButton(
         onPressed: () {
           setState(() {
-            selectedRole = role;
-            _assignedTo = null;
-            role == 'Intern' ? _fetchInternList() : _fetchAdvocateList();
           });
         },
         style: ElevatedButton.styleFrom(
@@ -455,6 +458,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     required List<Map<String, String>> items,
     required ValueChanged<String?> onChanged,
     bool isLabeled = true,
+    bool isDisabled = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,34 +479,39 @@ class EditTaskScreenState extends State<EditTaskScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: DropdownButtonFormField<String>(
-            value: value,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 16,
+          child: IgnorePointer(
+            ignoring: isDisabled,
+            child: DropdownButtonFormField<String>(
+              value: value,
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 16,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              
+              hint: Text(hint, style: TextStyle(color: Colors.grey[600])),
+              items: items
+                  .map((item) => DropdownMenuItem<String>(
+                        value: item['id'],
+                        child: Text(item['name']!),
+                      ))
+                  .toList(),
+              onChanged: onChanged,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+              iconEnabledColor: (isDisabled) ? Colors.transparent : Colors.black,
             ),
-            hint: Text(hint, style: TextStyle(color: Colors.grey[600])),
-            items: items
-                .map((item) => DropdownMenuItem<String>(
-                      value: item['id'],
-                      child: Text(item['name']!),
-                    ))
-                .toList(),
-            onChanged: onChanged,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
           ),
         ),
       ],

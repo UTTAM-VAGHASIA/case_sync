@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:case_sync/models/advocate.dart';
 import 'package:case_sync/screens/cases/case_counter_list.dart';
+import 'package:case_sync/screens/interns/assigned_case_list.dart';
+import 'package:case_sync/screens/notice/my_tasks_page.dart';
 import 'package:case_sync/services/case_services.dart';
 import 'package:case_sync/services/shared_pref.dart';
 import 'package:case_sync/utils/snackbar_utils.dart';
@@ -43,6 +45,7 @@ class HomeScreenState extends State<HomeScreen> {
   ValueNotifier<int> newCaseCount = ValueNotifier<int>(-1);
   ValueNotifier<int> caseCounterCount = ValueNotifier<int>(-1);
   ValueNotifier<int> todaysCaseCount = ValueNotifier<int>(-1);
+  ValueNotifier<int> myTaskCount = ValueNotifier<int>(-1);
   String errorMessage = '';
   ValueNotifier<List<Notifications>> notificationList =
       ValueNotifier<List<Notifications>>([]);
@@ -65,24 +68,27 @@ class HomeScreenState extends State<HomeScreen> {
               .map((item) => Notifications.fromJson(item))
               .toList();
           unassignedCasesCount.value =
-              int.parse(responseData['counters'][0]['unassigned_count']);
+              int.parse(responseData['counters'][0]['unassigned_count'] ?? '-2');
           assignedCasesCount.value =
-              int.parse(responseData['counters'][0]['assigned_count']);
+              int.parse(responseData['counters'][0]['assigned_count'] ?? '-2');
           caseHistoryCount.value =
-              int.parse(responseData['counters'][0]['history_count']);
+              int.parse(responseData['counters'][0]['history_count'] ?? '-2');
           advocateCount.value =
-              int.parse(responseData['counters'][0]['advocate_count']);
+              int.parse(responseData['counters'][0]['advocate_count'] ?? '-2');
           internCount.value =
-              int.parse(responseData['counters'][0]['intern_count']);
+              int.parse(responseData['counters'][0]['intern_count'] ?? '-2');
           companyCount.value =
-              int.parse(responseData['counters'][0]['company_count']);
+              int.parse(responseData['counters'][0]['company_count'] ?? '-2');
           taskCount.value =
-              int.parse(responseData['counters'][0]['task_count']);
-          newCaseCount.value = -2;
+              int.parse(responseData['counters'][0]['task_count'] ?? '-2');
+          newCaseCount.value = 
+              int.parse(responseData['counters'][0]['new_case_counter'] ?? '-2');
           caseCounterCount.value =
-              int.parse(responseData['counters'][0]['counters_count']);
+              int.parse(responseData['counters'][0]['counters_count'] ?? '-2');
           todaysCaseCount.value =
-              int.parse(responseData['counters'][0]['todays_case_count']);
+              int.parse(responseData['counters'][0]['todays_case_count'] ?? '-2');
+          myTaskCount.value =
+              int.parse(responseData['counters'][0]['my_task_count'] ?? '-2');
           ;
 
           print("Notification List Added: ${notificationList.value}");
@@ -98,16 +104,17 @@ class HomeScreenState extends State<HomeScreen> {
     }
 
     if (assignedCasesCount.value == -1) {
-      assignedCasesCount.value = 0;
-      unassignedCasesCount.value = 0;
-      caseHistoryCount.value = 0;
-      advocateCount.value = 0;
-      internCount.value = 0;
-      companyCount.value = 0;
-      taskCount.value = 0;
-      todaysCaseCount.value = 0;
-      caseCounterCount.value = 0;
+      assignedCasesCount.value = -2;
+      unassignedCasesCount.value = -2;
+      caseHistoryCount.value = -2;
+      advocateCount.value = -2;
+      internCount.value = -2;
+      companyCount.value = -2;
+      taskCount.value = -2;
+      todaysCaseCount.value = -2;
+      caseCounterCount.value = -2;
       newCaseCount.value = -2;
+      myTaskCount.value = -2;
       print("Entered If");
     }
     print("Hellooooo");
@@ -207,7 +214,7 @@ class HomeScreenState extends State<HomeScreen> {
                   builder: (context, cases, child) {
                     return Positioned(
                       right: 5,
-                      top: -3,
+                      top: 0,
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
@@ -224,9 +231,9 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Text(
                           notificationList.value.length.toString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.black,
-                            fontSize: 12,
+                            fontSize: (notificationList.value.length < 10) ? 12 : 10,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
@@ -345,6 +352,16 @@ class HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                           ),
+                          SizedBox(height: 2),
+                          _buildCard(
+                            title: 'My Tasks',
+                            iconPath: 'assets/icons/tasks.svg',
+                            cardWidth: fullCardWidth,
+                            cardHeight: cardHeight,
+                            destinationScreen: MyTaskPage(),
+                            counterNotifier: myTaskCount,
+                            shouldDisplayCounter: true,
+                          ),
                           const SizedBox(height: 20),
                           const Text(
                             'Cases',
@@ -439,15 +456,6 @@ class HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                           ),
-                          // _buildCard(
-                          //   title: 'Tasks',
-                          //   iconPath: 'assets/icons/tasks.svg',
-                          //   cardWidth: fullCardWidth,
-                          //   cardHeight: cardHeight,
-                          //   destinationScreen: AssignedCaseList(),
-                          //   counterNotifier: taskCount,
-                          //   shouldDisplayCounter: true,
-                          // ),
                           const SizedBox(height: 20),
                           const Text(
                             'Companies',
@@ -504,7 +512,7 @@ class HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           onTap: () async {
             HapticFeedback.mediumImpact();
-            var result = await Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => destinationScreen),
             );

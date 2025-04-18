@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Added appropriate Navigations when user clicks on a notification.
 - Added a different debug configuration for the application.
+- Added My Tasks tab in the home screen.
 
 ### Fixed
 
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Any task can be reassigned by the advocate now instead of only the tasks assigned to the advocate.
 - Fixed the issue where the advocate does not get both intern's and advocate's list to select while editing the task.
 - Fixed all the elevated buttons in the application.
+- Fixed Edit Task options that can be edited by the advocate.
 
 
 ## [1.6.11] - 2025-04-11

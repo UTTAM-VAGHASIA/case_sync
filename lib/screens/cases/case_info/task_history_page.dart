@@ -70,13 +70,19 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
             print('Task Details: ${_tasks[0]}');
           });
         } else {
-          _showError(data['message'] ?? "No tasks found.");
+          if (mounted) {
+            _showError(data['message'] ?? "No tasks found.", context);
+          }
         }
       } else {
-        _showError("Failed to fetch tasks. Please try again.");
+        if (mounted) {
+          _showError("Failed to fetch tasks. Please try again.", context);
+        }
       }
     } catch (e) {
-      _showError("An error occurred: $e");
+      if (mounted) {
+        _showError("An error occurred: $e", context);
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -119,30 +125,39 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
     }
   }
 
-  void _showError(String message) {
-    SnackBarUtils.showErrorSnackBar(context, message);
+  void _showError(String message, BuildContext cont) {
+    SnackBarUtils.showErrorSnackBar(cont, message);
   }
 
   Future<void> _deleteTask(String taskId) async {
     try {
       final url = Uri.parse('$baseUrl/delete_task');
       final response = await http.post(url, body: {'task_id': taskId});
-  
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
           setState(() {
             _tasks.removeWhere((task) => task['id'] == taskId);
           });
-          SnackBarUtils.showSuccessSnackBar(context, "Task deleted successfully.");
+          if (mounted) {
+            SnackBarUtils.showSuccessSnackBar(
+                context, "Task deleted successfully.");
+          }
         } else {
-          _showError(data['message'] ?? "Failed to delete task.");
+          if (mounted) {
+            _showError(data['message'] ?? "Failed to delete task.", context);
+          }
         }
       } else {
-        _showError("Failed to delete task.");
+        if (mounted) {
+          _showError("Failed to delete task.", context);
+        }
       }
     } catch (e) {
-      _showError("An error occurred: $e");
+      if (mounted) {
+        _showError("An error occurred: $e", context);
+      }
     }
   }
 
@@ -224,7 +239,7 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
                                   onEdit: () => _handleEdit(task),
                                   onDelete: () => _handleDelete(task),
                                   canReassign: true,
-                                      // (task['alloted_to_id'] == advocateId),
+                                  // (task['alloted_to_id'] == advocateId),
                                   onReassign: () => _handleReassign(task),
                                   child: Container(
                                     color: Color(0xFFF3F3F3),

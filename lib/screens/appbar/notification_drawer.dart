@@ -48,6 +48,7 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
   @override
   Widget build(BuildContext context) {
     void removeCase(Notifications caseItem) async {
+      final userId = (await SharedPrefService.getUser())!.id;
       final String url = "$baseUrl/read_notification";
 
       var request = http.MultipartRequest(
@@ -55,6 +56,9 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
         Uri.parse(url),
       );
       request.fields['not_id'] = caseItem.id;
+      request.fields['user_id'] = userId;
+
+      print(request.fields);
 
       try {
         final response = await request.send();
@@ -66,27 +70,31 @@ class _NotificationDrawerState extends State<NotificationDrawer> {
             setState(() {
               caseList.removeWhere((c) => c.id == caseItem.id);
             });
-            SnackBarUtils.showSuccessSnackBar(
+            if(context.mounted){SnackBarUtils.showSuccessSnackBar(
               context,
               "Notification marked as read",
-            );
+            );}
           } else {
-            SnackBarUtils.showErrorSnackBar(
+            if(context.mounted) {
+              SnackBarUtils.showErrorSnackBar(
               context,
               responseData['message'] ?? "Failed to mark notification as read",
             );
+            }
           }
         } else {
-          SnackBarUtils.showErrorSnackBar(
+          if(context.mounted){SnackBarUtils.showErrorSnackBar(
             context,
             "Failed to call API. Status Code: ${response.statusCode}",
-          );
+          );}
         }
       } catch (e) {
-        SnackBarUtils.showErrorSnackBar(
+        if(context.mounted) {
+          SnackBarUtils.showErrorSnackBar(
           context,
           "An error occurred while marking notification as read",
         );
+        }
       }
     }
 
