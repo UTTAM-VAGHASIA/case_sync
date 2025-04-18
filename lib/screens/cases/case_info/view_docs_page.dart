@@ -72,6 +72,9 @@ class _ViewDocsPageState extends State<ViewDocsPage>
         } else {
           if (!mounted) return;
           SnackBarUtils.showInfoSnackBar(context, 'No documents available.');
+          setState(() {
+            _documents.clear();
+          });
         }
       } else {
         if (!mounted) return;

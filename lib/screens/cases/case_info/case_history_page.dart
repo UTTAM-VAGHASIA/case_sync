@@ -90,10 +90,11 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
             }
           });
         } else {
-          _showError(data['message'] ?? "No tasks found.");
+          _showError(data['message'] ?? "No proceedings found.");
+          proceedingList = [];
         }
       } else {
-        _showError("Failed to fetch tasks. Please try again.");
+        _showError("Failed to fetch proceedings. Please try again.");
       }
     } catch (e) {
       _showError("An error occurred: $e");
@@ -125,9 +126,10 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
           proceedingList
               .removeWhere((proceeding) => proceeding.id == proceedingId);
         });
-        SnackBarUtils.showSuccessSnackBar(context, "Task deleted successfully.");
+        if(mounted){SnackBarUtils.showSuccessSnackBar(
+            context, "Proceeding deleted successfully.");}
       } else {
-        _showError(data['message'] ?? "Failed to delete task.");
+        _showError(data['message'] ?? "Failed to delete proceeding.");
       }
     } catch (e) {
       _showError("An error occurred: $e");
@@ -171,7 +173,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
 
   Future<void> _handleEdit(ProceedHistoryListData proceeding) async {
     if (kDebugMode) {
-      print("Edit task: ${proceeding.nextStageId}");
+      print("Edit proceeding: ${proceeding.nextStageId}");
     }
 
     if (advocateId == proceeding.insertedBy && (proceeding.insertedBy != "")) {
@@ -205,7 +207,7 @@ class _CaseHistoryPageState extends State<CaseHistoryPage>
 
   void _handleDelete(ProceedHistoryListData proceeding) {
     if (kDebugMode) {
-      print("Delete task: ${proceeding.nextStageId}");
+      print("Delete Proceeding: ${proceeding.nextStageId}");
     }
     if (advocateId == proceeding.insertedBy &&
         (proceeding.insertedBy != null || proceeding.insertedBy != "")) {

@@ -73,6 +73,9 @@ class TaskHistoryPageState extends State<TaskHistoryPage>
           if (mounted) {
             _showError(data['message'] ?? "No tasks found.", context);
           }
+          setState(() {
+            _tasks = [];
+          });
         }
       } else {
         if (mounted) {
