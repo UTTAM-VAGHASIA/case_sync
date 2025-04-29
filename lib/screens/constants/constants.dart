@@ -15,7 +15,7 @@ const List<String> months = [
 
 // For testing APIs:
 const baseUrl =
-    "https://pragmanxt.com/case_sync_test/services/admin/v1/index.php";
+    "https://pragmanxt.com/case_sync_pro/services/admin/v1/index.php";
 
 // For Production APIs:
 // const baseUrl =

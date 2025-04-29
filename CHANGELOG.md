@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.13] - 2025-04-29
+
+### Added
+
+- Switched to Production Build
+
 ## [1.6.12] - 2025-04-18
 
 ### Added
