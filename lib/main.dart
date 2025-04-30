@@ -1,32 +1,8 @@
-import 'package:case_sync/theme_data/app_theme.dart';
-import 'package:device_preview/device_preview.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+// This file acts as an entry point that exports the appropriate flavor configuration
+// When Flutter runs the app, it uses this file as the entry point
 
-import 'screens/splash_screen.dart';
+// To run with different flavors:
+// Flutter run --flavor production -t lib/main_production.dart
+// Flutter run --flavor staging -t lib/main_staging.dart
 
-void main() async {
-  runApp(
-    DevicePreview(
-      enabled: (!kReleaseMode && !GetPlatform.isIOS && !GetPlatform.isAndroid),
-      builder: (context) => CaseSyncApp(),
-    ),
-  );
-}
-
-class CaseSyncApp extends StatelessWidget {
-  const CaseSyncApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GetMaterialApp(
-      useInheritedMediaQuery: true,
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
-      home: const SplashScreen(),
-    );
-  }
-}
+export 'main_production.dart';

@@ -1,3 +1,5 @@
+import 'package:case_sync/services/api_helper.dart';
+
 const List<String> months = [
   'January',
   'February',
@@ -13,12 +15,9 @@ const List<String> months = [
   'December'
 ];
 
-// For testing APIs:
-const baseUrl =
-    "https://pragmanxt.com/case_sync_pro/services/admin/v1/index.php";
+// Use the ApiHelper.baseUrl getter to access the current flavor's base URL
+String get baseUrl => ApiHelper.baseUrl;
 
-// For Production APIs:
-// const baseUrl =
-//     "https://pragmanxt.com/case_sync_pro/services/admin/v1/index.php";
-//
-// const baseUrl = "http://192.168.1.129/case_sync/services/admin/v1/index.php";
+// Previous hardcoded URLs:
+// Test: "https://pragmanxt.com/case_sync_test/services/admin/v1/index.php"
+// Production: "https://pragmanxt.com/case_sync_pro/services/admin/v1/index.php"

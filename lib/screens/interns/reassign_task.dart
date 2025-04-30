@@ -107,8 +107,7 @@ class _ReAssignTaskSheetState extends State<ReAssignTaskSheet> {
   Future<void> _fetchInternList() async {
     if (_loggedInUserId == null) return; // Guard if user ID failed
 
-    const String apiUrl =
-        '$baseUrl/get_interns_list'; // Ensure baseUrl is correct
+    final String apiUrl = '$baseUrl/get_interns_list'; // Ensure baseUrl is correct
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -149,8 +148,7 @@ class _ReAssignTaskSheetState extends State<ReAssignTaskSheet> {
   Future<void> _fetchAdvocateList() async {
     if (_loggedInUserId == null) return; // Guard if user ID failed
 
-    const String apiUrl =
-        '$baseUrl/get_advocate_list'; // Ensure baseUrl is correct
+    final String apiUrl = '$baseUrl/get_advocate_list'; // Ensure baseUrl is correct
 
     try {
       final response = await http.get(Uri.parse(apiUrl));

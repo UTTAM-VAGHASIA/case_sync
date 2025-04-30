@@ -1,0 +1,101 @@
+name: Build and Publish Test App Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+      force_update:
+        description: 'Force users to update (true/false)'
+        required: true
+        default: false
+        type: boolean
+
+# Grant permissions for the GITHUB_TOKEN to modify repository content
+permissions:
+  contents: write
+
+jobs:
+  build_and_publish_test_update:
+    runs-on: ubuntu-latest
+    steps:
+      # --- Checkout, Setup Java, Setup Flutter, Get Deps ---
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '18'
+
+      - name: Set up Flutter 3.27.4
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.4'
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      # --- Build Test APK ---
+      - name: Build Test APK
+        env:
+          KEYSTORE_FILE: upload-keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          # Decode Keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          chmod 644 android/app/upload-keystore.jks
+          
+          # Build test flavor APK
+          flutter build apk --flavor staging --release -t lib/main_test.dart --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
+
+      # --- Create Artifacts Directory ---
+      - name: Setup version directory
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          mkdir -p test-versions/v$VERSION
+          cp build/app/outputs/flutter-apk/app-staging-release.apk test-versions/v$VERSION/app-staging-release.apk
+
+      # --- Generate version.json ---
+      - name: Generate version.json
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          FORCE_UPDATE=${{ github.event.inputs.force_update }}
+          
+          # Create repo URL variables for the raw content
+          REPO_OWNER=$(echo $GITHUB_REPOSITORY | cut -d "/" -f 1)
+          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d "/" -f 2)
+          
+          # Create version.json
+          echo '{
+            "version": "'$VERSION'",
+            "apk_url": "https://raw.githubusercontent.com/'$REPO_OWNER'/'$REPO_NAME'/test-versions/v'$VERSION'/app-staging-release.apk",
+            "force_update": '$FORCE_UPDATE'
+          }' > test-versions/v$VERSION/version.json
+          
+          # Display the contents for verification
+          cat test-versions/v$VERSION/version.json
+
+      # --- Commit and Push to Test Branch ---
+      - name: Commit and push test version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Add files and commit
+          git add test-versions/
+          git commit -m "Add test app version $VERSION"
+          
+          # Push to branch
+          git push origin HEAD:test-versions 

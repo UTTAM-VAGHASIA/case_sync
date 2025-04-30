@@ -42,23 +42,37 @@ android {
         }
     }
 
+    flavorDimensions "environment"
+    productFlavors {
+        production {
+            dimension "environment"
+            applicationId "com.casesync.app"
+            manifestPlaceholders = [
+                appName: "Advocates"
+            ]
+            resValue "string", "app_name", "Advocates"
+        }
+        staging {
+            dimension "environment"
+            applicationId "com.casesync.app.test"
+            manifestPlaceholders = [
+                appName: "Advocates Test"
+            ]
+            resValue "string", "app_name", "Advocates Test"
+        }
+    }
+
     buildTypes {
         release {
             signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            manifestPlaceholders = [
-                "appName": "Advocates"
-            ]
         }
         debug {
             signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             versionNameSuffix "-DEBUG"
-            manifestPlaceholders = [
-                "appName": "Debug" 
-            ]
         }
     }
 }

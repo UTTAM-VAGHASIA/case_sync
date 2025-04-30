@@ -2,6 +2,7 @@ import 'dart:async'; // Required for Timer/Future.delayed, TimeoutException, Com
 import 'dart:convert'; // For JSON decoding
 import 'dart:io'; // Required for File operations, Platform checks, HttpException, SocketException
 
+import 'package:case_sync/utils/flavor_config.dart';
 import 'package:case_sync/utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart'; // Flutter framework
@@ -28,6 +29,14 @@ class CheckUpdate {
   /// The GitHub API endpoint for fetching the latest release information.
   static String get _githubApiUrl =>
       "https://api.github.com/repos/$githubOwner/$githubRepo/releases/latest";
+      
+  /// The URL for checking staging updates
+  static Future<String?> getStagingUpdateUrl() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    final version = packageInfo.version;
+    
+    return 'https://raw.githubusercontent.com/$githubOwner/$githubRepo/test-versions/v$version/version.json';
+  }
 
   // --- Security Warning ---
   // Storing PAT via --dart-define is convenient but NOT secure for production apps
@@ -42,6 +51,163 @@ class CheckUpdate {
   /// Returns `true` to indicate the app can proceed with normal startup,
   /// or `false` if a mandatory update requires the app to halt (or exit).
   static Future<bool> checkForUpdate(BuildContext context) async {
+    // Check if we're in staging or production flavor
+    final isStaging = FlavorConfig.isTest();
+    
+    if (isStaging) {
+      print("CheckUpdate: Using staging update check flow");
+      return await _checkForStagingUpdate(context);
+    } else {
+      print("CheckUpdate: Using production update check flow");
+      return await _checkForProductionUpdate(context);
+    }
+  }
+  
+  /// Checks for updates in staging flavor
+  static Future<bool> _checkForStagingUpdate(BuildContext context) async {
+    String latestVersion = "";
+    bool forceUpdate = false;
+    String apkUrl = "";
+    
+    try {
+      // Get the staging version check URL
+      final versionJsonUrl = await getStagingUpdateUrl();
+      if (versionJsonUrl == null) {
+        print("CheckUpdate: Staging version URL is null, skipping update check");
+        return true;
+      }
+      
+      print("CheckUpdate: Checking for staging updates at $versionJsonUrl");
+      
+      // Fetch the version.json file
+      final response = await http.get(Uri.parse(versionJsonUrl))
+          .timeout(const Duration(seconds: 20));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Extract version info
+        latestVersion = data['version'] ?? '';
+        apkUrl = data['apk_url'] ?? '';
+        forceUpdate = data['force_update'] ?? false;
+        
+        if (latestVersion.isEmpty || apkUrl.isEmpty) {
+          print("CheckUpdate: Invalid staging version data");
+          return true;
+        }
+        
+        print("CheckUpdate: Staging release version: $latestVersion, Force update: $forceUpdate");
+      } else {
+        // Could be a 404 if the version.json doesn't exist yet
+        print("CheckUpdate: Staging version check failed with status ${response.statusCode}");
+        return true;
+      }
+    } catch (e) {
+      // If the file doesn't exist or there's a network error, just continue
+      print("CheckUpdate: Error checking for staging updates: $e");
+      return true;
+    }
+    
+    // Compare versions
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String currentVersion = packageInfo.version;
+    print("CheckUpdate: Current app version: $currentVersion");
+    
+    if (latestVersion.isNotEmpty && _isNewerVersion(latestVersion, currentVersion)) {
+      print("CheckUpdate: Staging update available from $currentVersion to $latestVersion");
+      
+      // Show the update dialog
+      final shouldProceed = await _showStagingUpdateDialog(
+        context,
+        latestVersion,
+        apkUrl,
+        forceUpdate
+      );
+      
+      return shouldProceed;
+    }
+    
+    return true;
+  }
+  
+  /// Shows a dialog for staging updates
+  static Future<bool> _showStagingUpdateDialog(
+    BuildContext context, 
+    String version, 
+    String apkUrl,
+    bool forceUpdate
+  ) async {
+    final completer = Completer<bool>();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: !forceUpdate,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => !forceUpdate,
+        child: AlertDialog(
+          title: Text(forceUpdate ? 'Required Update' : 'Update Available'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'A new version (v$version) is available.',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                if (forceUpdate)
+                  const Text(
+                    'This update is required to continue using the app.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  )
+              ],
+            ),
+          ),
+          actions: [
+            if (!forceUpdate)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  completer.complete(true);
+                },
+                child: const Text('Later'),
+              ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  // Start the download process
+                  await _downloadAndInstallUpdate(
+                    context,
+                    apkUrl,
+                    'Staging',
+                  );
+                  
+                  if (!completer.isCompleted) {
+                    completer.complete(!forceUpdate);
+                  }
+                } catch (e) {
+                  print("CheckUpdate: Error during staging update: $e");
+                  if (!completer.isCompleted) {
+                    completer.complete(!forceUpdate);
+                  }
+                }
+              },
+              child: const Text('Update Now'),
+            ),
+          ],
+        ),
+      ),
+    );
+    
+    return completer.future;
+  }
+  
+  /// Checks for updates using the production GitHub releases
+  static Future<bool> _checkForProductionUpdate(BuildContext context) async {
     String? assetApiUrl;
     String latestVersion = "";
     bool forceUpdate = false;
@@ -247,8 +413,6 @@ class CheckUpdate {
       print(
           "CheckUpdate: Error comparing versions '$latestVersion' and '$currentVersion': $e");
       // Fallback: Treat parse errors as not newer to avoid unnecessary update prompts.
-      // A simple string comparison could be used as a less reliable fallback:
-      // return latestVersion.compareTo(currentVersion) > 0;
       return false;
     }
   }
@@ -1101,6 +1265,111 @@ class CheckUpdate {
           );
         }
         break;
+    }
+  }
+
+  /// Download and install an APK update
+  static Future<void> _downloadAndInstallUpdate(
+    BuildContext context,
+    String url,
+    String updateType, // 'Staging' or 'Production'
+  ) async {
+    // Create a stateful download progress indicator
+    final downloadProgress = ValueNotifier<double>(0.0);
+    final downloadState = ValueNotifier<String>("Preparing...");
+    
+    // Show the download progress dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Downloading $updateType Update'),
+        content: ValueListenableBuilder(
+          valueListenable: downloadProgress,
+          builder: (context, value, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(value: value),
+                const SizedBox(height: 16),
+                ValueListenableBuilder(
+                  valueListenable: downloadState,
+                  builder: (context, state, _) => Text(state),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+    
+    try {
+      // Get the external storage directory
+      final directory = await getExternalStorageDirectory() ?? 
+                       await getTemporaryDirectory();
+      final filePath = '${directory.path}/app_update.apk';
+      final file = File(filePath);
+      
+      // Create the file
+      if (await file.exists()) {
+        await file.delete();
+      }
+      await file.create();
+      
+      // Start the download
+      downloadState.value = "Connecting...";
+      
+      final client = http.Client();
+      final request = http.Request('GET', Uri.parse(url));
+      final response = await client.send(request);
+      
+      final contentLength = response.contentLength ?? 0;
+      int receivedBytes = 0;
+      
+      downloadState.value = "Downloading...";
+      
+      final sink = file.openWrite();
+      
+      await response.stream.forEach((chunk) {
+        sink.add(chunk);
+        receivedBytes += chunk.length;
+        
+        if (contentLength > 0) {
+          downloadProgress.value = receivedBytes / contentLength;
+          
+          // Update state with percentage
+          final percent = (downloadProgress.value * 100).toStringAsFixed(1);
+          downloadState.value = "Downloading... $percent%";
+        }
+      });
+      
+      await sink.flush();
+      await sink.close();
+      
+      // Update dialog to show installing
+      downloadState.value = "Installing...";
+      
+      // Install the APK
+      final result = await OpenFile.open(filePath);
+      
+      // Close the dialog
+      Navigator.of(context, rootNavigator: true).pop();
+      
+      // Handle install issues
+      if (result.type != ResultType.done) {
+        SnackBarUtils.showErrorSnackBar(
+          context, 
+          "Failed to open APK: ${result.message}"
+        );
+      }
+    } catch (e) {
+      // Close the dialog on error
+      Navigator.of(context, rootNavigator: true).pop();
+      
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        "Error downloading update: $e",
+      );
     }
   }
 } // End of CheckUpdate class

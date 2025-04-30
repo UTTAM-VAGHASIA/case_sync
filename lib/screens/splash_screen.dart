@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:io'; // Keep if Platform.isAndroid is used
+import 'dart:io';
 
 import 'package:case_sync/check_update.dart';
+import 'package:case_sync/utils/flavor_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -84,28 +85,52 @@ class SplashScreenState extends State<SplashScreen> {
     // Keep your existing splash screen UI
     return Scaffold(
       backgroundColor: const Color.fromRGBO(243, 243, 243, 1.00),
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset('assets/icons/splash_logo.svg'),
-            const Text(
-              'For Advocates',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset('assets/icons/splash_logo.svg'),
+                const Text(
+                  'For Advocates',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                // Optionally add a loading indicator if checks take time
+                const SizedBox(height: 30),
+                const CircularProgressIndicator(color: Colors.black54),
+                const SizedBox(height: 10),
+                const Text("Initializing...",
+                    style: TextStyle(color: Colors.black54)),
+              ],
+            ),
+          ),
+          // Add flavor indicator in staging mode
+          if (FlavorConfig.isTest())
+            Positioned(
+              top: 40,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'STAGING',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
-            // Optionally add a loading indicator if checks take time
-            const SizedBox(height: 30),
-            const CircularProgressIndicator(color: Colors.black54),
-            const SizedBox(height: 10),
-            const Text("Initializing...",
-                style: TextStyle(color: Colors.black54)),
-          ],
-        ),
+        ],
       ),
     );
   }
