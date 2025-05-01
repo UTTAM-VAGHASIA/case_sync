@@ -71,7 +71,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: flutter build apk --release --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
+        run: flutter build apk --flavor production -t lib/main_production.dart --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
 
       # --- Prepare version.json (with Dynamic Force Update) ---
       - name: Construct APK Download URL
