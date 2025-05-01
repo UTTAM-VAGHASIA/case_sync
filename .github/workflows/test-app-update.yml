@@ -70,6 +70,12 @@ jobs:
           
           # Build test flavor APK
           flutter build apk --flavor staging --release -t lib/main_test.dart --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
+          
+          # Display APK information for debugging
+          echo "APK information:"
+          echo "---------------"
+          apt-get update && apt-get install -y aapt
+          aapt dump badging build/app/outputs/flutter-apk/app-staging-release.apk | grep -E 'package:|application-label:|launchable-activity:'
 
       # --- Create Artifacts Directory ---
       - name: Setup version directory
@@ -96,7 +102,7 @@ jobs:
           # Create JSON content
           JSON_CONTENT='{
             "version": "'$VERSION'",
-            "apk_url": "https://github.com/'$REPO_OWNER'/'$REPO_NAME'/raw/staging-versions/staging-versions/v'$VERSION'/app-staging-release.apk",
+            "apk_url": "https://api.github.com/repos/'$REPO_OWNER'/'$REPO_NAME'/contents/staging-versions/v'$VERSION'/app-staging-release.apk?ref=staging-versions",
             "force_update": '$FORCE_UPDATE'
           }'
           

@@ -1332,9 +1332,48 @@ class CheckUpdate {
     );
     
     try {
-      // Get the external storage directory
-      final directory = await getExternalStorageDirectory() ?? 
-                       await getTemporaryDirectory();
+      // Important user warning for staging updates
+      if (updateType == 'Staging') {
+        print("CheckUpdate: Installing STAGING update. Make sure you're running the STAGING version of the app!");
+        print("CheckUpdate: Staging app ID: com.casesync.app.test, Production app ID: com.casesync.app");
+        
+        // Get the application ID of the current app
+        final packageInfo = await PackageInfo.fromPlatform();
+        final String appId = packageInfo.packageName;
+        
+        print("CheckUpdate: Current app ID: $appId");
+        
+        // Show warning if trying to install a staging APK on a production app
+        if (appId == "com.casesync.app" && !appId.contains(".test")) {
+          // Close the download dialog
+          if (context.mounted) {
+            Navigator.of(context, rootNavigator: true).pop();
+          
+            // Show warning dialog
+            await showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text("Installation Error"),
+                content: const Text(
+                  "You are trying to install a STAGING update on the PRODUCTION app. "
+                  "This will not work.\n\n"
+                  "Please install the correct version of the app for testing."
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text("OK"),
+                  )
+                ],
+              ),
+            );
+          }
+          return;
+        }
+      }
+      
+      // Get the temporary directory for storing the APK
+      final directory = await getTemporaryDirectory();
       final filePath = '${directory.path}/app_update.apk';
       final file = File(filePath);
       
@@ -1347,57 +1386,143 @@ class CheckUpdate {
       // Start the download
       downloadState.value = "Connecting...";
       
+      // Retrieve the GitHub PAT from dart-define environment variables
+      const String githubPat = String.fromEnvironment(_githubPatKey, defaultValue: '');
+      
+      // First, get the metadata from GitHub API
       final client = http.Client();
-      final request = http.Request('GET', Uri.parse(url));
-      final response = await client.send(request);
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          "Accept": "application/vnd.github.v3+json",
+          // Include Authorization header for private repositories
+          if (githubPat.isNotEmpty) "Authorization": "Bearer $githubPat",
+        },
+      );
       
-      final contentLength = response.contentLength ?? 0;
-      int receivedBytes = 0;
-      
-      downloadState.value = "Downloading...";
-      
-      final sink = file.openWrite();
-      
-      await response.stream.forEach((chunk) {
-        sink.add(chunk);
-        receivedBytes += chunk.length;
-        
-        if (contentLength > 0) {
-          downloadProgress.value = receivedBytes / contentLength;
-          
-          // Update state with percentage
-          final percent = (downloadProgress.value * 100).toStringAsFixed(1);
-          downloadState.value = "Downloading... $percent%";
-        }
-      });
-      
-      await sink.flush();
-      await sink.close();
-      
-      // Update dialog to show installing
-      downloadState.value = "Installing...";
-      
-      // Install the APK
-      final result = await OpenFile.open(filePath);
-      
-      // Close the dialog
-      Navigator.of(context, rootNavigator: true).pop();
-      
-      // Handle install issues
-      if (result.type != ResultType.done) {
-        SnackBarUtils.showErrorSnackBar(
-          context, 
-          "Failed to open APK: ${result.message}"
+      if (response.statusCode != 200) {
+        throw HttpException(
+          'API request failed with status code: ${response.statusCode}',
+          uri: Uri.parse(url)
         );
+      }
+      
+      // Parse the API response to get the download URL
+      final apiResponse = jsonDecode(response.body);
+      
+      if (apiResponse['content'] != null && apiResponse['encoding'] == 'base64') {
+        // For smaller files, GitHub API includes the content directly as base64
+        downloadState.value = "Decoding...";
+        
+        // Decode the base64 content
+        final String base64Content = apiResponse['content'].replaceAll('\n', '');
+        final List<int> bytes = base64Decode(base64Content);
+        
+        // Write bytes directly to file
+        await file.writeAsBytes(bytes);
+        print("CheckUpdate: Downloaded APK size: ${bytes.length} bytes (from base64)");
+        
+        // Update dialog to show installing
+        downloadState.value = "Installing...";
+        
+        // Install the APK
+        final result = await OpenFile.open(
+          filePath,
+          type: "application/vnd.android.package-archive"
+        );
+        
+        // Close the dialog
+        Navigator.of(context, rootNavigator: true).pop();
+        
+        // Handle install issues
+        if (result.type != ResultType.done) {
+          print("CheckUpdate: Installation error: ${result.type} - ${result.message}");
+          SnackBarUtils.showErrorSnackBar(
+            context, 
+            "Failed to install APK: ${result.message}"
+          );
+        }
+      } else if (apiResponse['download_url'] != null) {
+        // For larger files, GitHub API gives a download_url
+        final String downloadUrl = apiResponse['download_url'];
+        
+        // Now download the actual file
+        downloadState.value = "Downloading...";
+        
+        final request = http.Request('GET', Uri.parse(downloadUrl));
+        if (githubPat.isNotEmpty) {
+          request.headers["Authorization"] = "Bearer $githubPat";
+        }
+        
+        final downloadResponse = await client.send(request);
+        
+        if (downloadResponse.statusCode != 200) {
+          throw HttpException(
+            'Download failed with status code: ${downloadResponse.statusCode}',
+            uri: Uri.parse(downloadUrl)
+          );
+        }
+        
+        final contentLength = downloadResponse.contentLength ?? 0;
+        int receivedBytes = 0;
+        
+        final sink = file.openWrite();
+        
+        await downloadResponse.stream.forEach((chunk) {
+          sink.add(chunk);
+          receivedBytes += chunk.length;
+          
+          if (contentLength > 0) {
+            downloadProgress.value = receivedBytes / contentLength;
+            
+            // Update state with percentage
+            final percent = (downloadProgress.value * 100).toStringAsFixed(1);
+            downloadState.value = "Downloading... $percent%";
+          }
+        });
+        
+        await sink.flush();
+        await sink.close();
+        
+        // Update dialog to show installing
+        downloadState.value = "Installing...";
+        
+        // Print downloaded file size for debugging
+        final fileSize = await file.length();
+        print("CheckUpdate: Downloaded APK size: $fileSize bytes");
+        
+        // Install the APK
+        final result = await OpenFile.open(
+          filePath,
+          type: "application/vnd.android.package-archive"
+        );
+        
+        // Close the dialog
+        Navigator.of(context, rootNavigator: true).pop();
+        
+        // Handle install issues
+        if (result.type != ResultType.done) {
+          print("CheckUpdate: Installation error: ${result.type} - ${result.message}");
+          SnackBarUtils.showErrorSnackBar(
+            context, 
+            "Failed to install APK: ${result.message}"
+          );
+        }
+      } else {
+        throw Exception("GitHub API response did not contain expected content or download_url");
       }
     } catch (e) {
       // Close the dialog on error
-      Navigator.of(context, rootNavigator: true).pop();
+      print("CheckUpdate: Download error: $e");
       
-      SnackBarUtils.showErrorSnackBar(
-        context,
-        "Error downloading update: $e",
-      );
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        
+        SnackBarUtils.showErrorSnackBar(
+          context,
+          "Error downloading update: $e",
+        );
+      }
     }
   }
 } // End of CheckUpdate class
