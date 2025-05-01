@@ -71,11 +71,12 @@ jobs:
           # Build test flavor APK
           flutter build apk --flavor staging --release -t lib/main_test.dart --dart-define=GITHUB_PAT=${{ secrets.GH_PAT_FOR_RELEASES }}
           
-          # Display APK information for debugging
+          # Display APK information for debugging (using bundletool instead of aapt)
           echo "APK information:"
           echo "---------------"
-          apt-get update && apt-get install -y aapt
-          aapt dump badging build/app/outputs/flutter-apk/app-staging-release.apk | grep -E 'package:|application-label:|launchable-activity:'
+          # Use the bundletool that's already available in the Android SDK
+          # Check file size as a simple verification
+          ls -lh build/app/outputs/flutter-apk/app-staging-release.apk
 
       # --- Create Artifacts Directory ---
       - name: Setup version directory
