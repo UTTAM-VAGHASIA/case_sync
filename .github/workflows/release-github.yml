@@ -47,8 +47,8 @@ jobs:
       # --- Define Paths ---
       - name: Define Artifact Names and Paths
         run: |
-          echo "APK_NAME=app-release-v${{ env.APP_VERSION }}.apk" >> $GITHUB_ENV
-          echo "APK_PATH=build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
+          echo "APK_NAME=app-production-release-v${{ env.APP_VERSION }}.apk" >> $GITHUB_ENV
+          echo "APK_PATH=build/app/outputs/flutter-apk/app-production-release.apk" >> $GITHUB_ENV
           echo "VERSION_JSON_NAME=version.json" >> $GITHUB_ENV
           echo "VERSION_JSON_PATH=version.json" >> $GITHUB_ENV # Temp file name in runner
           echo "NOTES_PATH=release_notes.md" >> $GITHUB_ENV # Path for extracted notes
