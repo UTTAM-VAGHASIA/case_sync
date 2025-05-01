@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../check_update.dart';
 
 enum Flavor {
   production,
@@ -58,7 +59,7 @@ class FlavorConfig {
       final version = packageInfo.version;
       
       // Return URL for test version check
-      return 'https://raw.githubusercontent.com/${getRepoPath()}/test-versions/v$version/version.json';
+      return 'https://raw.githubusercontent.com/${getRepoPath()}/${CheckUpdate.stagingBranch}/v$version/version.json';
     }
     
     // For production, null means use the normal GitHub releases
@@ -68,6 +69,6 @@ class FlavorConfig {
   // Helper to get repo path - make it public so it can be used elsewhere
   static String getRepoPath() {
     // Should match your GitHub repository path, e.g., "username/case_sync"
-    return 'username/case_sync';
+    return 'UT268/case_sync';
   }
 } 

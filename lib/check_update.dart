@@ -20,6 +20,7 @@ class CheckUpdate {
   // TODO: Replace with your actual GitHub username/org and repository name
   static const String githubOwner = "UT268"; // Your GitHub username or org
   static const String githubRepo = "case_sync"; // Your repository name
+  static const String stagingBranch = "staging-versions"; // Branch for staging updates
 
   /// The key used with --dart-define to pass the GitHub Personal Access Token.
   /// Example build command:
@@ -35,7 +36,7 @@ class CheckUpdate {
     final packageInfo = await PackageInfo.fromPlatform();
     final version = packageInfo.version;
     
-    return 'https://raw.githubusercontent.com/$githubOwner/$githubRepo/test-versions/v$version/version.json';
+    return 'https://raw.githubusercontent.com/$githubOwner/$githubRepo/$stagingBranch/v$version/version.json';
   }
 
   // --- Security Warning ---

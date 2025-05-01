@@ -61,8 +61,8 @@ jobs:
       - name: Setup version directory
         run: |
           VERSION=${{ github.event.inputs.version }}
-          mkdir -p test-versions/v$VERSION
-          cp build/app/outputs/flutter-apk/app-staging-release.apk test-versions/v$VERSION/app-staging-release.apk
+          mkdir -p staging-versions/v$VERSION
+          cp build/app/outputs/flutter-apk/app-staging-release.apk staging-versions/v$VERSION/app-staging-release.apk
 
       # --- Generate version.json ---
       - name: Generate version.json
@@ -77,12 +77,12 @@ jobs:
           # Create version.json
           echo '{
             "version": "'$VERSION'",
-            "apk_url": "https://raw.githubusercontent.com/'$REPO_OWNER'/'$REPO_NAME'/test-versions/v'$VERSION'/app-staging-release.apk",
+            "apk_url": "https://raw.githubusercontent.com/'$REPO_OWNER'/'$REPO_NAME'/staging-versions/v'$VERSION'/app-staging-release.apk",
             "force_update": '$FORCE_UPDATE'
-          }' > test-versions/v$VERSION/version.json
+          }' > staging-versions/v$VERSION/version.json
           
           # Display the contents for verification
-          cat test-versions/v$VERSION/version.json
+          cat staging-versions/v$VERSION/version.json
 
       # --- Commit and Push to Test Branch ---
       - name: Commit and push test version
@@ -94,8 +94,8 @@ jobs:
           git config --local user.name "GitHub Action"
           
           # Add files and commit
-          git add test-versions/
-          git commit -m "Add test app version $VERSION"
+          git add staging-versions/
+          git commit -m "Add staging app version $VERSION"
           
           # Push to branch
-          git push origin HEAD:test-versions 
+          git push origin HEAD:staging-versions 
