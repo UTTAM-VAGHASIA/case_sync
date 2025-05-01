@@ -49,3 +49,5 @@ pubspec.lock
 
 build_release.bat
 build_debug.bat
+build_production.bat
+build_test.bat
