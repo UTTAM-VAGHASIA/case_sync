@@ -33,10 +33,9 @@ class CheckUpdate {
       
   /// The URL for checking staging updates
   static Future<String?> getStagingUpdateUrl() async {
-    final packageInfo = await PackageInfo.fromPlatform();
-    final version = packageInfo.version;
-    
-    return 'https://raw.githubusercontent.com/$githubOwner/$githubRepo/$stagingBranch/v$version/version.json';
+    // For private repositories, we can't use raw.githubusercontent.com without authentication
+    // Instead, use the GitHub API to get the file content
+    return 'https://api.github.com/repos/$githubOwner/$githubRepo/contents/staging-versions/latest/version.json?ref=$stagingBranch';
   }
 
   // --- Security Warning ---
@@ -80,27 +79,55 @@ class CheckUpdate {
       
       print("CheckUpdate: Checking for staging updates at $versionJsonUrl");
       
-      // Fetch the version.json file
-      final response = await http.get(Uri.parse(versionJsonUrl))
-          .timeout(const Duration(seconds: 20));
+      // Retrieve the GitHub PAT from dart-define environment variables
+      const String githubPat = String.fromEnvironment(_githubPatKey, defaultValue: '');
+      
+      // Fetch the version.json file using the GitHub API
+      final response = await http.get(
+        Uri.parse(versionJsonUrl),
+        headers: {
+          "Accept": "application/vnd.github.v3+json",
+          // Include Authorization header for private repositories
+          if (githubPat.isNotEmpty) "Authorization": "Bearer $githubPat",
+        },
+      ).timeout(const Duration(seconds: 20));
       
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // GitHub API returns file content in a different format
+        final apiResponse = jsonDecode(response.body);
         
-        // Extract version info
-        latestVersion = data['version'] ?? '';
-        apkUrl = data['apk_url'] ?? '';
-        forceUpdate = data['force_update'] ?? false;
-        
-        if (latestVersion.isEmpty || apkUrl.isEmpty) {
-          print("CheckUpdate: Invalid staging version data");
+        // For files, GitHub API returns the content as base64 encoded
+        if (apiResponse['content'] != null && apiResponse['encoding'] == 'base64') {
+          // Decode the base64 content
+          final String base64Content = apiResponse['content'].replaceAll('\n', '');
+          final String jsonContent = utf8.decode(base64Decode(base64Content));
+          
+          // Parse the JSON content
+          final data = jsonDecode(jsonContent);
+          
+          // Extract version info
+          latestVersion = data['version'] ?? '';
+          apkUrl = data['apk_url'] ?? '';
+          forceUpdate = data['force_update'] ?? false;
+          
+          if (latestVersion.isEmpty || apkUrl.isEmpty) {
+            print("CheckUpdate: Invalid staging version data");
+            return true;
+          }
+          
+          print("CheckUpdate: Staging release version: $latestVersion, Force update: $forceUpdate");
+        } else {
+          print("CheckUpdate: Unexpected GitHub API response format");
           return true;
         }
-        
-        print("CheckUpdate: Staging release version: $latestVersion, Force update: $forceUpdate");
       } else {
         // Could be a 404 if the version.json doesn't exist yet
         print("CheckUpdate: Staging version check failed with status ${response.statusCode}");
+        if (response.statusCode == 404) {
+          print("CheckUpdate: Make sure the file exists at staging-versions/latest/version.json in your repository");
+        } else if (response.statusCode == 401 || response.statusCode == 403) {
+          print("CheckUpdate: Authentication failed. Make sure your GitHub PAT has the correct permissions");
+        }
         return true;
       }
     } catch (e) {

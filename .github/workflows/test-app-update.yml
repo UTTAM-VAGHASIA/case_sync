@@ -61,8 +61,13 @@ jobs:
       - name: Setup version directory
         run: |
           VERSION=${{ github.event.inputs.version }}
+          # Create both version-specific directory and latest directory
           mkdir -p staging-versions/v$VERSION
+          mkdir -p staging-versions/latest
+          # Copy APK to version-specific directory
           cp build/app/outputs/flutter-apk/app-staging-release.apk staging-versions/v$VERSION/app-staging-release.apk
+          # Also copy to latest directory for easier reference
+          cp build/app/outputs/flutter-apk/app-staging-release.apk staging-versions/latest/app-staging-release.apk
 
       # --- Generate version.json ---
       - name: Generate version.json
@@ -74,15 +79,19 @@ jobs:
           REPO_OWNER=$(echo $GITHUB_REPOSITORY | cut -d "/" -f 1)
           REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d "/" -f 2)
           
-          # Create version.json
-          echo '{
+          # Create JSON content
+          JSON_CONTENT='{
             "version": "'$VERSION'",
-            "apk_url": "https://raw.githubusercontent.com/'$REPO_OWNER'/'$REPO_NAME'/staging-versions/v'$VERSION'/app-staging-release.apk",
+            "apk_url": "https://github.com/'$REPO_OWNER'/'$REPO_NAME'/raw/staging-versions/staging-versions/v'$VERSION'/app-staging-release.apk",
             "force_update": '$FORCE_UPDATE'
-          }' > staging-versions/v$VERSION/version.json
+          }'
+          
+          # Write to both version-specific and latest locations
+          echo "$JSON_CONTENT" > staging-versions/v$VERSION/version.json
+          echo "$JSON_CONTENT" > staging-versions/latest/version.json
           
           # Display the contents for verification
-          cat staging-versions/v$VERSION/version.json
+          cat staging-versions/latest/version.json
 
       # --- Commit and Push to Test Branch ---
       - name: Commit and push test version

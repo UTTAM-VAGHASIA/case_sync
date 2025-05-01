@@ -54,12 +54,7 @@ class FlavorConfig {
   static Future<String?> getUpdateCheckUrl() async {
     // Only for the test flavor, we use a special URL that won't show in GitHub releases
     if (isTest()) {
-      // Get current version
-      final packageInfo = await PackageInfo.fromPlatform();
-      final version = packageInfo.version;
-      
-      // Return URL for test version check
-      return 'https://raw.githubusercontent.com/${getRepoPath()}/${CheckUpdate.stagingBranch}/v$version/version.json';
+      return CheckUpdate.getStagingUpdateUrl();
     }
     
     // For production, null means use the normal GitHub releases
